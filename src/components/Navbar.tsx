@@ -35,14 +35,9 @@ export default function Navbar() {
 
         <div className="flex items-center gap-4">
           <Link href="/login">
-            <Button variant="outline" className="hidden sm:flex items-center gap-2 border-primary text-primary hover:bg-primary/10">
+            <Button variant="outline" className="flex items-center gap-2 border-primary text-primary hover:bg-primary/10">
               <LogIn size={18} />
               Login
-            </Button>
-          </Link>
-          <Link href="/admin">
-            <Button className="bg-primary text-white hover:bg-primary/90 shadow-lg shadow-primary/20">
-              Admin Portal
             </Button>
           </Link>
         </div>
