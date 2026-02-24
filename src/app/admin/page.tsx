@@ -8,9 +8,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Plus, Edit, Trash2, Shield, List, GraduationCap, Megaphone, Database, Loader2, UserCheck } from 'lucide-react'
+import { Plus, Shield, List, GraduationCap, Megaphone, Database, Loader2, UserCheck } from 'lucide-react'
 import { useFirestore, useUser, useDoc, useMemoFirebase } from '@/firebase'
-import { doc, setDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore'
+import { doc, setDoc, collection, addDoc } from 'firebase/firestore'
 import { useToast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
 
@@ -18,6 +18,7 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState('results')
   const [isSeeding, setIsSeeding] = useState(false)
   const [isGranting, setIsGranting] = useState(false)
+  const [mounted, setMounted] = useState(false)
   
   const { user, isUserLoading } = useUser()
   const db = useFirestore()
@@ -29,12 +30,16 @@ export default function AdminPage() {
   const isAdmin = !!adminDoc
 
   useEffect(() => {
-    if (!isUserLoading && !user) {
-      router.push('/login')
-    }
-  }, [user, isUserLoading, router])
+    setMounted(true)
+  }, [])
 
-  if (isUserLoading || isAdminLoading) {
+  useEffect(() => {
+    if (mounted && !isUserLoading && !user) {
+      router.push('/login?redirect=/admin')
+    }
+  }, [user, isUserLoading, router, mounted])
+
+  if (!mounted || isUserLoading || isAdminLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="animate-spin text-primary" size={48} />
@@ -52,7 +57,8 @@ export default function AdminPage() {
     try {
       await setDoc(doc(db, 'roles_admin', user.uid), {
         email: user.email,
-        grantedAt: new Date().toISOString()
+        grantedAt: new Date().toISOString(),
+        uid: user.uid
       })
       toast({
         title: "Admin Rights Granted",

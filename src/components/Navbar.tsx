@@ -1,7 +1,7 @@
 
 "use client"
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Button } from './ui/button'
 import { Cpu, LogIn, ClipboardList, BookOpen, Bell, Home, LogOut, LayoutDashboard, Shield } from 'lucide-react'
@@ -10,9 +10,14 @@ import { signOut } from 'firebase/auth'
 import { doc } from 'firebase/firestore'
 
 export default function Navbar() {
+  const [mounted, setMounted] = useState(false)
   const { user } = useUser()
   const auth = useAuth()
   const db = useFirestore()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Check if current user is an admin
   const adminRef = useMemoFirebase(() => (user && db ? doc(db, 'roles_admin', user.uid) : null), [user, db])
@@ -55,7 +60,7 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-4">
-          {user ? (
+          {mounted && user ? (
             <div className="flex items-center gap-4">
               {isAdmin && (
                 <Link href="/admin">
@@ -76,13 +81,15 @@ export default function Navbar() {
                 Logout
               </Button>
             </div>
-          ) : (
+          ) : mounted ? (
             <Link href="/login">
               <Button variant="outline" className="flex items-center gap-2 border-primary text-primary hover:bg-primary/10">
                 <LogIn size={18} />
                 Login
               </Button>
             </Link>
+          ) : (
+            <div className="w-20 h-10" />
           )}
         </div>
       </div>
