@@ -1,33 +1,32 @@
+
 "use client"
 
-import React, { useEffect, useRef } from 'react'
+import React from 'react'
 import Navbar from '@/components/Navbar'
 import TechBackground from '@/components/TechBackground'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { ArrowRight, BookOpen, GraduationCap, Users, ShieldCheck, Cpu } from 'lucide-react'
+import { ArrowRight, BookOpen, GraduationCap, ShieldCheck, Cpu } from 'lucide-react'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
+
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+}
+
+const item = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0 }
+}
 
 export default function Home() {
-  const observerRef = useRef<IntersectionObserver | null>(null);
-
-  useEffect(() => {
-    observerRef.current = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-        }
-      });
-    }, { threshold: 0.1 });
-
-    document.querySelectorAll('.scroll-reveal').forEach(el => {
-      observerRef.current?.observe(el);
-    });
-
-    return () => observerRef.current?.disconnect();
-  }, []);
-
   return (
     <div className="relative">
       <TechBackground />
@@ -36,13 +35,25 @@ export default function Home() {
       <main>
         {/* Hero Section */}
         <section className="relative py-24 px-6">
-          <div className="max-w-7xl mx-auto text-center">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6 }}
+            className="max-w-7xl mx-auto text-center"
+          >
             <Badge variant="secondary" className="mb-6 py-1.5 px-4 bg-secondary/10 text-secondary border-secondary/20 font-medium">
               Next-Gen Student Portal
             </Badge>
             <h1 className="font-headline text-5xl md:text-7xl font-bold mb-6 text-foreground leading-[1.1]">
               Empowering Students Through <br />
-              <span className="text-primary italic">Technology</span>
+              <motion.span 
+                initial={{ backgroundPosition: "0% 50%" }}
+                animate={{ backgroundPosition: "100% 50%" }}
+                transition={{ duration: 5, repeat: Infinity, repeatType: "reverse" }}
+                className="text-primary italic inline-block"
+              >
+                Technology
+              </motion.span>
             </h1>
             <p className="max-w-2xl mx-auto text-lg text-muted-foreground mb-10 leading-relaxed">
               Experience the future of campus management. Access your grades, resources, and campus news in a sleek, integrated environment designed for the modern tech student.
@@ -59,44 +70,49 @@ export default function Home() {
                 </Button>
               </Link>
             </div>
-          </div>
+          </motion.div>
         </section>
 
         {/* Features Section */}
         <section className="py-24 px-6">
           <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <motion.div 
+              variants={container}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true }}
+              className="grid grid-cols-1 md:grid-cols-3 gap-8"
+            >
               {[
                 {
                   title: "Smart Resources",
                   desc: "Access notes, previous questions and digital libraries anytime, anywhere.",
-                  icon: <BookOpen className="text-primary" size={32} />,
-                  delay: "0s"
+                  icon: <BookOpen className="text-primary" size={32} />
                 },
                 {
                   title: "Real-time Tracking",
                   desc: "Monitor your academic progress with interactive charts and instant grade updates.",
-                  icon: <GraduationCap className="text-secondary" size={32} />,
-                  delay: "0.2s"
+                  icon: <GraduationCap className="text-secondary" size={32} />
                 },
                 {
                   title: "Urgent Alerts",
                   desc: "Stay informed with a dynamic notice board that prioritizes critical information.",
-                  icon: <ShieldCheck className="text-primary" size={32} />,
-                  delay: "0.4s"
+                  icon: <ShieldCheck className="text-primary" size={32} />
                 }
               ].map((feature, i) => (
-                <Card key={i} className="scroll-reveal glass group hover:shadow-2xl transition-all duration-500 border-border/50 overflow-hidden">
-                  <CardContent className="p-8">
-                    <div className="mb-6 p-4 w-fit bg-background rounded-2xl group-hover:scale-110 transition-transform duration-500 shadow-sm border border-border/50">
-                      {feature.icon}
-                    </div>
-                    <h3 className="text-2xl font-headline font-bold mb-4">{feature.title}</h3>
-                    <p className="text-muted-foreground leading-relaxed">{feature.desc}</p>
-                  </CardContent>
-                </Card>
+                <motion.div key={i} variants={item}>
+                  <Card className="glass group hover:shadow-2xl transition-all duration-500 border-border/50 overflow-hidden h-full">
+                    <CardContent className="p-8">
+                      <div className="mb-6 p-4 w-fit bg-background rounded-2xl group-hover:scale-110 transition-transform duration-500 shadow-sm border border-border/50">
+                        {feature.icon}
+                      </div>
+                      <h3 className="text-2xl font-headline font-bold mb-4">{feature.title}</h3>
+                      <p className="text-muted-foreground leading-relaxed">{feature.desc}</p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           </div>
         </section>
 
@@ -109,10 +125,16 @@ export default function Home() {
               { label: "Success Rate", value: "98%" },
               { label: "Faculty Members", value: "250+" }
             ].map((stat, i) => (
-              <div key={i} className="scroll-reveal">
+              <motion.div 
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+              >
                 <p className="text-4xl md:text-5xl font-headline font-bold text-primary mb-2">{stat.value}</p>
                 <p className="text-muted-foreground font-medium">{stat.label}</p>
-              </div>
+              </motion.div>
             ))}
           </div>
         </section>
