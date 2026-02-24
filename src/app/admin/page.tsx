@@ -35,7 +35,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (mounted && !isUserLoading && !user) {
-      router.push('/login?redirect=/admin')
+      router.push('/admin/login')
     }
   }, [user, isUserLoading, router, mounted])
 
