@@ -4,13 +4,20 @@
 import React from 'react'
 import Link from 'next/link'
 import { Button } from './ui/button'
-import { Cpu, LogIn, ClipboardList, BookOpen, Bell, Home, LogOut, LayoutDashboard } from 'lucide-react'
-import { useUser, useAuth } from '@/firebase'
+import { Cpu, LogIn, ClipboardList, BookOpen, Bell, Home, LogOut, LayoutDashboard, Shield } from 'lucide-react'
+import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from '@/firebase'
 import { signOut } from 'firebase/auth'
+import { doc } from 'firebase/firestore'
 
 export default function Navbar() {
   const { user } = useUser()
   const auth = useAuth()
+  const db = useFirestore()
+
+  // Check if current user is an admin
+  const adminRef = useMemoFirebase(() => (user && db ? doc(db, 'roles_admin', user.uid) : null), [user, db])
+  const { data: adminDoc } = useDoc(adminRef)
+  const isAdmin = !!adminDoc
 
   const handleLogout = () => {
     signOut(auth)
@@ -50,6 +57,14 @@ export default function Navbar() {
         <div className="flex items-center gap-4">
           {user ? (
             <div className="flex items-center gap-4">
+              {isAdmin && (
+                <Link href="/admin">
+                  <Button variant="ghost" className="flex items-center gap-2 text-secondary">
+                    <Shield size={18} />
+                    Admin
+                  </Button>
+                </Link>
+              )}
               <Link href="/dashboard">
                 <Button variant="ghost" className="flex items-center gap-2 text-primary">
                   <LayoutDashboard size={18} />
