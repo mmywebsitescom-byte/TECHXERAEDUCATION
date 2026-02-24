@@ -1,7 +1,7 @@
 
 "use client"
 
-import React from 'react'
+import React, { useEffect } from 'react'
 import Navbar from '@/components/Navbar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
@@ -39,10 +39,11 @@ export default function DashboardPage() {
   const { data: profile, isLoading: isProfileLoading } = useDoc(studentRef)
   const { data: results, isLoading: isResultsLoading } = useCollection(resultsQuery)
 
-  if (!isUserLoading && !user) {
-    router.push('/login')
-    return null
-  }
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/login')
+    }
+  }, [user, isUserLoading, router])
 
   if (isUserLoading || isProfileLoading) {
     return (
@@ -50,6 +51,10 @@ export default function DashboardPage() {
         <Loader2 className="animate-spin text-primary" size={48} />
       </div>
     )
+  }
+
+  if (!user) {
+    return null
   }
 
   const chartData = results?.map(r => ({

@@ -1,7 +1,7 @@
 
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Navbar from '@/components/Navbar'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -28,6 +28,12 @@ export default function AdminPage() {
   const { data: adminDoc, isLoading: isAdminLoading } = useDoc(adminRef)
   const isAdmin = !!adminDoc
 
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/login')
+    }
+  }, [user, isUserLoading, router])
+
   if (isUserLoading || isAdminLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -36,9 +42,7 @@ export default function AdminPage() {
     )
   }
 
-  // Redirect if not admin (and not in a state where they can grant themselves admin)
   if (!user) {
-    router.push('/login')
     return null
   }
 
