@@ -3,7 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { Button } from './ui/button'
-import { Cpu, LogIn, ClipboardList, BookOpen, Bell } from 'lucide-react'
+import { Cpu, LogIn, ClipboardList, BookOpen, Bell, Home } from 'lucide-react'
 
 export default function Navbar() {
   return (
@@ -19,6 +19,10 @@ export default function Navbar() {
         </Link>
 
         <div className="hidden md:flex items-center gap-8 font-medium">
+          <Link href="/" className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
+            <Home size={18} />
+            Home
+          </Link>
           <Link href="/resources" className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
             <BookOpen size={18} />
             Resources
