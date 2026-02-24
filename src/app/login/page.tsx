@@ -8,11 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Label } from '@/components/ui/label'
 import TechBackground from '@/components/TechBackground'
 import Navbar from '@/components/Navbar'
-import { Lock, User, ArrowRight, Loader2, GraduationCap } from 'lucide-react'
+import { Lock, User, ArrowRight, Loader2, GraduationCap, UserPlus } from 'lucide-react'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth, useUser } from '@/firebase'
-import { signInWithEmailAndPassword } from 'firebase/auth'
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 
@@ -20,7 +20,7 @@ function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [isReady, setIsReady] = useState(false)
+  const [isSignUp, setIsSignUp] = useState(false)
   
   const auth = useAuth()
   const { user, isUserLoading } = useUser()
@@ -31,14 +31,10 @@ function LoginForm() {
   const redirectTo = searchParams.get('redirect') || '/dashboard'
 
   useEffect(() => {
-    setIsReady(true)
-  }, [])
-
-  useEffect(() => {
-    if (isReady && !isUserLoading && user) {
+    if (!isUserLoading && user) {
       router.push(redirectTo)
     }
-  }, [user, isUserLoading, router, redirectTo, isReady])
+  }, [user, isUserLoading, router, redirectTo])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,24 +42,30 @@ function LoginForm() {
     
     setIsLoading(true)
     try {
-      await signInWithEmailAndPassword(auth, email, password)
-      toast({
-        title: "Success",
-        description: "Welcome back to the Student Portal.",
-      })
+      if (isSignUp) {
+        await createUserWithEmailAndPassword(auth, email, password)
+        toast({
+          title: "Account Created",
+          description: "Welcome to TechXera Campus! Redirecting...",
+        })
+      } else {
+        await signInWithEmailAndPassword(auth, email, password)
+        toast({
+          title: "Login Successful",
+          description: "Welcome back to the Student Portal.",
+        })
+      }
       router.push(redirectTo)
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Authentication Failed",
-        description: error.message || "Invalid credentials. Please try again.",
+        title: isSignUp ? "Sign Up Failed" : "Login Failed",
+        description: error.message || "Something went wrong. Please check your credentials.",
       })
     } finally {
       setIsLoading(false)
     }
   }
-
-  if (!isReady) return null
 
   return (
     <motion.div 
@@ -80,10 +82,14 @@ function LoginForm() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="mx-auto w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mb-2"
           >
-            <GraduationCap size={32} />
+            {isSignUp ? <UserPlus size={32} /> : <GraduationCap size={32} />}
           </motion.div>
-          <CardTitle className="text-3xl font-headline font-bold">Student Login</CardTitle>
-          <CardDescription>Enter your credentials to access your dashboard</CardDescription>
+          <CardTitle className="text-3xl font-headline font-bold">
+            {isSignUp ? "Student Sign Up" : "Student Login"}
+          </CardTitle>
+          <CardDescription>
+            {isSignUp ? "Create your campus portal account" : "Enter your credentials to access your dashboard"}
+          </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-6 pt-8">
@@ -105,7 +111,7 @@ function LoginForm() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
-                <Link href="#" className="text-sm text-primary hover:underline">Forgot password?</Link>
+                {!isSignUp && <Link href="#" className="text-sm text-primary hover:underline">Forgot password?</Link>}
               </div>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
@@ -129,11 +135,22 @@ function LoginForm() {
                 className="w-full h-12 text-lg font-medium shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90"
               >
                 {isLoading ? <Loader2 className="animate-spin mr-2" /> : null}
-                {isLoading ? "Authenticating..." : "Login"} <ArrowRight className="ml-2" size={18} />
+                {isLoading ? (isSignUp ? "Creating..." : "Authenticating...") : (isSignUp ? "Sign Up" : "Login")} 
+                <ArrowRight className="ml-2" size={18} />
               </Button>
             </motion.div>
-            <div className="text-center text-sm text-muted-foreground">
-              Staff or Admin? <Link href="/admin/login" className="text-primary font-medium hover:underline">Admin Login</Link>
+            
+            <div className="text-center text-sm text-muted-foreground space-y-2">
+              <button 
+                type="button"
+                onClick={() => setIsSignUp(!isSignUp)}
+                className="text-primary font-medium hover:underline block w-full"
+              >
+                {isSignUp ? "Already have an account? Login" : "Don't have an account? Sign Up"}
+              </button>
+              <div className="pt-2">
+                Staff or Admin? <Link href="/admin/login" className="text-primary font-medium hover:underline">Admin Login</Link>
+              </div>
             </div>
           </CardFooter>
         </form>
