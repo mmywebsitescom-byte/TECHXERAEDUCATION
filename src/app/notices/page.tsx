@@ -5,43 +5,11 @@ import React from 'react'
 import Navbar from '@/components/Navbar'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Calendar, AlertCircle, Info, Megaphone } from 'lucide-react'
+import { Calendar, AlertCircle, Info, Megaphone, Loader2 } from 'lucide-react'
 import { motion } from 'framer-motion'
-
-const notices = [
-  {
-    id: 1,
-    title: "Final Examination Schedule Released",
-    desc: "The final exam schedule for the Winter 2025 semester is now available for all departments. Please check the student portal to verify your exam dates and centers.",
-    date: "Oct 24, 2025",
-    type: "Urgent",
-    category: "Academic"
-  },
-  {
-    id: 2,
-    title: "Campus-wide Tech Symposium",
-    desc: "Join us for the annual TechXera Symposium featuring guest speakers from major tech companies. Registration starts next Monday.",
-    date: "Oct 22, 2025",
-    type: "Normal",
-    category: "Event"
-  },
-  {
-    id: 3,
-    title: "Hostel Fee Payment Deadline",
-    desc: "Attention hostel residents: The last date for fee payment without late fine is Oct 30. Payments can be made via the mobile app or web portal.",
-    date: "Oct 20, 2025",
-    type: "Urgent",
-    category: "Admin"
-  },
-  {
-    id: 4,
-    title: "New Library Timings",
-    desc: "Starting Nov 1, the campus library will be open 24/7 to accommodate students during the exam season.",
-    date: "Oct 18, 2025",
-    type: "Normal",
-    category: "General"
-  }
-]
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase'
+import { collection, query, orderBy } from 'firebase/firestore'
+import { format } from 'date-fns'
 
 const container = {
   hidden: { opacity: 0 },
@@ -59,6 +27,10 @@ const item = {
 }
 
 export default function NoticesPage() {
+  const db = useFirestore()
+  const noticesQuery = useMemoFirebase(() => query(collection(db, 'notices'), orderBy('publishDate', 'desc')), [db])
+  const { data: notices, isLoading } = useCollection(noticesQuery)
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -78,48 +50,58 @@ export default function NoticesPage() {
             className="flex items-center gap-2 p-3 bg-primary/10 text-primary rounded-2xl"
           >
             <Megaphone size={20} />
-            <span className="font-bold text-sm">4 New Notices</span>
+            <span className="font-bold text-sm">{notices?.length || 0} Announcements</span>
           </motion.div>
         </motion.div>
 
-        <motion.div 
-          variants={container}
-          initial="hidden"
-          animate="show"
-          className="space-y-6"
-        >
-          {notices.map((notice) => (
-            <motion.div key={notice.id} variants={item}>
-              <Card className={`shadow-sm border-l-4 transition-all hover:translate-x-2 duration-300 ${notice.type === 'Urgent' ? 'border-l-destructive border-border/50 bg-destructive/[0.02]' : 'border-l-primary border-border/50'}`}>
-                <CardContent className="p-8">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex items-center gap-3">
-                      <Badge className={notice.type === 'Urgent' ? 'bg-destructive text-white border-none' : 'bg-primary text-white border-none'}>
-                        {notice.type}
-                      </Badge>
-                      <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1">
-                        <Calendar size={12} /> {notice.date}
-                      </span>
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <Loader2 className="animate-spin text-primary" size={40} />
+            <p className="text-muted-foreground font-medium">Loading notices...</p>
+          </div>
+        ) : (
+          <motion.div 
+            variants={container}
+            initial="hidden"
+            animate="show"
+            className="space-y-6"
+          >
+            {notices?.map((notice) => (
+              <motion.div key={notice.id} variants={item}>
+                <Card className={`shadow-sm border-l-4 transition-all hover:translate-x-2 duration-300 ${notice.isUrgent ? 'border-l-destructive border-border/50 bg-destructive/[0.02]' : 'border-l-primary border-border/50'}`}>
+                  <CardContent className="p-8">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex items-center gap-3">
+                        <Badge className={notice.isUrgent ? 'bg-destructive text-white border-none' : 'bg-primary text-white border-none'}>
+                          {notice.isUrgent ? 'Urgent' : 'Normal'}
+                        </Badge>
+                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1">
+                          <Calendar size={12} /> {notice.publishDate ? format(new Date(notice.publishDate), 'MMM d, yyyy') : 'N/A'}
+                        </span>
+                      </div>
                     </div>
-                    <Badge variant="outline" className="text-muted-foreground border-border/60">
-                      {notice.category}
-                    </Badge>
-                  </div>
-                  
-                  <div className="flex gap-4">
-                    <div className={`hidden sm:flex shrink-0 w-12 h-12 rounded-full items-center justify-center ${notice.type === 'Urgent' ? 'bg-destructive/10 text-destructive' : 'bg-primary/10 text-primary'}`}>
-                      {notice.type === 'Urgent' ? <AlertCircle size={24} /> : <Info size={24} />}
+                    
+                    <div className="flex gap-4">
+                      <div className={`hidden sm:flex shrink-0 w-12 h-12 rounded-full items-center justify-center ${notice.isUrgent ? 'bg-destructive/10 text-destructive' : 'bg-primary/10 text-primary'}`}>
+                        {notice.isUrgent ? <AlertCircle size={24} /> : <Info size={24} />}
+                      </div>
+                      <div>
+                        <h3 className="text-2xl font-headline font-bold mb-3">{notice.title}</h3>
+                        <p className="text-muted-foreground leading-relaxed text-lg whitespace-pre-wrap">{notice.description}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-2xl font-headline font-bold mb-3">{notice.title}</h3>
-                      <p className="text-muted-foreground leading-relaxed text-lg">{notice.desc}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-        </motion.div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+
+            {notices?.length === 0 && (
+              <div className="text-center py-20 text-muted-foreground border-2 border-dashed rounded-3xl">
+                No active notices at the moment.
+              </div>
+            )}
+          </motion.div>
+        )}
       </main>
     </div>
   )

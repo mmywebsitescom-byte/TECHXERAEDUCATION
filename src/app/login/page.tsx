@@ -1,21 +1,51 @@
 
 "use client"
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import TechBackground from '@/components/TechBackground'
 import Navbar from '@/components/Navbar'
-import { Lock, User, ArrowRight } from 'lucide-react'
+import { Lock, User, ArrowRight, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import { useAuth, useUser } from '@/firebase'
+import { signInWithEmailAndPassword } from 'firebase/auth'
+import { useRouter } from 'next/navigation'
+import { useToast } from '@/hooks/use-toast'
 
 export default function LoginPage() {
-  const handleSubmit = (e: React.FormEvent) => {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const auth = useAuth()
+  const { user } = useUser()
+  const router = useRouter()
+  const { toast } = useToast()
+
+  useEffect(() => {
+    if (user) {
+      router.push('/dashboard')
+    }
+  }, [user, router])
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    window.location.href = '/dashboard';
+    setIsLoading(true)
+    try {
+      await signInWithEmailAndPassword(auth, email, password)
+      router.push('/dashboard')
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Authentication Failed",
+        description: error.message || "Invalid credentials. Please try again.",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -46,10 +76,18 @@ export default function LoginPage() {
             <form onSubmit={handleSubmit}>
               <CardContent className="space-y-6 pt-8">
                 <div className="space-y-2">
-                  <Label htmlFor="id">Student ID</Label>
+                  <Label htmlFor="email">Email Address</Label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-                    <Input id="id" placeholder="e.g. TX-2025-001" className="pl-10 h-12 bg-background/50" required />
+                    <Input 
+                      id="email" 
+                      type="email"
+                      placeholder="alex@techxera.edu" 
+                      className="pl-10 h-12 bg-background/50" 
+                      required 
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -59,14 +97,23 @@ export default function LoginPage() {
                   </div>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-                    <Input id="password" type="password" placeholder="••••••••" className="pl-10 h-12 bg-background/50" required />
+                    <Input 
+                      id="password" 
+                      type="password" 
+                      placeholder="••••••••" 
+                      className="pl-10 h-12 bg-background/50" 
+                      required 
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
                   </div>
                 </div>
               </CardContent>
               <CardFooter className="flex flex-col gap-4 pb-8">
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="w-full">
-                  <Button className="w-full h-12 text-lg font-medium shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90">
-                    Login <ArrowRight className="ml-2" size={18} />
+                  <Button disabled={isLoading} className="w-full h-12 text-lg font-medium shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90">
+                    {isLoading ? <Loader2 className="animate-spin mr-2" /> : null}
+                    {isLoading ? "Authenticating..." : "Login"} <ArrowRight className="ml-2" size={18} />
                   </Button>
                 </motion.div>
                 <div className="text-center text-sm text-muted-foreground">

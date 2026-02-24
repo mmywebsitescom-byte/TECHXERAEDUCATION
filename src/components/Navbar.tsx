@@ -1,11 +1,21 @@
+
 "use client"
 
 import React from 'react'
 import Link from 'next/link'
 import { Button } from './ui/button'
-import { Cpu, LogIn, ClipboardList, BookOpen, Bell, Home } from 'lucide-react'
+import { Cpu, LogIn, ClipboardList, BookOpen, Bell, Home, LogOut, LayoutDashboard } from 'lucide-react'
+import { useUser, useAuth } from '@/firebase'
+import { signOut } from 'firebase/auth'
 
 export default function Navbar() {
+  const { user } = useUser()
+  const auth = useAuth()
+
+  const handleLogout = () => {
+    signOut(auth)
+  }
+
   return (
     <nav className="sticky top-0 z-50 w-full glass border-b border-border/40 px-6 py-4">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -38,12 +48,27 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-4">
-          <Link href="/login">
-            <Button variant="outline" className="flex items-center gap-2 border-primary text-primary hover:bg-primary/10">
-              <LogIn size={18} />
-              Login
-            </Button>
-          </Link>
+          {user ? (
+            <div className="flex items-center gap-4">
+              <Link href="/dashboard">
+                <Button variant="ghost" className="flex items-center gap-2 text-primary">
+                  <LayoutDashboard size={18} />
+                  Dashboard
+                </Button>
+              </Link>
+              <Button onClick={handleLogout} variant="outline" className="flex items-center gap-2 border-destructive text-destructive hover:bg-destructive/10">
+                <LogOut size={18} />
+                Logout
+              </Button>
+            </div>
+          ) : (
+            <Link href="/login">
+              <Button variant="outline" className="flex items-center gap-2 border-primary text-primary hover:bg-primary/10">
+                <LogIn size={18} />
+                Login
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
     </nav>

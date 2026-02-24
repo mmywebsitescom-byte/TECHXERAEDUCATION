@@ -7,25 +7,21 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Search, Filter, Download, FileText, BookOpen } from 'lucide-react'
+import { Search, Filter, Download, FileText, BookOpen, Loader2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-
-const resources = [
-  { id: 1, title: "Advanced Algorithms Notes", subject: "Computer Science", semester: "5th Sem", type: "Note" },
-  { id: 2, title: "Digital Marketing Strategy", subject: "Management", semester: "3rd Sem", type: "Question Paper" },
-  { id: 3, title: "Quantum Physics Labs", subject: "Physics", semester: "2nd Sem", type: "Lab Manual" },
-  { id: 4, title: "Data Structures - Previous Year", subject: "Computer Science", semester: "3rd Sem", type: "Question Paper" },
-  { id: 5, title: "Ethics in Engineering", subject: "Common", semester: "8th Sem", type: "Note" },
-  { id: 6, title: "Microprocessor Architecture", subject: "Electronics", semester: "4th Sem", type: "Note" },
-]
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase'
+import { collection, query, orderBy } from 'firebase/firestore'
 
 export default function ResourcesPage() {
   const [searchTerm, setSearchTerm] = useState('')
+  const db = useFirestore()
+  const resourcesQuery = useMemoFirebase(() => query(collection(db, 'studyMaterials'), orderBy('uploadDate', 'desc')), [db])
+  const { data: resources, isLoading } = useCollection(resourcesQuery)
 
-  const filtered = resources.filter(r => 
+  const filtered = resources?.filter(r => 
     r.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
     r.subject.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  ) || []
 
   return (
     <div className="min-h-screen bg-background">
@@ -65,51 +61,59 @@ export default function ResourcesPage() {
           </div>
         </motion.div>
 
-        {/* Grid */}
-        <motion.div 
-          layout
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-        >
-          <AnimatePresence mode="popLayout">
-            {filtered.map((item) => (
-              <motion.div
-                layout
-                key={item.id}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.2 }}
-              >
-                <Card className="group hover:shadow-xl transition-all duration-300 border-border/50 overflow-hidden h-full">
-                  <CardContent className="p-0">
-                    <div className="p-6">
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="p-3 bg-primary/5 text-primary rounded-xl group-hover:bg-primary group-hover:text-white transition-colors duration-300">
-                          <FileText size={24} />
+        {isLoading ? (
+          <div className="text-center py-20 flex flex-col items-center gap-4">
+            <Loader2 className="animate-spin text-primary" size={40} />
+            <p className="text-muted-foreground font-medium">Fetching materials...</p>
+          </div>
+        ) : (
+          <motion.div 
+            layout
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
+            <AnimatePresence mode="popLayout">
+              {filtered.map((item) => (
+                <motion.div
+                  layout
+                  key={item.id}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <Card className="group hover:shadow-xl transition-all duration-300 border-border/50 overflow-hidden h-full">
+                    <CardContent className="p-0">
+                      <div className="p-6">
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="p-3 bg-primary/5 text-primary rounded-xl group-hover:bg-primary group-hover:text-white transition-colors duration-300">
+                            <FileText size={24} />
+                          </div>
+                          <Badge variant="secondary" className="bg-muted text-muted-foreground border-none uppercase tracking-wider text-[10px]">
+                            {item.semester}
+                          </Badge>
                         </div>
-                        <Badge variant="secondary" className="bg-muted text-muted-foreground border-none uppercase tracking-wider text-[10px]">
-                          {item.semester}
-                        </Badge>
+                        <h3 className="text-xl font-headline font-bold mb-2 group-hover:text-primary transition-colors">{item.title}</h3>
+                        <p className="text-muted-foreground text-sm mb-6 flex items-center gap-2">
+                          <BookOpen size={14} /> {item.subject}
+                        </p>
+                        <div className="flex items-center justify-between pt-4 border-t border-border/40">
+                          <span className="text-xs font-bold text-muted-foreground uppercase">{item.materialType}</span>
+                          <a href={item.fileUrl} target="_blank" rel="noopener noreferrer">
+                            <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/10 flex items-center gap-2 font-bold group-hover:translate-x-1 transition-transform">
+                              Access <Download size={14} />
+                            </Button>
+                          </a>
+                        </div>
                       </div>
-                      <h3 className="text-xl font-headline font-bold mb-2 group-hover:text-primary transition-colors">{item.title}</h3>
-                      <p className="text-muted-foreground text-sm mb-6 flex items-center gap-2">
-                        <BookOpen size={14} /> {item.subject}
-                      </p>
-                      <div className="flex items-center justify-between pt-4 border-t border-border/40">
-                        <span className="text-xs font-bold text-muted-foreground uppercase">{item.type}</span>
-                        <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/10 flex items-center gap-2 font-bold group-hover:translate-x-1 transition-transform">
-                          Download <Download size={14} />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </motion.div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </motion.div>
+        )}
 
-        {filtered.length === 0 && (
+        {!isLoading && filtered.length === 0 && (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState } from 'react'
@@ -7,10 +8,52 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Plus, Edit, Trash2, FileUp, Shield, List, GraduationCap, Megaphone } from 'lucide-react'
+import { Plus, Edit, Trash2, Shield, List, GraduationCap, Megaphone, Database, Loader2 } from 'lucide-react'
+import { useFirestore } from '@/firebase'
+import { doc, setDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore'
+import { useToast } from '@/hooks/use-toast'
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState('results')
+  const [isSeeding, setIsSeeding] = useState(false)
+  const db = useFirestore()
+  const { toast } = useToast()
+
+  const seedDatabase = async () => {
+    setIsSeeding(true)
+    try {
+      // Seed Notices
+      const notices = [
+        { title: "Final Examination Schedule Released", description: "The final exam schedule is now available.", publishDate: new Date().toISOString(), isUrgent: true },
+        { title: "Campus Tech Symposium", description: "Join us for the annual Symposium.", publishDate: new Date().toISOString(), isUrgent: false }
+      ]
+      for (const n of notices) {
+        await addDoc(collection(db, 'notices'), { ...n, id: crypto.randomUUID() })
+      }
+
+      // Seed Study Materials
+      const materials = [
+        { title: "Advanced Algorithms Notes", subject: "Computer Science", semester: "5th Sem", fileUrl: "https://example.com/file.pdf", materialType: "Notes", uploadDate: new Date().toISOString() },
+        { title: "Data Structures - Previous Year", subject: "Computer Science", semester: "3rd Sem", fileUrl: "https://example.com/file.pdf", materialType: "Question Paper", uploadDate: new Date().toISOString() }
+      ]
+      for (const m of materials) {
+        await addDoc(collection(db, 'studyMaterials'), { ...m, id: crypto.randomUUID() })
+      }
+
+      toast({
+        title: "Database Seeded",
+        description: "Initial campus data has been successfully added to Firestore.",
+      })
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Seeding Failed",
+        description: error.message,
+      })
+    } finally {
+      setIsSeeding(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -27,9 +70,20 @@ export default function AdminPage() {
               <p className="text-muted-foreground">Manage campus content and student academic data</p>
             </div>
           </div>
-          <Button className="h-12 px-6 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20">
-            <Plus className="mr-2" size={20} /> Create New Entry
-          </Button>
+          <div className="flex gap-4">
+            <Button 
+              variant="outline" 
+              onClick={seedDatabase} 
+              disabled={isSeeding}
+              className="h-12 border-primary text-primary"
+            >
+              {isSeeding ? <Loader2 className="animate-spin mr-2" /> : <Database className="mr-2" size={18} />}
+              Seed Database
+            </Button>
+            <Button className="h-12 px-6 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20">
+              <Plus className="mr-2" size={20} /> Create New Entry
+            </Button>
+          </div>
         </div>
 
         <Tabs defaultValue="results" className="space-y-8" onValueChange={setActiveTab}>
@@ -69,29 +123,11 @@ export default function AdminPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <TableRow key={i} className="hover:bg-muted/20 transition-colors">
-                      <TableCell className="px-8 font-medium">#{1000 + i}</TableCell>
-                      <TableCell>
-                        <div className="font-bold">Record Entry {i}</div>
-                        <div className="text-xs text-muted-foreground">Updated by Admin 2</div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
-                          General
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">Oct 24, 2025</TableCell>
-                      <TableCell className="text-right px-8 space-x-2">
-                        <Button variant="ghost" size="icon" className="hover:bg-primary/10 hover:text-primary">
-                          <Edit size={18} />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="hover:bg-destructive/10 hover:text-destructive">
-                          <Trash2 size={18} />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
+                      Switch tabs to manage data. Use "Seed Database" to add mock entries.
+                    </TableCell>
+                  </TableRow>
                 </TableBody>
               </Table>
             </CardContent>
