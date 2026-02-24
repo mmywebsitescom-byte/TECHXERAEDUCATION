@@ -1,0 +1,116 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * TechXera Campus Security Rules
+     *
+     * Core Philosophy:
+     * This ruleset implements a strict ownership and role-based access control (RBAC) model.
+     * High-level authorization is prioritized while maintaining data shape flexibility for
+     * rapid prototyping.
+     *
+     * Data Structure:
+     * - Student Profiles and Results are hierarchically organized under /students/{studentUid}.
+     * - Global resources (Study Materials, Notices) are stored in top-level collections.
+     * - Administrative privileges are controlled via a dedicated /roles_admin collection.
+     *
+     * Key Security Decisions:
+     * - Ownership is strictly enforced by comparing the user's Auth UID against document paths.
+     * - Database Access Control (DBAC): Admin status is determined by document existence in /roles_admin.
+     * - Denormalization for Authorization: The 'Result' entity includes a 'studentId' field 
+     *   to ensure consistency between the document path and the data payload.
+     * - Structural Segregation: Private student data is nested, while public-authenticated 
+     *   data resides in global collections for efficient querying.
+     */
+
+    // --- Helper Functions ---
+
+    /** @description Checks if the user is authenticated. */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /** @description Checks if the authenticated user matches the provided ID. */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /** @description Checks if the user exists and is the owner. Used for state-changing operations. */
+    function isExistingOwner(userId) {
+      return resource != null && isOwner(userId);
+    }
+
+    /** @description Checks if the authenticated user has administrative privileges. */
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+    }
+
+    // --- Collection Rules ---
+
+    /**
+     * @description Rules for student profile documents. Students manage their own profile; admins have full control.
+     * @path /students/{studentUid}
+     * @allow (get, list, update) if user UID matches {studentUid}.
+     * @deny (create) if the internal 'id' does not match the path UID.
+     * @principle Enforces path-based ownership and relational integrity for user profiles.
+     */
+    match /students/{studentUid} {
+      allow get, list: if isOwner(studentUid) || isAdmin();
+      allow create: if isOwner(studentUid) && request.resource.data.id == studentUid;
+      allow update: if (isExistingOwner(studentUid) && request.resource.data.id == resource.data.id) || isAdmin();
+      allow delete: if isAdmin();
+
+      /**
+       * @description Rules for academic results. Results are private to the student and manageable by admins.
+       * @path /students/{studentUid}/results/{resultId}
+       * @allow (create) if studentUid matches auth UID and denormalized studentId matches the path.
+       * @deny (update) if the 'studentId' field is modified.
+       * @principle Ensures nested data remains linked to the correct parent via denormalized foreign keys.
+       */
+      match /results/{resultId} {
+        allow get, list: if isOwner(studentUid) || isAdmin();
+        allow create: if isOwner(studentUid) && request.resource.data.studentId == studentUid;
+        allow update: if (isExistingOwner(studentUid) && request.resource.data.studentId == resource.data.studentId) || isAdmin();
+        allow delete: if isAdmin();
+      }
+    }
+
+    /**
+     * @description Rules for global educational resources. All signed-in students can view; only admins can modify.
+     * @path /studyMaterials/{materialId}
+     * @allow (get, list) for any authenticated user.
+     * @deny (write) for non-admin users.
+     * @principle Implements a Public-Read/Admin-Write pattern for shared resources.
+     */
+    match /studyMaterials/{materialId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description Rules for campus notices. Authenticated students have read access to the notice board.
+     * @path /notices/{noticeId}
+     * @allow (get, list) for any authenticated user.
+     * @deny (write) for non-admin users.
+     * @principle Separates dynamic announcement data from private user data.
+     */
+    match /notices/{noticeId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description Role-based access control markers. Presence of a document grants admin rights.
+     * @path /roles_admin/{adminUid}
+     * @allow (get) for the user to verify their own admin status.
+     * @deny (list, write) all client-side requests to prevent privilege escalation.
+     * @principle Database Access Control (DBAC) using document existence for secure role management.
+     */
+    match /roles_admin/{adminUid} {
+      allow get: if isOwner(adminUid);
+      allow list: if false;
+      allow create, update, delete: if false;
+    }
+  }
+}
