@@ -1,12 +1,11 @@
-
 "use client"
 
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import Navbar from '@/components/Navbar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
-import { GraduationCap, Award, BookOpen, Clock, TrendingUp, Loader2 } from 'lucide-react'
+import { GraduationCap, Award, BookOpen, Clock, TrendingUp, Loader2, Sparkles, User, Settings } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase'
 import { doc, collection } from 'firebase/firestore'
@@ -23,16 +22,20 @@ const container = {
 }
 
 const itemVariant = {
-  hidden: { opacity: 0, scale: 0.95 },
-  show: { opacity: 1, scale: 1 }
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { type: "spring" } }
 }
 
 export default function DashboardPage() {
+  const [mounted, setMounted] = useState(false)
   const { user, isUserLoading } = useUser()
   const db = useFirestore()
   const router = useRouter()
 
-  // Stabilize document and collection references
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   const studentRef = useMemoFirebase(() => (user && db ? doc(db, 'students', user.uid) : null), [user, db])
   const resultsQuery = useMemoFirebase(() => (user && db ? collection(db, 'students', user.uid, 'results') : null), [user, db])
 
@@ -40,22 +43,20 @@ export default function DashboardPage() {
   const { data: results, isLoading: isResultsLoading } = useCollection(resultsQuery)
 
   useEffect(() => {
-    if (!isUserLoading && !user) {
+    if (mounted && !isUserLoading && !user) {
       router.push('/login')
     }
-  }, [user, isUserLoading, router])
+  }, [user, isUserLoading, router, mounted])
 
-  if (isUserLoading || isProfileLoading) {
+  if (!mounted || isUserLoading || isProfileLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center bg-[#F5F5FA]">
         <Loader2 className="animate-spin text-primary" size={48} />
       </div>
     )
   }
 
-  if (!user) {
-    return null
-  }
+  if (!user) return null
 
   const chartData = results?.map(r => ({
     name: r.semester,
@@ -64,80 +65,88 @@ export default function DashboardPage() {
   })) || []
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#F5F5FA]">
       <Navbar />
       
-      <main className="max-w-7xl mx-auto p-6 md:p-10 space-y-10">
-        {/* Profile Welcome */}
+      <main className="max-w-7xl mx-auto p-6 md:p-12 space-y-12 pt-28">
+        {/* Profile Section */}
         <motion.div 
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col lg:flex-row gap-8 items-start lg:items-center justify-between"
         >
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-8">
             <motion.div 
               whileHover={{ scale: 1.05 }}
               className="relative"
             >
-              <img 
-                src={user?.photoURL || "https://picsum.photos/seed/student-1/200/200"} 
-                alt="Profile" 
-                className="w-20 h-20 rounded-2xl object-cover border-4 border-white shadow-xl"
-              />
-              <div className="absolute -bottom-2 -right-2 bg-secondary text-white p-1.5 rounded-lg shadow-lg">
-                <Award size={16} />
+              <div className="w-24 h-24 rounded-[2rem] overflow-hidden shadow-2xl border-4 border-white">
+                <img 
+                  src={user?.photoURL || "https://picsum.photos/seed/student-1/200/200"} 
+                  alt="Profile" 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="absolute -bottom-2 -right-2 bg-primary text-white p-2 rounded-xl shadow-lg border-2 border-white">
+                <Sparkles size={16} />
               </div>
             </motion.div>
-            <div>
-              <h1 className="text-3xl font-headline font-bold">Welcome back, {profile?.firstName || user?.displayName || 'Alex'}!</h1>
-              <p className="text-muted-foreground font-medium">
-                {profile?.studentId || 'N/A'} • {profile?.currentSemester || 'Semester X'}
+            <div className="space-y-1">
+              <h1 className="text-5xl font-headline font-bold tracking-tighter">
+                Hello, {profile?.firstName || 'Student'}!
+              </h1>
+              <p className="text-muted-foreground/80 font-bold text-sm uppercase tracking-[0.2em] flex items-center gap-2">
+                <GraduationCap size={16} /> {profile?.studentId || 'STUDENT'} • {profile?.currentSemester || 'SEMESTER'}
               </p>
             </div>
           </div>
-          <div className="flex gap-4">
-            <motion.div whileHover={{ y: -5 }} className="bg-white p-4 rounded-2xl shadow-sm border border-border/50 text-center min-w-[100px]">
-              <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-1">Results</p>
-              <p className="text-2xl font-headline font-bold text-primary">{results?.length || 0}</p>
-            </motion.div>
-            <motion.div whileHover={{ y: -5 }} className="bg-white p-4 rounded-2xl shadow-sm border border-border/50 text-center min-w-[100px]">
-              <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-1">Status</p>
-              <p className="text-2xl font-headline font-bold text-secondary">Active</p>
-            </motion.div>
+          
+          <div className="flex gap-4 w-full lg:w-auto">
+            <div className="flex-1 lg:flex-none bg-white p-6 rounded-[2rem] shadow-sm border border-white text-center min-w-[140px]">
+              <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mb-1">Rank</p>
+              <p className="text-3xl font-headline font-bold text-primary tracking-tighter">#04</p>
+            </div>
+            <div className="flex-1 lg:flex-none bg-primary text-white p-6 rounded-[2rem] shadow-xl shadow-primary/20 text-center min-w-[140px]">
+              <p className="text-[10px] text-white/70 uppercase font-bold tracking-widest mb-1">Results</p>
+              <p className="text-3xl font-headline font-bold tracking-tighter">{results?.length || 0}</p>
+            </div>
           </div>
         </motion.div>
 
-        {/* Dashboard Grid */}
+        {/* Dashboard Content */}
         <motion.div 
           variants={container}
           initial="hidden"
           animate="show"
-          className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+          className="grid grid-cols-1 lg:grid-cols-3 gap-10"
         >
           
-          {/* Performance Chart */}
+          {/* Main Analytics Card */}
           <motion.div variants={itemVariant} className="lg:col-span-2">
-            <Card className="shadow-sm border-border/50 overflow-hidden h-full">
-              <CardHeader className="border-b border-border/40 pb-4">
+            <Card className="glass border-none rounded-[3rem] overflow-hidden h-full shadow-lg">
+              <CardHeader className="p-10 border-b border-white/40 bg-white/30">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="text-primary" size={20} />
-                    Performance Analytics
-                  </CardTitle>
+                  <div>
+                    <CardTitle className="text-3xl font-headline font-bold tracking-tight">Academic Engine</CardTitle>
+                    <p className="text-muted-foreground text-sm font-medium mt-1">Real-time performance analytics</p>
+                  </div>
+                  <div className="p-4 bg-primary/10 text-primary rounded-2xl">
+                    <TrendingUp size={24} />
+                  </div>
                 </div>
               </CardHeader>
-              <CardContent className="pt-8 h-[350px]">
+              <CardContent className="p-10 h-[400px]">
                 {chartData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
-                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#666', fontSize: 12 }} />
-                      <YAxis axisLine={false} tickLine={false} tick={{ fill: '#666', fontSize: 12 }} domain={[0, 100]} />
+                    <BarChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#888', fontSize: 12, fontWeight: 700 }} />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fill: '#888', fontSize: 12, fontWeight: 700 }} domain={[0, 100]} />
                       <Tooltip 
                         cursor={{ fill: 'rgba(125, 107, 219, 0.05)' }}
-                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                        contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.1)', padding: '16px' }}
                       />
-                      <Bar dataKey="score" radius={[6, 6, 0, 0]} barSize={40}>
+                      <Bar dataKey="score" radius={[12, 12, 0, 0]} barSize={50}>
                         {chartData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
@@ -145,57 +154,64 @@ export default function DashboardPage() {
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="h-full flex items-center justify-center text-muted-foreground">
-                    No academic data available yet.
+                  <div className="h-full flex flex-col items-center justify-center text-muted-foreground gap-4">
+                    <div className="p-6 bg-muted/50 rounded-full"><Clock size={48} className="opacity-20" /></div>
+                    <p className="font-bold uppercase tracking-widest text-xs">No analytical data found</p>
                   </div>
                 )}
               </CardContent>
             </Card>
           </motion.div>
 
-          {/* Side Info */}
-          <div className="space-y-8">
-            {/* Recent Grades */}
+          {/* Sidebar Stats */}
+          <div className="space-y-10">
+            {/* Grades Card */}
             <motion.div variants={itemVariant}>
-              <Card className="shadow-sm border-border/50">
-                <CardHeader>
-                  <CardTitle className="text-lg">Recent Grades</CardTitle>
+              <Card className="glass border-none rounded-[3rem] shadow-lg">
+                <CardHeader className="p-8 pb-0">
+                  <CardTitle className="text-2xl font-headline font-bold flex items-center gap-3">
+                    <Award className="text-secondary" /> Recent Grades
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-6">
+                <CardContent className="p-8 space-y-8">
                   {results?.slice(0, 3).map((result, i) => (
-                    <div key={i} className="space-y-2">
-                      <div className="flex justify-between text-sm font-medium">
-                        <span>{result.subject}</span>
-                        <span className="text-primary font-bold">{result.grade}</span>
+                    <div key={i} className="space-y-3">
+                      <div className="flex justify-between items-end">
+                        <span className="text-sm font-bold tracking-tight">{result.subject}</span>
+                        <span className="text-primary font-black text-lg">{result.grade}</span>
                       </div>
-                      <Progress value={result.marks} className="h-2" />
+                      <Progress value={result.marks} className="h-3 rounded-full bg-muted" />
                     </div>
                   )) || (
-                    <p className="text-sm text-muted-foreground">No grades recorded.</p>
+                    <div className="py-10 text-center opacity-50 font-bold uppercase text-[10px] tracking-widest">Awaiting records</div>
                   )}
                 </CardContent>
               </Card>
             </motion.div>
 
-            {/* Quick Actions */}
-            <div className="grid grid-cols-2 gap-4">
+            {/* Interactive Grid */}
+            <div className="grid grid-cols-2 gap-6">
               <motion.button 
-                whileHover={{ scale: 1.05 }}
+                whileHover={{ scale: 1.05, y: -5 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => router.push('/resources')}
-                className="flex flex-col items-center justify-center p-6 bg-primary text-white rounded-3xl shadow-lg shadow-primary/20 transition-transform"
+                className="flex flex-col items-center justify-center p-8 bg-white text-foreground rounded-[2.5rem] shadow-sm hover:shadow-xl transition-all border-none"
               >
-                <BookOpen size={24} className="mb-2" />
-                <span className="text-sm font-bold">Resources</span>
+                <div className="p-4 bg-primary/5 rounded-2xl mb-4 text-primary">
+                  <BookOpen size={28} />
+                </div>
+                <span className="text-xs font-black uppercase tracking-widest">Library</span>
               </motion.button>
               <motion.button 
-                whileHover={{ scale: 1.05 }}
+                whileHover={{ scale: 1.05, y: -5 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => router.push('/notices')}
-                className="flex flex-col items-center justify-center p-6 bg-secondary text-white rounded-3xl shadow-lg shadow-secondary/20 transition-transform"
+                className="flex flex-col items-center justify-center p-8 bg-secondary text-white rounded-[2.5rem] shadow-xl shadow-secondary/20 transition-all border-none"
               >
-                <Clock size={24} className="mb-2" />
-                <span className="text-sm font-bold">Notices</span>
+                <div className="p-4 bg-white/20 rounded-2xl mb-4">
+                  <Clock size={28} />
+                </div>
+                <span className="text-xs font-black uppercase tracking-widest">Updates</span>
               </motion.button>
             </div>
           </div>
