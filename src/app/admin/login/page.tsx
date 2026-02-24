@@ -20,24 +20,27 @@ function AdminLoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [mounted, setMounted] = useState(false)
+  const [isReady, setIsReady] = useState(false)
+  
   const auth = useAuth()
   const { user, isUserLoading } = useUser()
   const router = useRouter()
   const { toast } = useToast()
 
   useEffect(() => {
-    setMounted(true)
+    setIsReady(true)
   }, [])
 
   useEffect(() => {
-    if (mounted && !isUserLoading && user) {
+    if (isReady && !isUserLoading && user) {
       router.push('/admin')
     }
-  }, [user, isUserLoading, router, mounted])
+  }, [user, isUserLoading, router, isReady])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return;
+
     setIsLoading(true)
     try {
       await signInWithEmailAndPassword(auth, email, password)
@@ -57,7 +60,7 @@ function AdminLoginForm() {
     }
   }
 
-  if (!mounted) return null
+  if (!isReady) return null
 
   return (
     <motion.div 
@@ -82,7 +85,7 @@ function AdminLoginForm() {
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-6 pt-8">
             <div className="space-y-2">
-              <Label htmlFor="email">Admin ID</Label>
+              <Label htmlFor="email">Admin ID (Email)</Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                 <Input 
@@ -114,12 +117,16 @@ function AdminLoginForm() {
 
             <div className="p-4 bg-muted/50 rounded-xl flex gap-3 text-xs text-muted-foreground border border-border/50">
               <Info className="shrink-0 text-primary" size={16} />
-              <p>For development: Admin access is restricted to authorized personnel. Use your provided campus admin credentials.</p>
+              <p>Admin access is restricted to authorized personnel. Use your provided campus admin credentials.</p>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4 pb-8">
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="w-full">
-              <Button disabled={isLoading} className="w-full h-12 text-lg font-bold shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90">
+              <Button 
+                type="submit"
+                disabled={isLoading} 
+                className="w-full h-12 text-lg font-bold shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90"
+              >
                 {isLoading ? <Loader2 className="animate-spin mr-2" /> : null}
                 {isLoading ? "Verifying..." : "Enter Portal"} <ArrowRight className="ml-2" size={18} />
               </Button>

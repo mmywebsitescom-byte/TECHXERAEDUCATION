@@ -20,7 +20,8 @@ function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [mounted, setMounted] = useState(false)
+  const [isReady, setIsReady] = useState(false)
+  
   const auth = useAuth()
   const { user, isUserLoading } = useUser()
   const router = useRouter()
@@ -30,17 +31,19 @@ function LoginForm() {
   const redirectTo = searchParams.get('redirect') || '/dashboard'
 
   useEffect(() => {
-    setMounted(true)
+    setIsReady(true)
   }, [])
 
   useEffect(() => {
-    if (mounted && !isUserLoading && user) {
+    if (isReady && !isUserLoading && user) {
       router.push(redirectTo)
     }
-  }, [user, isUserLoading, router, redirectTo, mounted])
+  }, [user, isUserLoading, router, redirectTo, isReady])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return;
+    
     setIsLoading(true)
     try {
       await signInWithEmailAndPassword(auth, email, password)
@@ -60,7 +63,7 @@ function LoginForm() {
     }
   }
 
-  if (!mounted) return null
+  if (!isReady) return null
 
   return (
     <motion.div 
@@ -120,7 +123,11 @@ function LoginForm() {
           </CardContent>
           <CardFooter className="flex flex-col gap-4 pb-8">
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="w-full">
-              <Button disabled={isLoading} className="w-full h-12 text-lg font-medium shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90">
+              <Button 
+                type="submit"
+                disabled={isLoading} 
+                className="w-full h-12 text-lg font-medium shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90"
+              >
                 {isLoading ? <Loader2 className="animate-spin mr-2" /> : null}
                 {isLoading ? "Authenticating..." : "Login"} <ArrowRight className="ml-2" size={18} />
               </Button>
