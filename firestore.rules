@@ -77,26 +77,26 @@ service cloud.firestore {
     }
 
     /**
-     * @description Rules for global educational resources. All signed-in students can view; only admins can modify.
+     * @description Rules for global educational resources. Publicly readable; only admins can modify.
      * @path /studyMaterials/{materialId}
-     * @allow (get, list) for any authenticated user.
+     * @allow (get, list) for all visitors.
      * @deny (write) for non-admin users.
      * @principle Implements a Public-Read/Admin-Write pattern for shared resources.
      */
     match /studyMaterials/{materialId} {
-      allow get, list: if isSignedIn();
+      allow get, list: if true;
       allow create, update, delete: if isAdmin();
     }
 
     /**
-     * @description Rules for campus notices. Authenticated students have read access to the notice board.
+     * @description Rules for campus notices. Publicly readable.
      * @path /notices/{noticeId}
-     * @allow (get, list) for any authenticated user.
+     * @allow (get, list) for all visitors.
      * @deny (write) for non-admin users.
      * @principle Separates dynamic announcement data from private user data.
      */
     match /notices/{noticeId} {
-      allow get, list: if isSignedIn();
+      allow get, list: if true;
       allow create, update, delete: if isAdmin();
     }
 
