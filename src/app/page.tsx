@@ -1,7 +1,7 @@
 
 "use client"
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import Navbar from '@/components/Navbar'
 import TechBackground from '@/components/TechBackground'
 import { Button } from '@/components/ui/button'
@@ -69,6 +69,12 @@ const item = {
 }
 
 export default function Home() {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   return (
     <div className="relative min-h-screen">
       <TechBackground />
@@ -121,7 +127,7 @@ export default function Home() {
           </motion.div>
         </section>
 
-        {/* Technologies I Use Section - PREMIUM BLACK THEME */}
+        {/* Technologies Section - Dedicated Black Page Style */}
         <section className="bg-black py-40 relative overflow-hidden">
           <div className="max-w-7xl mx-auto px-6 text-center space-y-16">
             <motion.div
@@ -144,19 +150,21 @@ export default function Home() {
             </motion.div>
 
             <div className="relative pt-12 flex flex-col items-center">
-              <div className="w-full relative z-10">
-                <LogoLoop 
-                  logos={techStackLogos} 
-                  speed={40} 
-                  logoHeight={56} 
-                  gap={100} 
-                  fadeOut={true} 
-                  fadeOutColor="#000000"
-                  scaleOnHover={true}
-                />
-              </div>
+              {mounted && (
+                <div className="w-full relative z-10">
+                  <LogoLoop 
+                    logos={techStackLogos} 
+                    speed={40} 
+                    logoHeight={56} 
+                    gap={100} 
+                    fadeOut={true} 
+                    fadeOutColor="#000000"
+                    scaleOnHover={true}
+                  />
+                </div>
+              )}
               
-              {/* Pulsing Purple Orb */}
+              {/* Pulsing Purple Orb - Premium Signature Style */}
               <div className="mt-20">
                 <motion.div 
                   animate={{ 

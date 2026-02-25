@@ -1,7 +1,7 @@
 
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Navbar from '@/components/Navbar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -12,8 +12,14 @@ import { useFirestore, useCollection, useMemoFirebase } from '@/firebase'
 import { collection, query, orderBy } from 'firebase/firestore'
 
 export default function ResourcesPage() {
+  const [mounted, setMounted] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const db = useFirestore()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   const resourcesQuery = useMemoFirebase(() => db ? query(collection(db, 'studyMaterials'), orderBy('uploadDate', 'desc')) : null, [db])
   const { data: resources, isLoading } = useCollection(resourcesQuery)
 
@@ -22,13 +28,24 @@ export default function ResourcesPage() {
     r.subject.toLowerCase().includes(searchTerm.toLowerCase())
   ) || []
 
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="flex items-center justify-center pt-32">
+          <Loader2 className="animate-spin text-primary" size={48} />
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Navbar />
       
       <main className="max-w-7xl mx-auto p-6 md:p-12 space-y-16 pt-32 pb-20">
         <div className="space-y-6">
-          <h1 className="text-5xl font-headline font-bold">Campus Repository</h1>
+          <h1 className="text-5xl font-headline font-bold tracking-tighter">Campus Repository</h1>
           <p className="text-muted-foreground text-lg max-w-2xl font-medium">
             Access the technical library for TechXera students. Download notes, previous questions, and guides.
           </p>
@@ -42,6 +59,7 @@ export default function ResourcesPage() {
               className="w-full pl-14 h-14 bg-transparent border-none focus:ring-0 text-foreground placeholder:text-muted-foreground/30 text-lg outline-none"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              autoComplete="off"
             />
           </div>
           <Button className="h-14 px-10 bg-primary text-white hover:bg-primary/90 rounded-2xl font-bold transition-transform active:scale-95">
@@ -74,7 +92,7 @@ export default function ResourcesPage() {
                           {item.semester}
                         </Badge>
                       </div>
-                      <h3 className="text-2xl font-headline font-bold mb-4">{item.title}</h3>
+                      <h3 className="text-2xl font-headline font-bold mb-4 tracking-tight">{item.title}</h3>
                       <p className="text-muted-foreground/60 text-sm font-bold uppercase tracking-widest mb-10">{item.subject}</p>
                       <div className="flex items-center justify-between pt-8 border-t border-border/40">
                         <span className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-[0.2em]">{item.materialType}</span>
