@@ -44,7 +44,7 @@ export default function ResourcesPage() {
     <div className="min-h-screen bg-[#F5F5FA] text-foreground">
       <Navbar />
       
-      <main className="max-w-7xl mx-auto p-10 md:p-20 lg:p-24 space-y-20 pt-40 pb-32">
+      <main className="max-w-7xl mx-auto p-10 md:p-20 lg:p-24 space-y-20 pt-64 pb-32">
         <div className="space-y-8">
           <motion.div 
             initial={{ opacity: 0, x: -20 }}

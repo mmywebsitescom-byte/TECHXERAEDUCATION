@@ -64,7 +64,7 @@ export default function DashboardPage() {
     return (
       <div className="min-h-screen bg-[#F5F5FA] flex flex-col">
         <Navbar />
-        <main className="flex-1 flex items-center justify-center p-6 pt-32">
+        <main className="flex-1 flex items-center justify-center p-6 pt-64">
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
             <Card className="max-w-xl w-full text-center p-12 glass border-none rounded-[3rem] shadow-2xl">
               <div className="mx-auto w-24 h-24 bg-orange-500/10 text-orange-500 rounded-[2rem] flex items-center justify-center mb-8">
@@ -95,7 +95,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-[#F5F5FA]">
       <Navbar />
       
-      <main className="max-w-7xl mx-auto p-10 md:p-20 lg:p-24 space-y-16 pt-32 pb-32">
+      <main className="max-w-7xl mx-auto p-10 md:p-20 lg:p-24 space-y-16 pt-64 pb-32">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

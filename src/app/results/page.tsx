@@ -83,7 +83,7 @@ export default function ResultsLookupPage() {
       <TechBackground />
       <Navbar />
 
-      <main className="flex-1 max-w-7xl mx-auto w-full p-6 flex flex-col items-center justify-center pt-24">
+      <main className="flex-1 max-w-7xl mx-auto w-full p-6 flex flex-col items-center justify-center pt-48">
         <AnimatePresence mode="wait">
           {!studentData ? (
             <motion.div 
