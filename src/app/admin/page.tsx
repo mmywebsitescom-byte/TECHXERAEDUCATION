@@ -45,10 +45,11 @@ export default function AdminPage() {
   const { data: adminDoc, isLoading: isAdminLoading } = useDoc(adminRef)
   const isAdmin = !!adminDoc
 
-  const noticesQuery = useMemoFirebase(() => db ? query(collection(db, 'notices'), orderBy('publishDate', 'desc')) : null, [db])
-  const materialsQuery = useMemoFirebase(() => db ? query(collection(db, 'studyMaterials'), orderBy('uploadDate', 'desc')) : null, [db])
-  const studentsQuery = useMemoFirebase(() => db ? query(collection(db, 'students'), orderBy('enrollmentDate', 'desc')) : null, [db])
-  const examsQuery = useMemoFirebase(() => db ? query(collection(db, 'exams'), orderBy('examDate', 'desc')) : null, [db])
+  // Fetch collections only if user is an admin to prevent permission errors on page load
+  const noticesQuery = useMemoFirebase(() => (db && isAdmin) ? query(collection(db, 'notices'), orderBy('publishDate', 'desc')) : null, [db, isAdmin])
+  const materialsQuery = useMemoFirebase(() => (db && isAdmin) ? query(collection(db, 'studyMaterials'), orderBy('uploadDate', 'desc')) : null, [db, isAdmin])
+  const studentsQuery = useMemoFirebase(() => (db && isAdmin) ? query(collection(db, 'students'), orderBy('enrollmentDate', 'desc')) : null, [db, isAdmin])
+  const examsQuery = useMemoFirebase(() => (db && isAdmin) ? query(collection(db, 'exams'), orderBy('examDate', 'desc')) : null, [db, isAdmin])
   
   const { data: notices } = useCollection(noticesQuery)
   const { data: materials } = useCollection(materialsQuery)
@@ -56,7 +57,7 @@ export default function AdminPage() {
   const { data: exams } = useCollection(examsQuery)
 
   // Results query for selected student
-  const resultsQuery = useMemoFirebase(() => (db && selectedStudentId) ? query(collection(db, 'students', selectedStudentId, 'results'), orderBy('examDate', 'desc')) : null, [db, selectedStudentId])
+  const resultsQuery = useMemoFirebase(() => (db && selectedStudentId && isAdmin) ? query(collection(db, 'students', selectedStudentId, 'results'), orderBy('examDate', 'desc')) : null, [db, selectedStudentId, isAdmin])
   const { data: selectedStudentResults } = useCollection(resultsQuery)
 
   useEffect(() => {
@@ -217,7 +218,7 @@ export default function AdminPage() {
     <div className="min-h-screen bg-background text-foreground">
       <Navbar />
       
-      <main className="max-w-7xl mx-auto p-6 md:p-10 pt-64 pb-20">
+      <main className="max-w-7xl mx-auto p-6 md:p-10 pt-48 pb-20">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-10">
           <div className="flex items-center gap-4">
             <div className="p-4 bg-primary text-white rounded-2xl shadow-xl shadow-primary/20">

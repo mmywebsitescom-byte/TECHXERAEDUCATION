@@ -38,6 +38,7 @@ service cloud.firestore {
     }
 
     match /exams/{examId} {
+      // Explicitly allow public read for exam sessions
       allow get, list: if true;
       allow create, update, delete: if isAdmin();
     }
