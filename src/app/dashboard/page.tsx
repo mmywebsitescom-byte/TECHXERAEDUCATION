@@ -69,47 +69,47 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-[#F5F5FA]">
       <Navbar />
       
-      <main className="max-w-7xl mx-auto p-6 md:p-12 lg:p-16 space-y-12 pt-24 pb-24">
+      <main className="max-w-7xl mx-auto p-10 md:p-20 lg:p-24 space-y-16 pt-32 pb-32">
         {/* Profile Section */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col lg:flex-row gap-8 items-start lg:items-center justify-between"
+          className="flex flex-col lg:flex-row gap-10 items-start lg:items-center justify-between"
         >
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-10">
             <motion.div 
               whileHover={{ scale: 1.05 }}
               className="relative"
             >
-              <div className="w-24 h-24 rounded-[2rem] overflow-hidden shadow-2xl border-4 border-white">
+              <div className="w-28 h-28 rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-white">
                 <img 
-                  src={user?.photoURL || `https://picsum.photos/seed/${user.uid}/200/200`} 
+                  src={user?.photoURL || `https://picsum.photos/seed/${user.uid}/300/300`} 
                   alt="Profile" 
                   className="w-full h-full object-cover"
                 />
               </div>
-              <div className="absolute -bottom-2 -right-2 bg-primary text-white p-2 rounded-xl shadow-lg border-2 border-white">
-                <Sparkles size={16} />
+              <div className="absolute -bottom-2 -right-2 bg-primary text-white p-3 rounded-2xl shadow-lg border-2 border-white">
+                <Sparkles size={20} />
               </div>
             </motion.div>
-            <div className="space-y-1">
-              <h1 className="text-4xl md:text-5xl font-headline font-bold tracking-tighter">
+            <div className="space-y-2">
+              <h1 className="text-5xl md:text-6xl font-headline font-bold tracking-tighter">
                 Hello, {profile?.firstName || 'Student'}!
               </h1>
-              <p className="text-muted-foreground/80 font-bold text-xs uppercase tracking-[0.2em] flex items-center gap-2">
-                <GraduationCap size={16} /> {profile?.studentId || 'STUDENT'} • {profile?.currentSemester || 'SEMESTER'}
+              <p className="text-muted-foreground/80 font-bold text-sm uppercase tracking-[0.2em] flex items-center gap-2">
+                <GraduationCap size={18} /> {profile?.studentId || 'STUDENT'} • {profile?.currentSemester || 'SEMESTER'}
               </p>
             </div>
           </div>
           
-          <div className="flex gap-6 w-full lg:w-auto">
-            <div className="flex-1 lg:flex-none bg-white p-6 rounded-[2rem] shadow-sm border border-white text-center min-w-[140px]">
-              <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mb-1">Rank</p>
-              <p className="text-3xl font-headline font-bold text-primary tracking-tighter">#04</p>
+          <div className="flex gap-8 w-full lg:w-auto">
+            <div className="flex-1 lg:flex-none bg-white p-8 rounded-[2.5rem] shadow-sm border border-white text-center min-w-[160px]">
+              <p className="text-[12px] text-muted-foreground uppercase font-bold tracking-widest mb-2">Rank</p>
+              <p className="text-4xl font-headline font-bold text-primary tracking-tighter">#04</p>
             </div>
-            <div className="flex-1 lg:flex-none bg-primary text-white p-6 rounded-[2rem] shadow-xl shadow-primary/20 text-center min-w-[140px]">
-              <p className="text-[10px] text-white/70 uppercase font-bold tracking-widest mb-1">Results</p>
-              <p className="text-3xl font-headline font-bold tracking-tighter">{results?.length || 0}</p>
+            <div className="flex-1 lg:flex-none bg-primary text-white p-8 rounded-[2.5rem] shadow-xl shadow-primary/20 text-center min-w-[160px]">
+              <p className="text-[12px] text-white/70 uppercase font-bold tracking-widest mb-2">Results</p>
+              <p className="text-4xl font-headline font-bold tracking-tighter">{results?.length || 0}</p>
             </div>
           </div>
         </motion.div>
@@ -119,35 +119,35 @@ export default function DashboardPage() {
           variants={container}
           initial="hidden"
           animate="show"
-          className="grid grid-cols-1 lg:grid-cols-3 gap-10"
+          className="grid grid-cols-1 lg:grid-cols-3 gap-12"
         >
           
           {/* Main Analytics Card */}
           <motion.div variants={itemVariant} className="lg:col-span-2">
-            <Card className="glass border-none rounded-[2.5rem] overflow-hidden h-full shadow-lg">
-              <CardHeader className="p-10 border-b border-white/40 bg-white/30">
+            <Card className="glass border-none rounded-[3rem] overflow-hidden h-full shadow-lg">
+              <CardHeader className="p-12 border-b border-white/40 bg-white/30">
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle className="text-3xl font-headline font-bold tracking-tight">Academic Engine</CardTitle>
-                    <p className="text-muted-foreground text-sm font-medium mt-1">Real-time performance analytics</p>
+                    <CardTitle className="text-4xl font-headline font-bold tracking-tight">Academic Engine</CardTitle>
+                    <p className="text-muted-foreground text-lg font-medium mt-2">Real-time performance analytics</p>
                   </div>
-                  <div className="p-4 bg-primary/10 text-primary rounded-2xl">
-                    <TrendingUp size={24} />
+                  <div className="p-5 bg-primary/10 text-primary rounded-2xl">
+                    <TrendingUp size={32} />
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="p-10 h-[400px]">
+              <CardContent className="p-12 h-[500px]">
                 {chartData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                    <BarChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
-                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#888', fontSize: 11, fontWeight: 700 }} />
-                      <YAxis axisLine={false} tickLine={false} tick={{ fill: '#888', fontSize: 11, fontWeight: 700 }} domain={[0, 100]} />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#888', fontSize: 13, fontWeight: 700 }} />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fill: '#888', fontSize: 13, fontWeight: 700 }} domain={[0, 100]} />
                       <Tooltip 
                         cursor={{ fill: 'rgba(125, 107, 219, 0.05)' }}
-                        contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.1)', padding: '16px' }}
+                        contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 30px 60px -15px rgba(0, 0, 0, 0.1)', padding: '24px' }}
                       />
-                      <Bar dataKey="score" radius={[10, 10, 0, 0]} barSize={45}>
+                      <Bar dataKey="score" radius={[15, 15, 0, 0]} barSize={60}>
                         {chartData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
@@ -155,9 +155,9 @@ export default function DashboardPage() {
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="h-full flex flex-col items-center justify-center text-muted-foreground gap-4">
-                    <div className="p-6 bg-muted/50 rounded-full"><Clock size={48} className="opacity-20" /></div>
-                    <p className="font-bold uppercase tracking-widest text-xs">No analytical data found</p>
+                  <div className="h-full flex flex-col items-center justify-center text-muted-foreground gap-6">
+                    <div className="p-10 bg-muted/50 rounded-full"><Clock size={64} className="opacity-20" /></div>
+                    <p className="font-bold uppercase tracking-widest text-sm">No analytical data found</p>
                   </div>
                 )}
               </CardContent>
@@ -165,54 +165,54 @@ export default function DashboardPage() {
           </motion.div>
 
           {/* Sidebar Stats */}
-          <div className="space-y-10">
+          <div className="space-y-12">
             {/* Grades Card */}
             <motion.div variants={itemVariant}>
-              <Card className="glass border-none rounded-[2.5rem] shadow-lg">
-                <CardHeader className="p-8 pb-0">
-                  <CardTitle className="text-2xl font-headline font-bold flex items-center gap-3">
-                    <Award className="text-secondary" size={24} /> Recent Grades
+              <Card className="glass border-none rounded-[3rem] shadow-lg">
+                <CardHeader className="p-10 pb-0">
+                  <CardTitle className="text-3xl font-headline font-bold flex items-center gap-4">
+                    <Award className="text-secondary" size={32} /> Recent Grades
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-8 space-y-8">
+                <CardContent className="p-10 space-y-10">
                   {results?.slice(0, 3).map((result, i) => (
-                    <div key={i} className="space-y-3">
+                    <div key={i} className="space-y-4">
                       <div className="flex justify-between items-end">
-                        <span className="text-sm font-bold tracking-tight">{result.subject}</span>
-                        <span className="text-primary font-black text-xl">{result.grade}</span>
+                        <span className="text-lg font-bold tracking-tight">{result.subject}</span>
+                        <span className="text-primary font-black text-2xl">{result.grade}</span>
                       </div>
-                      <Progress value={result.marks} className="h-2.5 rounded-full bg-muted" />
+                      <Progress value={result.marks} className="h-3 rounded-full bg-muted" />
                     </div>
                   )) || (
-                    <div className="py-10 text-center opacity-50 font-bold uppercase text-xs tracking-widest">Awaiting records</div>
+                    <div className="py-16 text-center opacity-50 font-bold uppercase text-sm tracking-widest">Awaiting records</div>
                   )}
                 </CardContent>
               </Card>
             </motion.div>
 
             {/* Interactive Grid */}
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 gap-8">
               <motion.button 
                 whileHover={{ scale: 1.05, y: -4 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => router.push('/resources')}
-                className="flex flex-col items-center justify-center p-8 bg-white text-foreground rounded-[2rem] shadow-sm hover:shadow-xl transition-all border-none"
+                className="flex flex-col items-center justify-center p-10 bg-white text-foreground rounded-[2.5rem] shadow-sm hover:shadow-xl transition-all border-none"
               >
-                <div className="p-4 bg-primary/5 rounded-2xl mb-4 text-primary">
-                  <BookOpen size={28} />
+                <div className="p-5 bg-primary/5 rounded-2xl mb-5 text-primary">
+                  <BookOpen size={36} />
                 </div>
-                <span className="text-[10px] font-black uppercase tracking-widest">Library</span>
+                <span className="text-[12px] font-black uppercase tracking-widest">Library</span>
               </motion.button>
               <motion.button 
                 whileHover={{ scale: 1.05, y: -4 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => router.push('/notices')}
-                className="flex flex-col items-center justify-center p-8 bg-secondary text-white rounded-[2rem] shadow-xl shadow-secondary/20 transition-all border-none"
+                className="flex flex-col items-center justify-center p-10 bg-secondary text-white rounded-[2.5rem] shadow-xl shadow-secondary/20 transition-all border-none"
               >
-                <div className="p-4 bg-white/20 rounded-2xl mb-4">
-                  <Clock size={28} />
+                <div className="p-5 bg-white/20 rounded-2xl mb-5">
+                  <Clock size={36} />
                 </div>
-                <span className="text-[10px] font-black uppercase tracking-widest">Updates</span>
+                <span className="text-[12px] font-black uppercase tracking-widest">Updates</span>
               </motion.button>
             </div>
           </div>
