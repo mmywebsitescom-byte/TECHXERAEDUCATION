@@ -202,7 +202,7 @@ export default function AdminPage() {
     <div className="min-h-screen bg-background text-foreground">
       <Navbar />
       
-      <main className="max-w-7xl mx-auto p-6 md:p-10 pt-32">
+      <main className="max-w-7xl mx-auto p-6 md:p-10 pt-40 pb-20">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-10">
           <div className="flex items-center gap-4">
             <div className="p-4 bg-primary text-white rounded-2xl shadow-xl shadow-primary/20">
