@@ -7,9 +7,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Switch } from '@/components/ui/switch'
 import { Plus, Shield, List, GraduationCap, Megaphone, Database, Loader2, UserCheck, Trash2 } from 'lucide-react'
 import { useFirestore, useUser, useDoc, useMemoFirebase, useCollection, errorEmitter, FirestorePermissionError } from '@/firebase'
-import { doc, setDoc, collection, addDoc, deleteDoc, query, orderBy } from 'firebase/firestore'
+import { doc, setDoc, collection, deleteDoc, query, orderBy } from 'firebase/firestore'
 import { useToast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
@@ -18,8 +23,14 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState('results')
   const [isSeeding, setIsSeeding] = useState(false)
   const [isGranting, setIsGranting] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
   
+  // Form State
+  const [newNotice, setNewNotice] = useState({ title: '', description: '', isUrgent: false })
+  const [newMaterial, setNewMaterial] = useState({ title: '', subject: '', semester: '', fileUrl: '', materialType: 'Notes' })
+
   const { user, isUserLoading } = useUser()
   const db = useFirestore()
   const { toast } = useToast()
@@ -101,6 +112,54 @@ export default function AdminPage() {
       })
   }
 
+  const handleCreateNotice = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!db || !isAdmin) return
+    setIsCreating(true)
+
+    const docRef = doc(collection(db, 'notices'))
+    const data = {
+      ...newNotice,
+      id: docRef.id,
+      publishDate: new Date().toISOString()
+    }
+
+    setDoc(docRef, data)
+      .then(() => {
+        toast({ title: "Notice Created", description: "Your notice is now live on the board." })
+        setNewNotice({ title: '', description: '', isUrgent: false })
+        setIsDialogOpen(false)
+      })
+      .catch(async () => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: docRef.path, operation: 'create', requestResourceData: data }))
+      })
+      .finally(() => setIsCreating(false))
+  }
+
+  const handleCreateMaterial = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!db || !isAdmin) return
+    setIsCreating(true)
+
+    const docRef = doc(collection(db, 'studyMaterials'))
+    const data = {
+      ...newMaterial,
+      id: docRef.id,
+      uploadDate: new Date().toISOString()
+    }
+
+    setDoc(docRef, data)
+      .then(() => {
+        toast({ title: "Resource Added", description: "The material is now available in the repository." })
+        setNewMaterial({ title: '', subject: '', semester: '', fileUrl: '', materialType: 'Notes' })
+        setIsDialogOpen(false)
+      })
+      .catch(async () => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: docRef.path, operation: 'create', requestResourceData: data }))
+      })
+      .finally(() => setIsCreating(false))
+  }
+
   const seedDatabase = () => {
     if (!db) return
     setIsSeeding(true)
@@ -128,35 +187,6 @@ export default function AdminPage() {
         errorEmitter.emit('permission-error', new FirestorePermissionError({ path: docRef.path, operation: 'create', requestResourceData: data }));
       });
     });
-
-    if (user) {
-      const studentDocRef = doc(db, 'students', user.uid);
-      const studentData = {
-        id: user.uid,
-        studentId: "TX-2025-001",
-        firstName: user.displayName?.split(' ')[0] || "Student",
-        lastName: user.displayName?.split(' ')[1] || "User",
-        email: user.email,
-        enrollmentDate: new Date().toISOString(),
-        currentSemester: "4th Semester",
-        dateOfBirth: "2006-01-01"
-      };
-      setDoc(studentDocRef, studentData).catch(async () => {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: studentDocRef.path, operation: 'write', requestResourceData: studentData }));
-      });
-
-      const resultsData = [
-        { subject: "Data Structures", semester: "Sem 3", marks: 95, grade: "A+", examDate: new Date().toISOString(), studentId: user.uid },
-        { subject: "Operating Systems", semester: "Sem 3", marks: 88, grade: "A", examDate: new Date().toISOString(), studentId: user.uid }
-      ]
-      resultsData.forEach(r => {
-        const docRef = doc(collection(db, 'students', user.uid, 'results'));
-        const data = { ...r, id: docRef.id };
-        setDoc(docRef, data).catch(async () => {
-          errorEmitter.emit('permission-error', new FirestorePermissionError({ path: docRef.path, operation: 'create', requestResourceData: data }));
-        });
-      });
-    }
 
     toast({
       title: "Seeding Started",
@@ -201,9 +231,123 @@ export default function AdminPage() {
               {isSeeding ? <Loader2 className="animate-spin mr-2" /> : <Database className="mr-2" size={18} />}
               Seed Initial Data
             </Button>
-            <Button disabled={!isAdmin} className="h-12 px-6 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 text-white">
-              <Plus className="mr-2" size={20} /> Create New
-            </Button>
+            
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button disabled={!isAdmin || activeTab === 'results'} className="h-12 px-6 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 text-white">
+                  <Plus className="mr-2" size={20} /> Create New
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                  <DialogTitle>Add New {activeTab === 'notices' ? 'Notice' : 'Resource'}</DialogTitle>
+                  <DialogDescription>
+                    Fill in the details below to publish new content to the student portal.
+                  </DialogDescription>
+                </DialogHeader>
+                
+                {activeTab === 'notices' ? (
+                  <form onSubmit={handleCreateNotice} className="space-y-6 pt-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="title">Notice Title</Label>
+                      <Input 
+                        id="title" 
+                        required 
+                        value={newNotice.title} 
+                        onChange={e => setNewNotice({ ...newNotice, title: e.target.value })} 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="description">Content</Label>
+                      <Textarea 
+                        id="description" 
+                        required 
+                        className="min-h-[120px]" 
+                        value={newNotice.description} 
+                        onChange={e => setNewNotice({ ...newNotice, description: e.target.value })} 
+                      />
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Switch 
+                        id="urgent" 
+                        checked={newNotice.isUrgent} 
+                        onCheckedChange={checked => setNewNotice({ ...newNotice, isUrgent: checked })} 
+                      />
+                      <Label htmlFor="urgent">Mark as Urgent</Label>
+                    </div>
+                    <DialogFooter>
+                      <Button type="submit" disabled={isCreating} className="w-full">
+                        {isCreating ? <Loader2 className="animate-spin mr-2" /> : null}
+                        Publish Notice
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                ) : (
+                  <form onSubmit={handleCreateMaterial} className="space-y-4 pt-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="m-title">Resource Title</Label>
+                      <Input 
+                        id="m-title" 
+                        required 
+                        value={newMaterial.title} 
+                        onChange={e => setNewMaterial({ ...newMaterial, title: e.target.value })} 
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="subject">Subject</Label>
+                        <Input 
+                          id="subject" 
+                          required 
+                          value={newMaterial.subject} 
+                          onChange={e => setNewMaterial({ ...newMaterial, subject: e.target.value })} 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="semester">Semester</Label>
+                        <Input 
+                          id="semester" 
+                          required 
+                          placeholder="e.g. 5th Sem" 
+                          value={newMaterial.semester} 
+                          onChange={e => setNewMaterial({ ...newMaterial, semester: e.target.value })} 
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="fileUrl">File URL / Download Link</Label>
+                      <Input 
+                        id="fileUrl" 
+                        required 
+                        type="url" 
+                        value={newMaterial.fileUrl} 
+                        onChange={e => setNewMaterial({ ...newMaterial, fileUrl: e.target.value })} 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="type">Material Type</Label>
+                      <select 
+                        id="type"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        value={newMaterial.materialType}
+                        onChange={e => setNewMaterial({ ...newMaterial, materialType: e.target.value })}
+                      >
+                        <option>Notes</option>
+                        <option>Previous Question</option>
+                        <option>Book</option>
+                        <option>Video Lecture</option>
+                      </select>
+                    </div>
+                    <DialogFooter className="pt-4">
+                      <Button type="submit" disabled={isCreating} className="w-full">
+                        {isCreating ? <Loader2 className="animate-spin mr-2" /> : null}
+                        Upload Resource
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                )}
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
 
@@ -235,7 +379,7 @@ export default function AdminPage() {
               <CardHeader className="bg-white/50 border-b border-border/40 p-8">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                   <div>
-                    <CardTitle className="text-2xl font-headline capitalize">{activeTab} Management</CardTitle>
+                    <CardTitle className="text-2xl font-headline font-bold capitalize">{activeTab} Management</CardTitle>
                     <CardDescription>View and edit existing campus {activeTab}</CardDescription>
                   </div>
                 </div>
