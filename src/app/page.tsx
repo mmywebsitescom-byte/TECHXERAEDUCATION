@@ -82,7 +82,7 @@ export default function Home() {
 
       <main>
         {/* Hero Section */}
-        <section className="relative py-24 md:py-32 px-6 overflow-hidden">
+        <section className="relative py-16 md:py-24 px-6 overflow-hidden">
           <motion.div 
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
@@ -94,12 +94,12 @@ export default function Home() {
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.2 }}
             >
-              <Badge variant="secondary" className="mb-6 py-2 px-6 bg-white/50 backdrop-blur-sm text-primary border-primary/20 font-bold text-sm rounded-full shadow-sm">
-                <Sparkles size={14} className="mr-2 text-yellow-500" /> REVOLUTIONIZING CAMPUS LIFE
+              <Badge variant="secondary" className="mb-4 py-1.5 px-5 bg-white/50 backdrop-blur-sm text-primary border-primary/20 font-bold text-xs rounded-full shadow-sm">
+                <Sparkles size={12} className="mr-2 text-yellow-500" /> REVOLUTIONIZING CAMPUS LIFE
               </Badge>
             </motion.div>
             
-            <h1 className="font-headline text-5xl md:text-7xl lg:text-8xl font-bold mb-8 text-foreground leading-[0.95] tracking-tighter">
+            <h1 className="font-headline text-4xl md:text-6xl lg:text-7xl font-bold mb-6 text-foreground leading-[0.95] tracking-tighter">
               The Digital Core of <br />
               <motion.span 
                 className="text-primary bg-clip-text"
@@ -108,18 +108,18 @@ export default function Home() {
               </motion.span>
             </h1>
             
-            <p className="max-w-3xl mx-auto text-lg md:text-xl text-muted-foreground/80 mb-12 leading-relaxed font-medium">
+            <p className="max-w-2xl mx-auto text-base md:text-lg text-muted-foreground/80 mb-8 leading-relaxed font-medium">
               A high-performance student portal engineered for TechXera. Manage results, resources, and announcements with a seamless, data-driven interface.
             </p>
             
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link href="/login">
-                <Button size="lg" className="h-16 px-10 bg-primary text-white hover:bg-primary/90 rounded-2xl text-lg font-bold shadow-2xl shadow-primary/40 transition-all hover:scale-105 active:scale-95">
-                  Get Started <ArrowRight className="ml-2" size={20} />
+                <Button size="lg" className="h-14 px-8 bg-primary text-white hover:bg-primary/90 rounded-2xl text-base font-bold shadow-2xl shadow-primary/40 transition-all hover:scale-105 active:scale-95">
+                  Get Started <ArrowRight className="ml-2" size={18} />
                 </Button>
               </Link>
               <Link href="/results">
-                <Button size="lg" variant="outline" className="h-16 px-10 border-2 border-primary/20 rounded-2xl text-lg font-bold hover:bg-white/50 backdrop-blur-sm transition-all">
+                <Button size="lg" variant="outline" className="h-14 px-8 border-2 border-primary/20 rounded-2xl text-base font-bold hover:bg-white/50 backdrop-blur-sm transition-all">
                   Check Results
                 </Button>
               </Link>
@@ -127,34 +127,34 @@ export default function Home() {
           </motion.div>
         </section>
 
-        {/* Technologies Section - Dedciated Black Section */}
-        <section className="bg-[#0b0b0b] py-24 md:py-32 relative overflow-hidden">
-          <div className="max-w-7xl mx-auto px-6 text-center space-y-12">
+        {/* Technologies Section - Decreased Height */}
+        <section className="bg-[#0b0b0b] py-12 md:py-16 relative overflow-hidden">
+          <div className="max-w-7xl mx-auto px-6 text-center space-y-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="space-y-4"
+              className="space-y-3"
             >
-              <h2 className="text-4xl md:text-6xl font-headline font-bold tracking-tight text-white">
+              <h2 className="text-3xl md:text-5xl font-headline font-bold tracking-tight text-white">
                 Technologies We Leverage
               </h2>
               <div className="flex justify-center">
-                <div className="w-24 h-1.5 bg-gradient-to-r from-primary to-secondary rounded-full"></div>
+                <div className="w-20 h-1 bg-gradient-to-r from-primary to-secondary rounded-full"></div>
               </div>
-              <p className="text-[#888] text-base md:text-lg font-medium max-w-2xl mx-auto leading-relaxed">
+              <p className="text-[#888] text-sm md:text-base font-medium max-w-2xl mx-auto leading-relaxed">
                 Driving innovation with a modern, high-performance tech stack built for the future of education.
               </p>
             </motion.div>
 
-            <div className="relative pt-12 flex flex-col items-center">
+            <div className="relative pt-6 flex flex-col items-center">
               {mounted && (
                 <div className="w-full relative z-10">
                   <LogoLoop 
                     logos={techStackLogos} 
                     speed={40} 
-                    logoHeight={48} 
-                    gap={80} 
+                    logoHeight={40} 
+                    gap={60} 
                     fadeOut={true} 
                     fadeOutColor="#0b0b0b"
                     scaleOnHover={true}
@@ -163,19 +163,19 @@ export default function Home() {
               )}
               
               {/* Pulsing Orb Effect */}
-              <div className="mt-16">
+              <div className="mt-8">
                 <motion.div 
                   animate={{ 
                     boxShadow: [
-                      "0 0 20px 5px rgba(125, 107, 219, 0.4)",
-                      "0 0 60px 20px rgba(125, 107, 219, 0.7)",
-                      "0 0 20px 5px rgba(125, 107, 219, 0.4)"
+                      "0 0 15px 5px rgba(125, 107, 219, 0.4)",
+                      "0 0 40px 15px rgba(125, 107, 219, 0.7)",
+                      "0 0 15px 5px rgba(125, 107, 219, 0.4)"
                     ]
                   }}
                   transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                  className="w-12 h-12 rounded-full bg-black border-[3px] border-primary/50 flex items-center justify-center"
+                  className="w-10 h-10 rounded-full bg-black border-[2px] border-primary/50 flex items-center justify-center"
                 >
-                  <div className="w-4 h-4 rounded-full bg-primary/80 blur-[3px]"></div>
+                  <div className="w-3 h-3 rounded-full bg-primary/80 blur-[2px]"></div>
                 </motion.div>
               </div>
             </div>
@@ -183,43 +183,43 @@ export default function Home() {
         </section>
 
         {/* Features Section */}
-        <section className="py-24 md:py-32 px-6">
+        <section className="py-16 md:py-24 px-6">
           <div className="max-w-7xl mx-auto">
             <motion.div 
               variants={container}
               initial="hidden"
               whileInView="show"
               viewport={{ once: true, margin: "-50px" }}
-              className="grid grid-cols-1 md:grid-cols-3 gap-12"
+              className="grid grid-cols-1 md:grid-cols-3 gap-8"
             >
               {[
                 {
                   title: "Smart Resources",
                   desc: "Advanced repository for lecture notes, research papers, and coding guides.",
-                  icon: <BookOpen className="text-primary" size={32} />,
+                  icon: <BookOpen className="text-primary" size={28} />,
                   accent: "bg-primary/10"
                 },
                 {
                   title: "Performance Tracking",
                   desc: "Visualize your academic growth with real-time analytics and predictive grading.",
-                  icon: <Zap className="text-secondary" size={32} />,
+                  icon: <Zap className="text-secondary" size={28} />,
                   accent: "bg-secondary/10"
                 },
                 {
                   title: "Instant Alerts",
                   desc: "Priority notification system for exam schedules and critical campus updates.",
-                  icon: <ShieldCheck className="text-primary" size={32} />,
+                  icon: <ShieldCheck className="text-primary" size={28} />,
                   accent: "bg-primary/10"
                 }
               ].map((feature, i) => (
                 <motion.div key={i} variants={item}>
-                  <Card className="glass group hover:bg-white transition-all duration-500 border-none rounded-[2.5rem] overflow-hidden h-full shadow-md hover:shadow-2xl">
-                    <CardContent className="p-10">
-                      <div className={`mb-6 p-6 w-fit ${feature.accent} rounded-2xl group-hover:scale-110 transition-transform duration-500`}>
+                  <Card className="glass group hover:bg-white transition-all duration-500 border-none rounded-[2rem] overflow-hidden h-full shadow-md hover:shadow-xl">
+                    <CardContent className="p-8">
+                      <div className={`mb-5 p-5 w-fit ${feature.accent} rounded-2xl group-hover:scale-110 transition-transform duration-500`}>
                         {feature.icon}
                       </div>
-                      <h3 className="text-2xl md:text-3xl font-headline font-bold mb-4 tracking-tight">{feature.title}</h3>
-                      <p className="text-muted-foreground/80 leading-relaxed text-lg font-medium">{feature.desc}</p>
+                      <h3 className="text-xl md:text-2xl font-headline font-bold mb-3 tracking-tight">{feature.title}</h3>
+                      <p className="text-muted-foreground/80 leading-relaxed text-base font-medium">{feature.desc}</p>
                     </CardContent>
                   </Card>
                 </motion.div>
@@ -229,9 +229,9 @@ export default function Home() {
         </section>
 
         {/* Stats Section */}
-        <section className="py-24 bg-white/40 backdrop-blur-sm border-y border-white/20">
+        <section className="py-16 bg-white/40 backdrop-blur-sm border-y border-white/20">
           <div className="max-w-7xl mx-auto px-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-12 md:gap-16 text-center">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 text-center">
               {[
                 { label: "Active Users", value: "5K+" },
                 { label: "Daily Queries", value: "12K+" },
@@ -245,8 +245,8 @@ export default function Home() {
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1, type: "spring" }}
                 >
-                  <p className="text-5xl md:text-6xl font-headline font-bold text-primary mb-2 tracking-tighter">{stat.value}</p>
-                  <p className="text-muted-foreground uppercase text-xs font-bold tracking-[0.2em]">{stat.label}</p>
+                  <p className="text-4xl md:text-5xl font-headline font-bold text-primary mb-1 tracking-tighter">{stat.value}</p>
+                  <p className="text-muted-foreground uppercase text-[10px] font-bold tracking-[0.2em]">{stat.label}</p>
                 </motion.div>
               ))}
             </div>
@@ -255,20 +255,20 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="py-12 px-6 border-t border-white/20">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10 text-muted-foreground">
+      <footer className="py-10 px-6 border-t border-white/20">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8 text-muted-foreground">
           <div className="flex items-center gap-4">
-            <div className="bg-primary p-2.5 rounded-xl text-white">
-              <Zap size={24} />
+            <div className="bg-primary p-2 rounded-xl text-white">
+              <Zap size={20} />
             </div>
-            <span className="font-headline font-bold text-2xl text-foreground tracking-tight">TechXera Campus</span>
+            <span className="font-headline font-bold text-xl text-foreground tracking-tight">TechXera Campus</span>
           </div>
-          <div className="flex gap-10 text-xs font-bold uppercase tracking-widest">
+          <div className="flex gap-8 text-[10px] font-bold uppercase tracking-widest">
             <Link href="#" className="hover:text-primary transition-colors">Security</Link>
             <Link href="#" className="hover:text-primary transition-colors">Privacy</Link>
             <Link href="#" className="hover:text-primary transition-colors">Help</Link>
           </div>
-          <p className="text-xs font-medium">© 2025 TechXera. High-Performance Campus Engine.</p>
+          <p className="text-[10px] font-medium">© 2025 TechXera. High-Performance Campus Engine.</p>
         </div>
       </footer>
     </div>
