@@ -12,9 +12,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
-import { Plus, Shield, List, GraduationCap, Megaphone, Database, Loader2, UserCheck, Trash2 } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Plus, Shield, List, GraduationCap, Megaphone, Database, Loader2, UserCheck, Trash2, Users, CheckCircle, XCircle } from 'lucide-react'
 import { useFirestore, useUser, useDoc, useMemoFirebase, useCollection, errorEmitter, FirestorePermissionError } from '@/firebase'
-import { doc, setDoc, collection, deleteDoc, query, orderBy } from 'firebase/firestore'
+import { doc, setDoc, collection, deleteDoc, query, orderBy, updateDoc } from 'firebase/firestore'
 import { useToast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
@@ -42,9 +43,11 @@ export default function AdminPage() {
 
   const noticesQuery = useMemoFirebase(() => db ? query(collection(db, 'notices'), orderBy('publishDate', 'desc')) : null, [db])
   const materialsQuery = useMemoFirebase(() => db ? query(collection(db, 'studyMaterials'), orderBy('uploadDate', 'desc')) : null, [db])
+  const studentsQuery = useMemoFirebase(() => db ? query(collection(db, 'students'), orderBy('enrollmentDate', 'desc')) : null, [db])
   
   const { data: notices } = useCollection(noticesQuery)
   const { data: materials } = useCollection(materialsQuery)
+  const { data: students } = useCollection(studentsQuery)
 
   useEffect(() => {
     setMounted(true)
@@ -104,12 +107,26 @@ export default function AdminPage() {
         toast({ title: "Deleted", description: "The record has been removed." })
       })
       .catch(async () => {
-        const permissionError = new FirestorePermissionError({
-          path: docRef.path,
-          operation: 'delete',
-        });
-        errorEmitter.emit('permission-error', permissionError);
+        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: docRef.path, operation: 'delete' }));
       })
+  }
+
+  const handleApproveStudent = (studentId: string, approve: boolean) => {
+    if (!db) return
+    const studentRef = doc(db, 'students', studentId)
+    updateDoc(studentRef, {
+      isApproved: approve,
+      status: approve ? 'approved' : 'rejected'
+    })
+    .then(() => {
+      toast({
+        title: approve ? "Student Approved" : "Student Rejected",
+        description: `Account has been ${approve ? 'activated' : 'deactivated'}.`
+      })
+    })
+    .catch(async () => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({ path: studentRef.path, operation: 'update' }));
+    })
   }
 
   const handleCreateNotice = (e: React.FormEvent) => {
@@ -160,41 +177,6 @@ export default function AdminPage() {
       .finally(() => setIsCreating(false))
   }
 
-  const seedDatabase = () => {
-    if (!db) return
-    setIsSeeding(true)
-    
-    const noticesData = [
-      { title: "Final Examination Schedule Released", description: "The final exam schedule is now available for all departments.", publishDate: new Date().toISOString(), isUrgent: true },
-      { title: "Campus Tech Symposium", description: "Join us for the annual Symposium featuring guest speakers from top tech firms.", publishDate: new Date().toISOString(), isUrgent: false }
-    ]
-    noticesData.forEach(n => {
-      const docRef = doc(collection(db, 'notices'));
-      const data = { ...n, id: docRef.id };
-      setDoc(docRef, data).catch(async () => {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: docRef.path, operation: 'create', requestResourceData: data }));
-      });
-    });
-
-    const materialsData = [
-      { title: "Advanced Algorithms Notes", subject: "Computer Science", semester: "5th Sem", fileUrl: "https://example.com/algorithms.pdf", materialType: "Notes", uploadDate: new Date().toISOString() },
-      { title: "Data Structures - 2023 Paper", subject: "Computer Science", semester: "3rd Sem", fileUrl: "https://example.com/ds-paper.pdf", materialType: "Previous Question", uploadDate: new Date().toISOString() }
-    ]
-    materialsData.forEach(m => {
-      const docRef = doc(collection(db, 'studyMaterials'));
-      const data = { ...m, id: docRef.id };
-      setDoc(docRef, data).catch(async () => {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: docRef.path, operation: 'create', requestResourceData: data }));
-      });
-    });
-
-    toast({
-      title: "Seeding Started",
-      description: "Initial campus data is being added to the database.",
-    })
-    setIsSeeding(false)
-  }
-
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Navbar />
@@ -222,28 +204,16 @@ export default function AdminPage() {
                 Grant Admin Access
               </Button>
             )}
-            <Button 
-              variant="outline" 
-              onClick={seedDatabase} 
-              disabled={isSeeding || !isAdmin}
-              className="h-12 border-primary text-primary hover:bg-primary/5"
-            >
-              {isSeeding ? <Loader2 className="animate-spin mr-2" /> : <Database className="mr-2" size={18} />}
-              Seed Initial Data
-            </Button>
             
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button disabled={!isAdmin || activeTab === 'results'} className="h-12 px-6 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 text-white">
+                <Button disabled={!isAdmin || activeTab === 'results' || activeTab === 'students'} className="h-12 px-6 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 text-white">
                   <Plus className="mr-2" size={20} /> Create New
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
                   <DialogTitle>Add New {activeTab === 'notices' ? 'Notice' : 'Resource'}</DialogTitle>
-                  <DialogDescription>
-                    Fill in the details below to publish new content to the student portal.
-                  </DialogDescription>
                 </DialogHeader>
                 
                 {activeTab === 'notices' ? (
@@ -357,15 +327,18 @@ export default function AdminPage() {
               <Shield size={64} className="mx-auto text-muted-foreground opacity-20" />
               <h2 className="text-2xl font-headline font-bold">Restricted Area</h2>
               <p className="text-muted-foreground">
-                Please grant yourself administrative privileges using the button above to manage the campus records.
+                Please grant yourself administrative privileges using the button above.
               </p>
             </div>
           </Card>
         ) : (
           <Tabs defaultValue="results" className="space-y-8" onValueChange={setActiveTab}>
-            <TabsList className="bg-white p-1 rounded-2xl shadow-sm border border-border/50 h-auto grid grid-cols-3 md:w-[600px]">
+            <TabsList className="bg-white p-1 rounded-2xl shadow-sm border border-border/50 h-auto grid grid-cols-4 md:w-[800px]">
               <TabsTrigger value="results" className="rounded-xl py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
                 <GraduationCap className="mr-2" size={18} /> Results
+              </TabsTrigger>
+              <TabsTrigger value="students" className="rounded-xl py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
+                <Users className="mr-2" size={18} /> Students
               </TabsTrigger>
               <TabsTrigger value="notices" className="rounded-xl py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
                 <Megaphone className="mr-2" size={18} /> Notices
@@ -377,25 +350,59 @@ export default function AdminPage() {
 
             <Card className="shadow-xl border-border/50 overflow-hidden bg-white/80 backdrop-blur-sm">
               <CardHeader className="bg-white/50 border-b border-border/40 p-8">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                  <div>
-                    <CardTitle className="text-2xl font-headline font-bold capitalize">{activeTab} Management</CardTitle>
-                    <CardDescription>View and edit existing campus {activeTab}</CardDescription>
-                  </div>
-                </div>
+                <CardTitle className="text-2xl font-headline font-bold capitalize">{activeTab} Management</CardTitle>
+                <CardDescription>View and manage existing campus {activeTab}</CardDescription>
               </CardHeader>
               <CardContent className="p-0">
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/50 hover:bg-muted/50">
-                      <TableHead className="py-4 px-8 font-bold">Identifier</TableHead>
-                      <TableHead className="py-4 font-bold">Title / Subject</TableHead>
-                      <TableHead className="py-4 font-bold">Details</TableHead>
-                      <TableHead className="py-4 font-bold">Date</TableHead>
-                      <TableHead className="py-4 text-right px-8 font-bold">Actions</TableHead>
+                      {activeTab === 'students' ? (
+                        <>
+                          <TableHead className="py-4 px-8 font-bold">Name</TableHead>
+                          <TableHead className="py-4 font-bold">Email</TableHead>
+                          <TableHead className="py-4 font-bold">ID</TableHead>
+                          <TableHead className="py-4 font-bold">Status</TableHead>
+                          <TableHead className="py-4 text-right px-8 font-bold">Actions</TableHead>
+                        </>
+                      ) : (
+                        <>
+                          <TableHead className="py-4 px-8 font-bold">Identifier</TableHead>
+                          <TableHead className="py-4 font-bold">Title / Subject</TableHead>
+                          <TableHead className="py-4 font-bold">Details</TableHead>
+                          <TableHead className="py-4 font-bold">Date</TableHead>
+                          <TableHead className="py-4 text-right px-8 font-bold">Actions</TableHead>
+                        </>
+                      )}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
+                    {activeTab === 'students' && students?.map((student) => (
+                      <TableRow key={student.id}>
+                        <TableCell className="px-8 font-bold">{student.firstName} {student.lastName}</TableCell>
+                        <TableCell>{student.email}</TableCell>
+                        <TableCell className="font-medium text-xs text-muted-foreground">{student.studentId}</TableCell>
+                        <TableCell>
+                          <Badge variant={student.isApproved ? "default" : "secondary"} className={student.isApproved ? "bg-green-500" : ""}>
+                            {student.status || 'pending'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right px-8 space-x-2">
+                          {!student.isApproved ? (
+                            <Button variant="ghost" size="icon" onClick={() => handleApproveStudent(student.id, true)} className="text-green-600 hover:bg-green-50">
+                              <CheckCircle size={18} />
+                            </Button>
+                          ) : (
+                            <Button variant="ghost" size="icon" onClick={() => handleApproveStudent(student.id, false)} className="text-orange-600 hover:bg-orange-50">
+                              <XCircle size={18} />
+                            </Button>
+                          )}
+                          <Button variant="ghost" size="icon" onClick={() => handleDelete('students', student.id)} className="text-destructive hover:bg-destructive/10">
+                            <Trash2 size={18} />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
                     {activeTab === 'notices' && notices?.map((notice) => (
                       <TableRow key={notice.id}>
                         <TableCell className="px-8 font-medium">{notice.id.slice(0, 8)}...</TableCell>
@@ -421,14 +428,7 @@ export default function AdminPage() {
                     {activeTab === 'results' && (
                       <TableRow>
                         <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
-                          Manage student results by viewing individual student profiles in the student management section (Coming Soon).
-                        </TableCell>
-                      </TableRow>
-                    )}
-                    {((activeTab === 'notices' && (!notices || notices.length === 0)) || (activeTab === 'resources' && (!materials || materials.length === 0))) && (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
-                          No data available. Use "Seed Initial Data" to populate mock records.
+                          Select a student from the "Students" tab to manage their results.
                         </TableCell>
                       </TableRow>
                     )}

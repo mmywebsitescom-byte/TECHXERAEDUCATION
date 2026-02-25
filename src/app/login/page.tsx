@@ -10,19 +10,23 @@ import TechBackground from '@/components/TechBackground'
 import Navbar from '@/components/Navbar'
 import { Lock, User, ArrowRight, Loader2, GraduationCap, UserPlus } from 'lucide-react'
 import Link from 'next/link'
-import { motion, AnimatePresence } from 'framer-motion'
-import { useAuth, useUser } from '@/firebase'
+import { motion } from 'framer-motion'
+import { useAuth, useUser, useFirestore } from '@/firebase'
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth'
+import { doc, setDoc } from 'firebase/firestore'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 
 function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isSignUp, setIsSignUp] = useState(false)
   
   const auth = useAuth()
+  const db = useFirestore()
   const { user, isUserLoading } = useUser()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -43,10 +47,25 @@ function LoginForm() {
     setIsLoading(true)
     try {
       if (isSignUp) {
-        await createUserWithEmailAndPassword(auth, email, password)
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password)
+        const newUser = userCredential.user
+        
+        // Create initial student profile (pending approval)
+        await setDoc(doc(db, 'students', newUser.uid), {
+          id: newUser.uid,
+          studentId: `TX-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+          firstName,
+          lastName,
+          email,
+          enrollmentDate: new Date().toISOString(),
+          isApproved: false,
+          status: 'pending',
+          currentSemester: 'Semester 1'
+        })
+
         toast({
           title: "Account Created",
-          description: "Welcome to TechXera Campus! Redirecting...",
+          description: "Your registration is pending administrator approval.",
         })
       } else {
         await signInWithEmailAndPassword(auth, email, password)
@@ -60,7 +79,7 @@ function LoginForm() {
       toast({
         variant: "destructive",
         title: isSignUp ? "Sign Up Failed" : "Login Failed",
-        description: error.message || "Something went wrong. Please check your credentials.",
+        description: error.message || "Something went wrong.",
       })
     } finally {
       setIsLoading(false)
@@ -88,11 +107,35 @@ function LoginForm() {
             {isSignUp ? "Student Sign Up" : "Student Login"}
           </CardTitle>
           <CardDescription>
-            {isSignUp ? "Create your campus portal account" : "Enter your credentials to access your dashboard"}
+            {isSignUp ? "Create your account (Subject to admin approval)" : "Enter your credentials to access your dashboard"}
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-6 pt-8">
+            {isSignUp && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName">First Name</Label>
+                  <Input 
+                    id="firstName" 
+                    placeholder="Alex" 
+                    required 
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <Input 
+                    id="lastName" 
+                    placeholder="Smith" 
+                    required 
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="email">Email Address</Label>
               <div className="relative">
@@ -111,7 +154,6 @@ function LoginForm() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
-                {!isSignUp && <Link href="#" className="text-sm text-primary hover:underline">Forgot password?</Link>}
               </div>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
@@ -148,9 +190,6 @@ function LoginForm() {
               >
                 {isSignUp ? "Already have an account? Login" : "Don't have an account? Sign Up"}
               </button>
-              <div className="pt-2">
-                Staff or Admin? <Link href="/admin/login" className="text-primary font-medium hover:underline">Admin Login</Link>
-              </div>
             </div>
           </CardFooter>
         </form>

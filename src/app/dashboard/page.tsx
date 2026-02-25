@@ -6,7 +6,7 @@ import Navbar from '@/components/Navbar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
-import { GraduationCap, Award, BookOpen, Clock, TrendingUp, Loader2, Sparkles } from 'lucide-react'
+import { GraduationCap, Award, BookOpen, Clock, TrendingUp, Loader2, Sparkles, AlertCircle, ShieldAlert } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase'
 import { doc, collection } from 'firebase/firestore'
@@ -38,9 +38,9 @@ export default function DashboardPage() {
   }, [])
 
   const studentRef = useMemoFirebase(() => (user && db ? doc(db, 'students', user.uid) : null), [user, db])
-  const resultsQuery = useMemoFirebase(() => (user && db ? collection(db, 'students', user.uid, 'results') : null), [user, db])
-
   const { data: profile, isLoading: isProfileLoading } = useDoc(studentRef)
+
+  const resultsQuery = useMemoFirebase(() => (user && profile?.isApproved && db ? collection(db, 'students', user.uid, 'results') : null), [user, profile, db])
   const { data: results, isLoading: isResultsLoading } = useCollection(resultsQuery)
 
   useEffect(() => {
@@ -59,6 +59,32 @@ export default function DashboardPage() {
 
   if (!user) return null
 
+  // Approval Check View
+  if (profile && !profile.isApproved) {
+    return (
+      <div className="min-h-screen bg-[#F5F5FA] flex flex-col">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center p-6 pt-32">
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
+            <Card className="max-w-xl w-full text-center p-12 glass border-none rounded-[3rem] shadow-2xl">
+              <div className="mx-auto w-24 h-24 bg-orange-500/10 text-orange-500 rounded-[2rem] flex items-center justify-center mb-8">
+                <ShieldAlert size={48} />
+              </div>
+              <h2 className="text-4xl font-headline font-bold mb-4">Account Pending Approval</h2>
+              <p className="text-muted-foreground text-lg mb-8 leading-relaxed">
+                Your registration has been received. A campus administrator must review and approve your account before you can access academic records.
+              </p>
+              <div className="p-6 bg-muted/50 rounded-2xl flex items-center gap-4 text-left">
+                <AlertCircle className="text-primary shrink-0" />
+                <p className="text-sm font-medium">Please contact the IT department if this takes longer than 24 hours.</p>
+              </div>
+            </Card>
+          </motion.div>
+        </main>
+      </div>
+    )
+  }
+
   const chartData = results?.map(r => ({
     name: r.semester,
     score: r.marks,
@@ -70,7 +96,6 @@ export default function DashboardPage() {
       <Navbar />
       
       <main className="max-w-7xl mx-auto p-10 md:p-20 lg:p-24 space-y-16 pt-32 pb-32">
-        {/* Profile Section */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -114,15 +139,12 @@ export default function DashboardPage() {
           </div>
         </motion.div>
 
-        {/* Dashboard Content */}
         <motion.div 
           variants={container}
           initial="hidden"
           animate="show"
           className="grid grid-cols-1 lg:grid-cols-3 gap-12"
         >
-          
-          {/* Main Analytics Card */}
           <motion.div variants={itemVariant} className="lg:col-span-2">
             <Card className="glass border-none rounded-[3rem] overflow-hidden h-full shadow-lg">
               <CardHeader className="p-12 border-b border-white/40 bg-white/30">
@@ -164,9 +186,7 @@ export default function DashboardPage() {
             </Card>
           </motion.div>
 
-          {/* Sidebar Stats */}
           <div className="space-y-12">
-            {/* Grades Card */}
             <motion.div variants={itemVariant}>
               <Card className="glass border-none rounded-[3rem] shadow-lg">
                 <CardHeader className="p-10 pb-0">
@@ -190,7 +210,6 @@ export default function DashboardPage() {
               </Card>
             </motion.div>
 
-            {/* Interactive Grid */}
             <div className="grid grid-cols-2 gap-8">
               <motion.button 
                 whileHover={{ scale: 1.05, y: -4 }}

@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -18,17 +19,20 @@ service cloud.firestore {
       return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
     }
 
+    function isApproved(userId) {
+      return get(/databases/$(database)/documents/students/$(userId)).data.isApproved == true;
+    }
+
     match /students/{studentUid} {
-      allow get, list: if isOwner(studentUid) || isAdmin();
-      allow create: if isOwner(studentUid) && request.resource.data.id == studentUid;
-      allow update: if (isExistingOwner(studentUid) && request.resource.data.id == resource.data.id) || isAdmin();
+      allow get: if isOwner(studentUid) || isAdmin();
+      allow list: if isAdmin();
+      allow create: if isOwner(studentUid) && request.resource.data.id == studentUid && request.resource.data.isApproved == false;
+      allow update: if (isExistingOwner(studentUid) && request.resource.data.id == resource.data.id && request.resource.data.isApproved == resource.data.isApproved) || isAdmin();
       allow delete: if isAdmin();
 
       match /results/{resultId} {
-        allow get, list: if isOwner(studentUid) || isAdmin();
-        allow create: if isOwner(studentUid) && request.resource.data.studentId == studentUid;
-        allow update: if (isExistingOwner(studentUid) && request.resource.data.studentId == resource.data.studentId) || isAdmin();
-        allow delete: if isAdmin();
+        allow get, list: if (isOwner(studentUid) && isApproved(studentUid)) || isAdmin();
+        allow create, update, delete: if isAdmin();
       }
     }
 

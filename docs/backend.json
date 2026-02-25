@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "Student": {
@@ -8,11 +9,11 @@
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the Student entity."
+          "description": "Unique identifier for the Student entity (Firebase UID)."
         },
         "studentId": {
           "type": "string",
-          "description": "The unique identification number or student ID used by the student for login purposes. (This is distinct from the internal 'id' PK)."
+          "description": "The unique identification number or student ID used by the student for login purposes."
         },
         "firstName": {
           "type": "string",
@@ -39,7 +40,16 @@
         },
         "currentSemester": {
           "type": "string",
-          "description": "The current academic semester the student is enrolled in (e.g., 'Fall 2023', 'Semester 1')."
+          "description": "The current academic semester the student is enrolled in."
+        },
+        "isApproved": {
+          "type": "boolean",
+          "description": "Flag indicating if the student account has been approved by an administrator."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "approved", "rejected"],
+          "description": "The current status of the student account."
         }
       },
       "required": [
@@ -48,7 +58,9 @@
         "firstName",
         "lastName",
         "email",
-        "enrollmentDate"
+        "enrollmentDate",
+        "isApproved",
+        "status"
       ]
     },
     "Result": {
@@ -63,7 +75,7 @@
         },
         "studentId": {
           "type": "string",
-          "description": "Reference to the Student entity this result belongs to. (Relationship: Student 1:N Result)"
+          "description": "Reference to the Student entity this result belongs to."
         },
         "subject": {
           "type": "string",
@@ -79,7 +91,7 @@
         },
         "grade": {
           "type": "string",
-          "description": "The letter grade or equivalent awarded for the subject (e.g., 'A+', 'B', 'Pass')."
+          "description": "The letter grade or equivalent awarded for the subject."
         },
         "examDate": {
           "type": "string",
@@ -134,7 +146,7 @@
         },
         "materialType": {
           "type": "string",
-          "description": "The type of the study material (e.g., 'Previous Question', 'Notes', 'Book', 'Video Lecture')."
+          "description": "The type of the study material."
         },
         "uploadDate": {
           "type": "string",
@@ -209,11 +221,11 @@
           "schema": {
             "$ref": "#/backend/entities/Student"
           },
-          "description": "Stores individual student profiles. The document ID (`{studentUid}`) is the Firebase Authentication User ID. Includes fields like `studentId` (internal ID), `firstName`, `lastName`, etc. Student can read/update their own profile. Admin can read/update/delete any student profile.",
+          "description": "Stores individual student profiles. The document ID (`{studentUid}`) is the Firebase Authentication User ID. Includes approval status.",
           "params": [
             {
               "name": "studentUid",
-              "description": "The Firebase Authentication User ID (UID) of the student, serving as the document ID."
+              "description": "The Firebase Authentication User ID (UID) of the student."
             }
           ]
         }
@@ -225,11 +237,11 @@
           "schema": {
             "$ref": "#/backend/entities/Result"
           },
-          "description": "Stores academic results specific to a student. Each document includes a denormalized `studentId` field that **MUST** match the parent `{studentUid}` for authorization independence. Students can read their own results. Admin can read/update/delete any student's results.",
+          "description": "Stores academic results specific to a student.",
           "params": [
             {
               "name": "studentUid",
-              "description": "The Firebase Authentication User ID (UID) of the student owner of these results."
+              "description": "The Firebase Authentication User ID (UID) of the student owner."
             },
             {
               "name": "resultId",
@@ -245,7 +257,7 @@
           "schema": {
             "$ref": "#/backend/entities/StudyMaterial"
           },
-          "description": "Houses general study resources accessible by all authenticated students for reading. Admin users have full CRUD permissions. No specific user ownership is tied to individual documents for read access.",
+          "description": "Houses general study resources.",
           "params": [
             {
               "name": "materialId",
@@ -261,7 +273,7 @@
           "schema": {
             "$ref": "#/backend/entities/Notice"
           },
-          "description": "Contains important announcements for all authenticated students to read. Admin users have full CRUD permissions. No specific user ownership is tied to individual documents for read access.",
+          "description": "Contains important announcements.",
           "params": [
             {
               "name": "noticeId",
@@ -277,7 +289,7 @@
           "schema": {
             "$ref": "#/backend/entities/Student"
           },
-          "description": "A collection used for Database Access Control (DBAC). The existence of a document at this path for a given `request.auth.uid` grants administrative privileges across the application. Documents typically contain minimal data, serving as a marker. The schema '$ref' points to 'Student' as a placeholder for admin identity, but a dedicated 'Admin' entity could be created if more specific admin profile data is needed.",
+          "description": "A marker collection for admin privileges.",
           "params": [
             {
               "name": "adminUid",
@@ -286,7 +298,6 @@
           ]
         }
       }
-    ],
-    "reasoning": "The Firestore structure is designed to be secure, scalable, and debuggable by strictly adhering to the mandated design principles. \n\n**Authorization Independence (CRITICAL):**\n1.  **Student-Owned Data (`/students/{studentUid}/results/{resultId}`):** Each 'Result' document explicitly contains a `studentId` field. This field is denormalized and **MUST** match the `{studentUid}` wildcard in the path, which in turn maps to `request.auth.uid`. This direct mapping eliminates the need for expensive and complex `get()` calls in security rules to check ownership. Rules can simply verify `request.auth.uid == resource.data.studentId` or `request.auth.uid == studentUid` (from the path). This enables atomic write operations for results without parent document lookups.\n2.  **Global Data (`/studyMaterials/{materialId}`, `/notices/{noticeId}`):** These collections are accessed globally by all authenticated users for read operations. Admin access for CRUD is determined by the existence of a document in the `/roles_admin/{adminUid}` collection. Since access is not dependent on specific parent document attributes, no denormalization is required beyond the inherent document data.\n\n**QAPs (Rules are not Filters):**\n1.  **Student-Specific Data (`/students/{studentUid}`, `/students/{studentUid}/results/{resultId}`):**\n    *   For a student to list their own data, queries will include `where('studentId', '==', request.auth.uid)` or naturally be scoped by the path, e.g., `db.collection('students').doc(request.auth.uid).collection('results').get()`. The security rules will enforce that `request.auth.uid == studentUid` (from the path) for any read access, ensuring only the owner can list their own items. This is a query that the rules can evaluate and allow, not filter.\n2.  **Global Read-Only Data (`/studyMaterials/{materialId}`, `/notices/{noticeId}`):**\n    *   Authenticated users can list all documents in these collections (`db.collection('studyMaterials').get()`). The security rules will simply check `request.auth.uid != null` for read operations. This naturally supports `list` operations without requiring client-side filtering or complex server-side rule logic, fulfilling the QAP principle.\n\n**Structural Segregation & Access Modeling:**\n*   **Private Student Profiles:** `/students/{studentUid}` uses path-based ownership, making student profile data directly linked to their Firebase Auth UID. Only the owning student or an admin can access it.\n*   **Nested User-Owned Data:** `/students/{studentUid}/results/{resultId}` continues the hierarchical path, ensuring that a student's results are securely nested under their profile. This leverages Firebase's strong security model for user-owned data.\n*   **Public/Collaborative Data (for Authenticated Users):** `/studyMaterials` and `/notices` are distinct top-level collections because they have a homogeneous security posture: read-only for all authenticated students, and full CRUD for administrators. This prevents mixing security contexts within a single collection.\n*   **DBAC (Database Access Control):** A dedicated collection `/roles_admin/{adminUid}` is used for admin role management. The existence of a document at `request.auth.uid` in this collection grants administrative privileges, embodying the 'existence over content' strategy and completely avoiding custom claims."
+    ]
   }
 }
