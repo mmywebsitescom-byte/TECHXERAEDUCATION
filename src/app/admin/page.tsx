@@ -13,7 +13,8 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Shield, List, GraduationCap, Megaphone, Loader2, UserCheck, Trash2, Users, CheckCircle, XCircle, Search } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Plus, Shield, List, GraduationCap, Megaphone, Loader2, UserCheck, Trash2, Users, CheckCircle, XCircle, Search, ClipboardList } from 'lucide-react'
 import { useFirestore, useUser, useDoc, useMemoFirebase, useCollection, errorEmitter, FirestorePermissionError } from '@/firebase'
 import { doc, setDoc, collection, deleteDoc, query, orderBy, updateDoc } from 'firebase/firestore'
 import { useToast } from '@/hooks/use-toast'
@@ -32,7 +33,8 @@ export default function AdminPage() {
   // Form States
   const [newNotice, setNewNotice] = useState({ title: '', description: '', isUrgent: false })
   const [newMaterial, setNewMaterial] = useState({ title: '', subject: '', semester: '', fileUrl: '', materialType: 'Notes' })
-  const [newResult, setNewResult] = useState({ subject: '', semester: '', marks: 0, grade: '', examDate: new Date().toISOString().split('T')[0] })
+  const [newResult, setNewResult] = useState({ examId: '', subject: '', semester: '', marks: 0, grade: '', examDate: new Date().toISOString().split('T')[0] })
+  const [newExam, setNewExam] = useState({ title: '', semester: '', examDate: new Date().toISOString().split('T')[0], status: 'upcoming' })
 
   const { user, isUserLoading } = useUser()
   const db = useFirestore()
@@ -46,10 +48,12 @@ export default function AdminPage() {
   const noticesQuery = useMemoFirebase(() => db ? query(collection(db, 'notices'), orderBy('publishDate', 'desc')) : null, [db])
   const materialsQuery = useMemoFirebase(() => db ? query(collection(db, 'studyMaterials'), orderBy('uploadDate', 'desc')) : null, [db])
   const studentsQuery = useMemoFirebase(() => db ? query(collection(db, 'students'), orderBy('enrollmentDate', 'desc')) : null, [db])
+  const examsQuery = useMemoFirebase(() => db ? query(collection(db, 'exams'), orderBy('examDate', 'desc')) : null, [db])
   
   const { data: notices } = useCollection(noticesQuery)
   const { data: materials } = useCollection(materialsQuery)
   const { data: students } = useCollection(studentsQuery)
+  const { data: exams } = useCollection(examsQuery)
 
   // Results query for selected student
   const resultsQuery = useMemoFirebase(() => (db && selectedStudentId) ? query(collection(db, 'students', selectedStudentId, 'results'), orderBy('examDate', 'desc')) : null, [db, selectedStudentId])
@@ -137,12 +141,9 @@ export default function AdminPage() {
 
     setDoc(docRef, data)
       .then(() => {
-        toast({ title: "Notice Created" })
+        toast({ title: "Notice Published" })
         setNewNotice({ title: '', description: '', isUrgent: false })
         setIsDialogOpen(false)
-      })
-      .catch(async () => {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: docRef.path, operation: 'create', requestResourceData: data }))
       })
       .finally(() => setIsCreating(false))
   }
@@ -161,12 +162,29 @@ export default function AdminPage() {
 
     setDoc(docRef, data)
       .then(() => {
-        toast({ title: "Resource Added" })
+        toast({ title: "Resource Uploaded" })
         setNewMaterial({ title: '', subject: '', semester: '', fileUrl: '', materialType: 'Notes' })
         setIsDialogOpen(false)
       })
-      .catch(async () => {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: docRef.path, operation: 'create', requestResourceData: data }))
+      .finally(() => setIsCreating(false))
+  }
+
+  const handleCreateExam = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!db || !isAdmin) return
+    setIsCreating(true)
+
+    const docRef = doc(collection(db, 'exams'))
+    const data = {
+      ...newExam,
+      id: docRef.id,
+    }
+
+    setDoc(docRef, data)
+      .then(() => {
+        toast({ title: "Exam Created" })
+        setNewExam({ title: '', semester: '', examDate: new Date().toISOString().split('T')[0], status: 'upcoming' })
+        setIsDialogOpen(false)
       })
       .finally(() => setIsCreating(false))
   }
@@ -187,11 +205,8 @@ export default function AdminPage() {
     setDoc(docRef, data)
       .then(() => {
         toast({ title: "Result Recorded" })
-        setNewResult({ subject: '', semester: '', marks: 0, grade: '', examDate: new Date().toISOString().split('T')[0] })
+        setNewResult({ examId: '', subject: '', semester: '', marks: 0, grade: '', examDate: new Date().toISOString().split('T')[0] })
         setIsDialogOpen(false)
-      })
-      .catch(async () => {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: docRef.path, operation: 'create', requestResourceData: data }))
       })
       .finally(() => setIsCreating(false))
   }
@@ -231,6 +246,7 @@ export default function AdminPage() {
                   <DialogTitle>
                     {activeTab === 'notices' ? 'Publish Notice' : 
                      activeTab === 'resources' ? 'Add Study Material' : 
+                     activeTab === 'exams' ? 'Create Exam' :
                      `Add Result for ${selectedStudent?.firstName}`}
                   </DialogTitle>
                 </DialogHeader>
@@ -240,7 +256,7 @@ export default function AdminPage() {
                     <div className="space-y-2"><Label>Title</Label><Input required value={newNotice.title} onChange={e => setNewNotice({ ...newNotice, title: e.target.value })} /></div>
                     <div className="space-y-2"><Label>Content</Label><Textarea required value={newNotice.description} onChange={e => setNewNotice({ ...newNotice, description: e.target.value })} /></div>
                     <div className="flex items-center space-x-2"><Switch checked={newNotice.isUrgent} onCheckedChange={c => setNewNotice({ ...newNotice, isUrgent: c })} /><Label>Urgent</Label></div>
-                    <Button type="submit" disabled={isCreating} className="w-full">{isCreating ? <Loader2 className="animate-spin" /> : 'Publish'}</Button>
+                    <Button type="submit" disabled={isCreating} className="w-full">Publish</Button>
                   </form>
                 ) : activeTab === 'resources' ? (
                   <form onSubmit={handleCreateMaterial} className="space-y-4 pt-4">
@@ -252,8 +268,39 @@ export default function AdminPage() {
                     <div className="space-y-2"><Label>File URL</Label><Input required type="url" value={newMaterial.fileUrl} onChange={e => setNewMaterial({ ...newMaterial, fileUrl: e.target.value })} /></div>
                     <Button type="submit" disabled={isCreating} className="w-full">Upload</Button>
                   </form>
+                ) : activeTab === 'exams' ? (
+                  <form onSubmit={handleCreateExam} className="space-y-4 pt-4">
+                    <div className="space-y-2"><Label>Exam Title</Label><Input required placeholder="e.g., Spring Finals 2025" value={newExam.title} onChange={e => setNewExam({ ...newExam, title: e.target.value })} /></div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2"><Label>Semester</Label><Input required value={newExam.semester} onChange={e => setNewExam({ ...newExam, semester: e.target.value })} /></div>
+                      <div className="space-y-2"><Label>Start Date</Label><Input required type="date" value={newExam.examDate} onChange={e => setNewExam({ ...newExam, examDate: e.target.value })} /></div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Status</Label>
+                      <Select value={newExam.status} onValueChange={(val) => setNewExam({ ...newExam, status: val })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="upcoming">Upcoming</SelectItem>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="completed">Completed</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button type="submit" disabled={isCreating} className="w-full">Create Exam Session</Button>
+                  </form>
                 ) : (
                   <form onSubmit={handleAddResult} className="space-y-4 pt-4">
+                    <div className="space-y-2">
+                      <Label>Link to Exam Session</Label>
+                      <Select value={newResult.examId} onValueChange={(val) => setNewResult({ ...newResult, examId: val })}>
+                        <SelectTrigger><SelectValue placeholder="Select Exam (Optional)" /></SelectTrigger>
+                        <SelectContent>
+                          {exams?.map(exam => (
+                            <SelectItem key={exam.id} value={exam.id}>{exam.title}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2"><Label>Subject</Label><Input required value={newResult.subject} onChange={e => setNewResult({ ...newResult, subject: e.target.value })} /></div>
                       <div className="space-y-2"><Label>Semester</Label><Input required value={newResult.semester} onChange={e => setNewResult({ ...newResult, semester: e.target.value })} /></div>
@@ -278,9 +325,10 @@ export default function AdminPage() {
           </Card>
         ) : (
           <Tabs defaultValue="results" className="space-y-8" onValueChange={setActiveTab}>
-            <TabsList className="bg-white p-1 rounded-2xl shadow-sm border border-border/50 h-auto grid grid-cols-4 md:w-[800px]">
+            <TabsList className="bg-white p-1 rounded-2xl shadow-sm border border-border/50 h-auto grid grid-cols-3 md:grid-cols-5 w-full md:w-[1000px]">
               <TabsTrigger value="results" className="rounded-xl py-3 data-[state=active]:bg-primary data-[state=active]:text-white"><GraduationCap className="mr-2" size={18} /> Results</TabsTrigger>
               <TabsTrigger value="students" className="rounded-xl py-3 data-[state=active]:bg-primary data-[state=active]:text-white"><Users className="mr-2" size={18} /> Students</TabsTrigger>
+              <TabsTrigger value="exams" className="rounded-xl py-3 data-[state=active]:bg-primary data-[state=active]:text-white"><ClipboardList className="mr-2" size={18} /> Exams</TabsTrigger>
               <TabsTrigger value="notices" className="rounded-xl py-3 data-[state=active]:bg-primary data-[state=active]:text-white"><Megaphone className="mr-2" size={18} /> Notices</TabsTrigger>
               <TabsTrigger value="resources" className="rounded-xl py-3 data-[state=active]:bg-primary data-[state=active]:text-white"><List className="mr-2" size={18} /> Resources</TabsTrigger>
             </TabsList>
@@ -304,11 +352,6 @@ export default function AdminPage() {
                         ))}
                       </select>
                     </div>
-                    {selectedStudentId && (
-                      <Badge variant="outline" className="h-12 px-6 rounded-xl font-bold">
-                        {selectedStudentResults?.length || 0} Records Found
-                      </Badge>
-                    )}
                   </div>
                 </div>
               )}
@@ -331,7 +374,15 @@ export default function AdminPage() {
                           <TableHead>Semester</TableHead>
                           <TableHead>Marks</TableHead>
                           <TableHead>Grade</TableHead>
-                          <TableHead>Exam Date</TableHead>
+                          <TableHead>Session</TableHead>
+                          <TableHead className="text-right px-8">Actions</TableHead>
+                        </>
+                      ) : activeTab === 'exams' ? (
+                        <>
+                          <TableHead className="px-8">Exam Title</TableHead>
+                          <TableHead>Semester</TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Status</TableHead>
                           <TableHead className="text-right px-8">Actions</TableHead>
                         </>
                       ) : (
@@ -363,21 +414,35 @@ export default function AdminPage() {
                         </TableCell>
                       </TableRow>
                     ))}
-                    {activeTab === 'results' && selectedStudentResults?.map((res) => (
-                      <TableRow key={res.id}>
-                        <TableCell className="px-8 font-bold">{res.subject}</TableCell>
-                        <TableCell>{res.semester}</TableCell>
-                        <TableCell>{res.marks}%</TableCell>
-                        <TableCell className="font-bold text-primary">{res.grade}</TableCell>
-                        <TableCell>{format(new Date(res.examDate), 'MMM d, yyyy')}</TableCell>
-                        <TableCell className="text-right px-8">
-                          <Button variant="ghost" size="icon" onClick={() => handleDelete('students', selectedStudentId!, 'results', res.id)} className="text-destructive"><Trash2 size={18} /></Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {activeTab === 'results' && selectedStudentResults?.map((res) => {
+                      const exam = exams?.find(e => e.id === res.examId);
+                      return (
+                        <TableRow key={res.id}>
+                          <TableCell className="px-8 font-bold">{res.subject}</TableCell>
+                          <TableCell>{res.semester}</TableCell>
+                          <TableCell>{res.marks}%</TableCell>
+                          <TableCell className="font-bold text-primary">{res.grade}</TableCell>
+                          <TableCell className="text-xs">{exam?.title || 'General'}</TableCell>
+                          <TableCell className="text-right px-8">
+                            <Button variant="ghost" size="icon" onClick={() => handleDelete('students', selectedStudentId!, 'results', res.id)} className="text-destructive"><Trash2 size={18} /></Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                     {activeTab === 'results' && !selectedStudentId && (
                       <TableRow><TableCell colSpan={6} className="text-center py-20 text-muted-foreground font-medium">Select a student from the dropdown to manage results.</TableCell></TableRow>
                     )}
+                    {activeTab === 'exams' && exams?.map((exam) => (
+                      <TableRow key={exam.id}>
+                        <TableCell className="px-8 font-bold">{exam.title}</TableCell>
+                        <TableCell>{exam.semester}</TableCell>
+                        <TableCell>{format(new Date(exam.examDate), 'MMM d, yyyy')}</TableCell>
+                        <TableCell><Badge variant={exam.status === 'completed' ? 'secondary' : 'default'}>{exam.status}</Badge></TableCell>
+                        <TableCell className="text-right px-8">
+                          <Button variant="ghost" size="icon" onClick={() => handleDelete('exams', exam.id)} className="text-destructive"><Trash2 size={18} /></Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
                     {activeTab === 'notices' && notices?.map((notice) => (
                       <TableRow key={notice.id}>
                         <TableCell className="px-8 font-medium">{notice.id.slice(0, 8)}</TableCell>

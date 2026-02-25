@@ -63,6 +63,37 @@
         "status"
       ]
     },
+    "Exam": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Exam",
+      "type": "object",
+      "description": "Represents an examination session or cycle within the campus.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Exam entity."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the examination (e.g., Final Semester Exam 2025)."
+        },
+        "semester": {
+          "type": "string",
+          "description": "The academic semester this exam belongs to."
+        },
+        "examDate": {
+          "type": "string",
+          "description": "The date when the exam cycle starts.",
+          "format": "date"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["upcoming", "active", "completed"],
+          "description": "The current status of the exam session."
+        }
+      },
+      "required": ["id", "title", "semester", "examDate", "status"]
+    },
     "Result": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Result",
@@ -76,6 +107,10 @@
         "studentId": {
           "type": "string",
           "description": "Reference to the Student entity this result belongs to."
+        },
+        "examId": {
+          "type": "string",
+          "description": "Reference to the Exam entity this result is associated with."
         },
         "subject": {
           "type": "string",
@@ -246,6 +281,22 @@
             {
               "name": "resultId",
               "description": "The unique identifier for a specific academic result document."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/exams/{examId}",
+        "definition": {
+          "entityName": "Exam",
+          "schema": {
+            "$ref": "#/backend/entities/Exam"
+          },
+          "description": "Stores examination sessions.",
+          "params": [
+            {
+              "name": "examId",
+              "description": "The unique identifier for a specific exam document."
             }
           ]
         }

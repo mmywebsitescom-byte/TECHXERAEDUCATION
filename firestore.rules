@@ -24,7 +24,6 @@ service cloud.firestore {
     }
 
     match /students/{studentUid} {
-      // Allow public fetching by ID for result lookups
       allow get: if true;
       allow list: if isAdmin() || request.query.limit == 1; 
       
@@ -33,10 +32,14 @@ service cloud.firestore {
       allow delete: if isAdmin();
 
       match /results/{resultId} {
-        // Results are public if you have the student's direct UID (which results page gets after verifying DOB)
         allow get, list: if true; 
         allow create, update, delete: if isAdmin();
       }
+    }
+
+    match /exams/{examId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
     }
 
     match /studyMaterials/{materialId} {
