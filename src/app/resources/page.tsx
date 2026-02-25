@@ -33,7 +33,7 @@ export default function ResourcesPage() {
     return (
       <div className="min-h-screen bg-[#F5F5FA]">
         <Navbar />
-        <div className="flex items-center justify-center pt-32">
+        <div className="flex items-center justify-center pt-24">
           <Loader2 className="animate-spin text-primary" size={48} />
         </div>
       </div>
@@ -44,8 +44,8 @@ export default function ResourcesPage() {
     <div className="min-h-screen bg-[#F5F5FA] text-foreground">
       <Navbar />
       
-      <main className="max-w-7xl mx-auto p-6 md:p-12 space-y-16 pt-32 pb-20">
-        <div className="space-y-6">
+      <main className="max-w-7xl mx-auto p-6 md:p-12 space-y-10 pt-24 pb-12">
+        <div className="space-y-4">
           <motion.div 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -53,18 +53,18 @@ export default function ResourcesPage() {
           >
             <BookOpen size={14} /> Repository
           </motion.div>
-          <h1 className="text-5xl md:text-6xl font-headline font-bold tracking-tighter">Campus Repository</h1>
-          <p className="text-muted-foreground text-lg max-w-2xl font-medium leading-relaxed">
-            Access the technical library for TechXera students. Explore a curated collection of lecture notes, research papers, and coding guides uploaded by faculty.
+          <h1 className="text-4xl md:text-5xl font-headline font-bold tracking-tighter">Campus Repository</h1>
+          <p className="text-muted-foreground text-base max-w-2xl font-medium leading-relaxed">
+            Access the technical library for TechXera students. Explore a curated collection of lecture notes, research papers, and coding guides.
           </p>
         </div>
 
         {/* Search Bar */}
-        <div className="flex flex-col md:flex-row gap-6 items-center bg-white p-4 md:p-6 rounded-[2.5rem] shadow-sm border border-white">
+        <div className="flex flex-col md:flex-row gap-4 items-center bg-white p-3 md:p-4 rounded-[2.5rem] shadow-sm border border-white">
           <div className="relative flex-1 w-full">
             <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-muted-foreground/40" size={20} />
             <input 
-              placeholder="Search resources, subjects, or types..." 
+              placeholder="Search resources..." 
               className="w-full pl-14 h-14 bg-transparent border-none focus:ring-0 text-foreground placeholder:text-muted-foreground/30 text-lg outline-none"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -72,17 +72,17 @@ export default function ResourcesPage() {
             />
           </div>
           <Button className="w-full md:w-auto h-14 px-10 bg-primary text-white hover:bg-primary/90 rounded-2xl font-bold transition-transform active:scale-95 shadow-lg shadow-primary/20">
-            Search Library
+            Search
           </Button>
         </div>
 
         {isLoading ? (
-          <div className="text-center py-20 flex flex-col items-center gap-4">
+          <div className="text-center py-12 flex flex-col items-center gap-4">
             <Loader2 className="animate-spin text-primary" size={48} />
             <p className="font-bold text-muted-foreground uppercase tracking-widest text-xs">Accessing Archives...</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <AnimatePresence mode="popLayout">
               {filtered.map((item, idx) => (
                 <motion.div
@@ -94,10 +94,10 @@ export default function ResourcesPage() {
                   exit={{ opacity: 0, scale: 0.9 }}
                 >
                   <Card className="bg-white border-none hover:bg-primary/[0.01] transition-all duration-500 rounded-[2.5rem] overflow-hidden group shadow-sm hover:shadow-2xl h-full flex flex-col">
-                    <CardContent className="p-10 flex-1 flex flex-col">
-                      <div className="flex justify-between items-start mb-8">
+                    <CardContent className="p-8 flex-1 flex flex-col">
+                      <div className="flex justify-between items-start mb-6">
                         <div className="p-4 bg-primary/5 text-primary rounded-2xl group-hover:scale-110 transition-transform duration-500">
-                          <FileText size={32} />
+                          <FileText size={28} />
                         </div>
                         <Badge variant="secondary" className="bg-muted text-muted-foreground border-none uppercase text-[10px] font-bold tracking-widest px-4 py-1.5 rounded-full">
                           {item.semester}
@@ -105,15 +105,15 @@ export default function ResourcesPage() {
                       </div>
                       
                       <div className="flex-1">
-                        <h3 className="text-2xl font-headline font-bold mb-4 tracking-tight line-clamp-2">{item.title}</h3>
-                        <div className="space-y-1 mb-8">
-                          <p className="text-primary text-sm font-bold uppercase tracking-widest">{item.subject}</p>
-                          <p className="text-muted-foreground/60 text-[10px] font-bold uppercase tracking-widest">{item.materialType}</p>
+                        <h3 className="text-xl font-headline font-bold mb-3 tracking-tight line-clamp-2">{item.title}</h3>
+                        <div className="space-y-1 mb-6">
+                          <p className="text-primary text-xs font-bold uppercase tracking-widest">{item.subject}</p>
+                          <p className="text-muted-foreground/60 text-[9px] font-bold uppercase tracking-widest">{item.materialType}</p>
                         </div>
                       </div>
 
-                      <div className="pt-8 border-t border-border/40 flex items-center justify-between">
-                        <span className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-[0.2em]">
+                      <div className="pt-6 border-t border-border/40 flex items-center justify-between">
+                        <span className="text-[9px] font-bold text-muted-foreground/40 uppercase tracking-[0.2em]">
                           {new Date(item.uploadDate).toLocaleDateString()}
                         </span>
                         <a 
@@ -122,8 +122,8 @@ export default function ResourcesPage() {
                           rel="noopener noreferrer"
                           className="inline-block"
                         >
-                          <Button variant="ghost" className="text-primary hover:bg-primary/5 px-4 rounded-xl flex items-center gap-2 font-bold text-xs uppercase tracking-widest">
-                            Access <Download size={16} />
+                          <Button variant="ghost" className="text-primary hover:bg-primary/5 px-4 rounded-xl flex items-center gap-2 font-bold text-[10px] uppercase tracking-widest">
+                            Access <Download size={14} />
                           </Button>
                         </a>
                       </div>
@@ -139,13 +139,12 @@ export default function ResourcesPage() {
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-center py-32 text-muted-foreground/40 border-2 border-dashed border-border/50 rounded-[2.5rem] bg-white/50"
+            className="text-center py-20 text-muted-foreground/40 border-2 border-dashed border-border/50 rounded-[2.5rem] bg-white/50"
           >
-            <div className="p-6 bg-muted/20 w-fit mx-auto rounded-full mb-4">
-              <Search size={48} className="opacity-20" />
+            <div className="p-4 bg-muted/20 w-fit mx-auto rounded-full mb-4">
+              <Search size={32} className="opacity-20" />
             </div>
-            <p className="font-bold uppercase tracking-widest text-sm">No repository matches found.</p>
-            <p className="text-xs mt-2 font-medium">Try adjusting your filters or search terms.</p>
+            <p className="font-bold uppercase tracking-widest text-xs">No repository matches found.</p>
           </motion.div>
         )}
       </main>

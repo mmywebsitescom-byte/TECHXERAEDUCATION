@@ -82,7 +82,7 @@ export default function Home() {
 
       <main>
         {/* Hero Section */}
-        <section className="relative py-20 px-6 overflow-hidden">
+        <section className="relative py-12 px-6 overflow-hidden">
           <motion.div 
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
@@ -94,12 +94,12 @@ export default function Home() {
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.2 }}
             >
-              <Badge variant="secondary" className="mb-6 py-2 px-6 bg-white/50 backdrop-blur-sm text-primary border-primary/20 font-bold text-sm rounded-full shadow-sm">
+              <Badge variant="secondary" className="mb-4 py-2 px-6 bg-white/50 backdrop-blur-sm text-primary border-primary/20 font-bold text-sm rounded-full shadow-sm">
                 <Sparkles size={14} className="mr-2 text-yellow-500" /> REVOLUTIONIZING CAMPUS LIFE
               </Badge>
             </motion.div>
             
-            <h1 className="font-headline text-5xl md:text-7xl font-bold mb-6 text-foreground leading-[0.95] tracking-tighter">
+            <h1 className="font-headline text-5xl md:text-7xl font-bold mb-4 text-foreground leading-[0.95] tracking-tighter">
               The Digital Core of <br />
               <motion.span 
                 className="text-primary bg-clip-text"
@@ -108,7 +108,7 @@ export default function Home() {
               </motion.span>
             </h1>
             
-            <p className="max-w-3xl mx-auto text-lg text-muted-foreground/80 mb-10 leading-relaxed font-medium">
+            <p className="max-w-3xl mx-auto text-lg text-muted-foreground/80 mb-8 leading-relaxed font-medium">
               A high-performance student portal engineered for TechXera. Manage results, resources, and announcements with a seamless, data-driven interface.
             </p>
             
@@ -127,14 +127,14 @@ export default function Home() {
           </motion.div>
         </section>
 
-        {/* Technologies Section - Compacted significantly */}
-        <section className="bg-[#0b0b0b] py-12 relative overflow-hidden">
-          <div className="max-w-7xl mx-auto px-6 text-center space-y-8">
+        {/* Technologies Section */}
+        <section className="bg-[#0b0b0b] py-6 relative overflow-hidden">
+          <div className="max-w-7xl mx-auto px-6 text-center space-y-4">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="space-y-3"
+              className="space-y-2"
             >
               <h2 className="text-3xl md:text-5xl font-headline font-bold tracking-tight text-white">
                 Technologies We Leverage
@@ -142,19 +142,19 @@ export default function Home() {
               <div className="flex justify-center">
                 <div className="w-16 h-1 bg-gradient-to-r from-primary to-secondary rounded-full"></div>
               </div>
-              <p className="text-[#888] text-base font-medium max-w-2xl mx-auto leading-relaxed">
+              <p className="text-[#888] text-sm font-medium max-w-2xl mx-auto leading-relaxed">
                 Driving innovation with a modern, high-performance tech stack.
               </p>
             </motion.div>
 
-            <div className="relative pt-4 flex flex-col items-center">
+            <div className="relative pt-2 flex flex-col items-center">
               {mounted && (
                 <div className="w-full relative z-10">
                   <LogoLoop 
                     logos={techStackLogos} 
                     speed={40} 
-                    logoHeight={40} 
-                    gap={60} 
+                    logoHeight={32} 
+                    gap={50} 
                     fadeOut={true} 
                     fadeOutColor="#0b0b0b"
                     scaleOnHover={true}
@@ -162,19 +162,19 @@ export default function Home() {
                 </div>
               )}
               
-              <div className="mt-8">
+              <div className="mt-4">
                 <motion.div 
                   animate={{ 
                     boxShadow: [
-                      "0 0 15px 3px rgba(125, 107, 219, 0.4)",
-                      "0 0 40px 15px rgba(125, 107, 219, 0.7)",
-                      "0 0 15px 3px rgba(125, 107, 219, 0.4)"
+                      "0 0 10px 2px rgba(125, 107, 219, 0.4)",
+                      "0 0 30px 10px rgba(125, 107, 219, 0.7)",
+                      "0 0 10px 2px rgba(125, 107, 219, 0.4)"
                     ]
                   }}
                   transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                  className="w-10 h-10 rounded-full bg-black border-[3px] border-primary/50 flex items-center justify-center"
+                  className="w-8 h-8 rounded-full bg-black border-[2px] border-primary/50 flex items-center justify-center"
                 >
-                  <div className="w-4 h-4 rounded-full bg-primary/80 blur-[2px]"></div>
+                  <div className="w-3 h-3 rounded-full bg-primary/80 blur-[2px]"></div>
                 </motion.div>
               </div>
             </div>
@@ -182,7 +182,7 @@ export default function Home() {
         </section>
 
         {/* Features Section */}
-        <section className="py-20 px-6">
+        <section className="py-12 px-6">
           <div className="max-w-7xl mx-auto">
             <motion.div 
               variants={container}
@@ -214,10 +214,10 @@ export default function Home() {
                 <motion.div key={i} variants={item}>
                   <Card className="glass group hover:bg-white transition-all duration-500 border-none rounded-[2rem] overflow-hidden h-full shadow-md hover:shadow-xl">
                     <CardContent className="p-8">
-                      <div className={`mb-6 p-5 w-fit ${feature.accent} rounded-2xl group-hover:scale-110 transition-transform duration-500`}>
+                      <div className={`mb-4 p-5 w-fit ${feature.accent} rounded-2xl group-hover:scale-110 transition-transform duration-500`}>
                         {feature.icon}
                       </div>
-                      <h3 className="text-2xl font-headline font-bold mb-3 tracking-tight">{feature.title}</h3>
+                      <h3 className="text-2xl font-headline font-bold mb-2 tracking-tight">{feature.title}</h3>
                       <p className="text-muted-foreground/80 leading-relaxed text-base font-medium">{feature.desc}</p>
                     </CardContent>
                   </Card>
@@ -228,7 +228,7 @@ export default function Home() {
         </section>
 
         {/* Stats Section */}
-        <section className="py-16 bg-white/40 backdrop-blur-sm border-y border-white/20">
+        <section className="py-10 bg-white/40 backdrop-blur-sm border-y border-white/20">
           <div className="max-w-7xl mx-auto px-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-10 text-center">
               {[
@@ -244,8 +244,8 @@ export default function Home() {
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1, type: "spring" }}
                 >
-                  <p className="text-4xl md:text-5xl font-headline font-bold text-primary mb-2 tracking-tighter">{stat.value}</p>
-                  <p className="text-muted-foreground uppercase text-xs font-bold tracking-[0.2em]">{stat.label}</p>
+                  <p className="text-4xl md:text-5xl font-headline font-bold text-primary mb-1 tracking-tighter">{stat.value}</p>
+                  <p className="text-muted-foreground uppercase text-[10px] font-bold tracking-[0.2em]">{stat.label}</p>
                 </motion.div>
               ))}
             </div>
@@ -254,20 +254,20 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="py-12 px-6 border-t border-white/20">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8 text-muted-foreground">
+      <footer className="py-6 px-6 border-t border-white/20">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6 text-muted-foreground">
           <div className="flex items-center gap-3">
             <div className="bg-primary p-2 rounded-xl text-white">
               <Zap size={20} />
             </div>
             <span className="font-headline font-bold text-xl text-foreground tracking-tight">TechXera Campus</span>
           </div>
-          <div className="flex gap-8 text-xs font-bold uppercase tracking-widest">
+          <div className="flex gap-8 text-[10px] font-bold uppercase tracking-widest">
             <Link href="#" className="hover:text-primary transition-colors">Security</Link>
             <Link href="#" className="hover:text-primary transition-colors">Privacy</Link>
             <Link href="#" className="hover:text-primary transition-colors">Help</Link>
           </div>
-          <p className="text-xs font-medium">© 2025 TechXera. High-Performance Campus Engine.</p>
+          <p className="text-[10px] font-medium">© 2025 TechXera. High-Performance Campus Engine.</p>
         </div>
       </footer>
     </div>
