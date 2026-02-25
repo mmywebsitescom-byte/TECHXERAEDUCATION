@@ -1,27 +1,81 @@
 
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Navbar from '@/components/Navbar'
 import TechBackground from '@/components/TechBackground'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { ClipboardList, Search, Loader2 } from 'lucide-react'
+import { ClipboardList, Search, Loader2, Download, AlertCircle, RefreshCw } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useFirestore } from '@/firebase'
+import { collection, query, where, getDocs, orderBy, DocumentData } from 'firebase/firestore'
+import { format } from 'date-fns'
+import { useToast } from '@/hooks/use-toast'
 
 export default function ResultsLookupPage() {
   const [loading, setLoading] = useState(false)
-  const [showResults, setShowResults] = useState(false)
+  const [studentIdInput, setStudentIdInput] = useState('')
+  const [dobInput, setDobInput] = useState('')
+  const [studentData, setStudentData] = useState<DocumentData | null>(null)
+  const [results, setResults] = useState<DocumentData[]>([])
+  const [error, setError] = useState<string | null>(null)
+  
+  const db = useFirestore()
+  const { toast } = useToast()
 
-  const handleLookup = (e: React.FormEvent) => {
+  const handleLookup = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!db) return
+    
     setLoading(true)
-    setTimeout(() => {
+    setError(null)
+    setStudentData(null)
+    setResults([])
+
+    try {
+      // 1. Find the student by ID
+      const studentsRef = collection(db, 'students')
+      const q = query(studentsRef, where('studentId', '==', studentIdInput))
+      const querySnapshot = await getDocs(q)
+
+      if (querySnapshot.empty) {
+        throw new Error("No student record found with this ID.")
+      }
+
+      const studentDoc = querySnapshot.docs[0]
+      const data = studentDoc.data()
+
+      // 2. Verify DOB
+      if (data.dateOfBirth !== dobInput) {
+        throw new Error("Student ID and Date of Birth do not match.")
+      }
+
+      // 3. Fetch Results
+      const resultsRef = collection(db, 'students', studentDoc.id, 'results')
+      const resultsSnapshot = await getDocs(query(resultsRef, orderBy('examDate', 'desc')))
+      
+      const fetchedResults = resultsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+
+      setStudentData(data)
+      setResults(fetchedResults)
+      
+      toast({
+        title: "Record Found",
+        description: `Academic transcript retrieved for ${data.firstName}.`
+      })
+    } catch (err: any) {
+      setError(err.message || "Something went wrong during the lookup.")
+      toast({
+        variant: "destructive",
+        title: "Lookup Failed",
+        description: err.message
+      })
+    } finally {
       setLoading(false)
-      setShowResults(true)
-    }, 1500)
+    }
   }
 
   return (
@@ -29,9 +83,9 @@ export default function ResultsLookupPage() {
       <TechBackground />
       <Navbar />
 
-      <main className="flex-1 max-w-7xl mx-auto w-full p-6 flex flex-col items-center justify-center">
+      <main className="flex-1 max-w-7xl mx-auto w-full p-6 flex flex-col items-center justify-center pt-24">
         <AnimatePresence mode="wait">
-          {!showResults ? (
+          {!studentData ? (
             <motion.div 
               key="lookup"
               initial={{ opacity: 0, scale: 0.95 }}
@@ -39,28 +93,47 @@ export default function ResultsLookupPage() {
               exit={{ opacity: 0, scale: 0.95 }}
               className="w-full max-w-lg"
             >
-              <Card className="glass border-border/40 shadow-2xl">
-                <CardHeader className="text-center pb-8 border-b border-border/40">
-                  <div className="mx-auto w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mb-4">
+              <Card className="glass border-border/40 shadow-2xl overflow-hidden">
+                <CardHeader className="text-center pb-8 border-b border-border/40 bg-primary/5">
+                  <div className="mx-auto w-16 h-16 bg-primary text-white rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-primary/20">
                     <ClipboardList size={32} />
                   </div>
                   <CardTitle className="text-3xl font-headline font-bold">Check Results</CardTitle>
-                  <CardDescription>Enter your student details to view your mark sheet</CardDescription>
+                  <CardDescription>Official student record lookup portal</CardDescription>
                 </CardHeader>
                 <form onSubmit={handleLookup}>
                   <CardContent className="space-y-6 pt-8">
+                    {error && (
+                      <div className="p-4 bg-destructive/10 text-destructive rounded-xl flex items-center gap-3 text-sm font-medium border border-destructive/20">
+                        <AlertCircle size={18} /> {error}
+                      </div>
+                    )}
                     <div className="space-y-2">
-                      <Label htmlFor="id">Student ID</Label>
-                      <Input id="id" placeholder="e.g. TX-2025-001" className="h-12 bg-background/50" required />
+                      <Label htmlFor="id">Student Identification Number</Label>
+                      <Input 
+                        id="id" 
+                        placeholder="e.g. TX-2025-001" 
+                        className="h-12 bg-background/50 text-lg font-medium" 
+                        required 
+                        value={studentIdInput}
+                        onChange={(e) => setStudentIdInput(e.target.value)}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="dob">Date of Birth</Label>
-                      <Input id="dob" type="date" className="h-12 bg-background/50" required />
+                      <Input 
+                        id="dob" 
+                        type="date" 
+                        className="h-12 bg-background/50" 
+                        required 
+                        value={dobInput}
+                        onChange={(e) => setDobInput(e.target.value)}
+                      />
                     </div>
                   </CardContent>
-                  <div className="p-6 pt-0 flex flex-col gap-4">
-                    <Button disabled={loading} className="w-full h-12 text-lg font-bold bg-primary hover:bg-primary/90">
-                      {loading ? <Loader2 className="animate-spin mr-2" /> : <Search className="mr-2" />}
+                  <div className="p-6 pt-0">
+                    <Button disabled={loading} className="w-full h-14 text-lg font-bold bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20">
+                      {loading ? <Loader2 className="animate-spin mr-2" /> : <Search className="mr-2" size={20} />}
                       {loading ? 'Searching Records...' : 'View Mark Sheet'}
                     </Button>
                   </div>
@@ -77,80 +150,88 @@ export default function ResultsLookupPage() {
             >
               <Card className="glass border-border/40 shadow-2xl overflow-hidden max-w-4xl mx-auto">
                 <CardHeader className="bg-primary text-white p-8">
-                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div>
                       <CardTitle className="text-3xl font-headline font-bold">Academic Transcript</CardTitle>
-                      <CardDescription className="text-primary-foreground/80 text-lg">Semester 4 • Academic Year 2024-25</CardDescription>
+                      <CardDescription className="text-primary-foreground/80 text-lg font-medium">
+                        Official Academic Record • TechXera Campus
+                      </CardDescription>
                     </div>
-                    <Button variant="secondary" className="bg-white text-primary hover:bg-white/90">
-                      Download PDF
-                    </Button>
+                    <div className="flex gap-4">
+                      <Button variant="secondary" className="bg-white text-primary hover:bg-white/90 font-bold h-12 px-6 rounded-xl">
+                        <Download className="mr-2" size={18} /> PDF
+                      </Button>
+                      <Button variant="ghost" className="text-white hover:bg-white/10 font-bold h-12 px-6 rounded-xl" onClick={() => setStudentData(null)}>
+                        <RefreshCw className="mr-2" size={18} /> Reset
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8 border-b border-border/40">
+                  <div className="p-8 grid grid-cols-1 md:grid-cols-3 gap-8 border-b border-border/40 bg-muted/5">
                     <div className="space-y-1">
                       <p className="text-xs text-muted-foreground uppercase font-bold tracking-widest">Student Name</p>
-                      <p className="text-xl font-bold">Alex Johnson</p>
+                      <p className="text-xl font-bold">{studentData.firstName} {studentData.lastName}</p>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground uppercase font-bold tracking-widest">Enrollment No.</p>
-                      <p className="text-xl font-bold">TX-2025-001</p>
+                      <p className="text-xs text-muted-foreground uppercase font-bold tracking-widest">Student ID</p>
+                      <p className="text-xl font-bold text-primary">{studentData.studentId}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground uppercase font-bold tracking-widest">Current Status</p>
+                      <Badge className="bg-green-500 hover:bg-green-600 text-white font-bold px-4 py-1">ENROLLED</Badge>
                     </div>
                   </div>
-                  <div className="p-0">
+                  
+                  <div className="overflow-x-auto">
                     <table className="w-full text-left">
                       <thead className="bg-muted/50 border-b border-border/40">
                         <tr>
-                          <th className="p-4 px-8 font-bold">Subject Code</th>
-                          <th className="p-4 font-bold">Subject Name</th>
-                          <th className="p-4 font-bold">Grade</th>
-                          <th className="p-4 px-8 text-right font-bold">Points</th>
+                          <th className="p-5 px-8 font-bold text-xs uppercase tracking-widest text-muted-foreground">Subject</th>
+                          <th className="p-5 font-bold text-xs uppercase tracking-widest text-muted-foreground">Semester</th>
+                          <th className="p-5 font-bold text-xs uppercase tracking-widest text-muted-foreground">Marks</th>
+                          <th className="p-5 px-8 text-right font-bold text-xs uppercase tracking-widest text-muted-foreground">Grade</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {[
-                          { code: "CS401", name: "Data Structures", grade: "A+", points: "10.0" },
-                          { code: "CS402", name: "Operating Systems", grade: "A", points: "9.0" },
-                          { code: "CS403", name: "Database Systems", grade: "A-", points: "8.0" },
-                          { code: "CS404", name: "Software Engineering", grade: "B+", points: "7.0" }
-                        ].map((item, i) => (
-                          <motion.tr 
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: i * 0.1 }}
-                            key={i} 
-                            className="border-b border-border/40 hover:bg-muted/20"
-                          >
-                            <td className="p-4 px-8 font-medium">{item.code}</td>
-                            <td className="p-4">{item.name}</td>
-                            <td className="p-4 font-bold text-primary">{item.grade}</td>
-                            <td className="p-4 px-8 text-right">{item.points}</td>
-                          </motion.tr>
-                        ))}
+                        {results.length > 0 ? (
+                          results.map((res, i) => (
+                            <motion.tr 
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: i * 0.1 }}
+                              key={res.id} 
+                              className="border-b border-border/40 hover:bg-muted/20 transition-colors"
+                            >
+                              <td className="p-5 px-8 font-bold">{res.subject}</td>
+                              <td className="p-5 text-sm font-medium">{res.semester}</td>
+                              <td className="p-5 text-sm">{res.marks}%</td>
+                              <td className="p-5 px-8 text-right font-black text-2xl text-primary">{res.grade}</td>
+                            </motion.tr>
+                          ))
+                        ) : (
+                          <tr><td colSpan={4} className="p-20 text-center text-muted-foreground font-medium">No results found for this student.</td></tr>
+                        )}
                       </tbody>
                     </table>
                   </div>
-                  <div className="p-8 bg-muted/30 flex justify-between items-center">
-                    <div className="text-center">
-                      <p className="text-xs text-muted-foreground uppercase font-bold mb-1">Total Credits</p>
-                      <p className="text-2xl font-headline font-bold">24.0</p>
+
+                  {results.length > 0 && (
+                    <div className="p-10 bg-primary/5 flex justify-between items-center border-t border-border/40">
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase font-bold mb-1">Total Subjects</p>
+                        <p className="text-3xl font-headline font-bold">{results.length}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-muted-foreground uppercase font-bold mb-1 tracking-widest">Final Result Status</p>
+                        <p className="text-2xl font-bold text-green-600 uppercase tracking-tight">PASSED WITH EXCELLENCE</p>
+                      </div>
                     </div>
-                    <div className="text-center">
-                      <p className="text-xs text-muted-foreground uppercase font-bold mb-1">SGPA</p>
-                      <p className="text-3xl font-headline font-bold text-primary">8.50</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-xs text-muted-foreground uppercase font-bold mb-1">Result Status</p>
-                      <p className="text-lg font-bold text-green-600">PASSED</p>
-                    </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
               <div className="mt-8 text-center">
-                <Button variant="link" onClick={() => setShowResults(false)} className="text-primary font-bold">
-                  Check another result
-                </Button>
+                <p className="text-sm text-muted-foreground italic">Disclaimer: This is a digitally generated transcript. For formal purposes, please request an original copy from the registrar.</p>
               </div>
             </motion.div>
           )}

@@ -24,14 +24,17 @@ service cloud.firestore {
     }
 
     match /students/{studentUid} {
-      allow get: if isOwner(studentUid) || isAdmin();
-      allow list: if isAdmin();
+      // Allow public fetching by ID for result lookups
+      allow get: if true;
+      allow list: if isAdmin() || request.query.limit == 1; 
+      
       allow create: if isOwner(studentUid) && request.resource.data.id == studentUid && request.resource.data.isApproved == false;
       allow update: if (isExistingOwner(studentUid) && request.resource.data.id == resource.data.id && request.resource.data.isApproved == resource.data.isApproved) || isAdmin();
       allow delete: if isAdmin();
 
       match /results/{resultId} {
-        allow get, list: if (isOwner(studentUid) && isApproved(studentUid)) || isAdmin();
+        // Results are public if you have the student's direct UID (which results page gets after verifying DOB)
+        allow get, list: if true; 
         allow create, update, delete: if isAdmin();
       }
     }

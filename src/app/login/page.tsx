@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Label } from '@/components/ui/label'
 import TechBackground from '@/components/TechBackground'
 import Navbar from '@/components/Navbar'
-import { Lock, User, ArrowRight, Loader2, GraduationCap, UserPlus } from 'lucide-react'
+import { Lock, User, ArrowRight, Loader2, GraduationCap, UserPlus, Calendar } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { useAuth, useUser, useFirestore } from '@/firebase'
@@ -22,6 +22,7 @@ function LoginForm() {
   const [password, setPassword] = useState('')
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
+  const [dateOfBirth, setDateOfBirth] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isSignUp, setIsSignUp] = useState(false)
   
@@ -57,6 +58,7 @@ function LoginForm() {
           firstName,
           lastName,
           email,
+          dateOfBirth,
           enrollmentDate: new Date().toISOString(),
           isApproved: false,
           status: 'pending',
@@ -94,7 +96,7 @@ function LoginForm() {
       className="w-full max-w-md"
     >
       <Card className="glass shadow-2xl border-border/40 overflow-hidden">
-        <CardHeader className="space-y-2 text-center pb-8 border-b border-border/40">
+        <CardHeader className="space-y-2 text-center pb-6 border-b border-border/40">
           <motion.div 
             initial={{ rotate: -20 }}
             animate={{ rotate: 0 }}
@@ -111,30 +113,46 @@ function LoginForm() {
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-6 pt-8">
+          <CardContent className="space-y-4 pt-6">
             {isSignUp && (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
-                  <Input 
-                    id="firstName" 
-                    placeholder="Alex" 
-                    required 
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                  />
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">First Name</Label>
+                    <Input 
+                      id="firstName" 
+                      placeholder="Alex" 
+                      required 
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Last Name</Label>
+                    <Input 
+                      id="lastName" 
+                      placeholder="Smith" 
+                      required 
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
-                  <Input 
-                    id="lastName" 
-                    placeholder="Smith" 
-                    required 
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                  />
+                  <Label htmlFor="dob">Date of Birth</Label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+                    <Input 
+                      id="dob" 
+                      type="date"
+                      className="pl-10 h-11 bg-background/50" 
+                      required 
+                      value={dateOfBirth}
+                      onChange={(e) => setDateOfBirth(e.target.value)}
+                    />
+                  </div>
                 </div>
-              </div>
+              </>
             )}
             <div className="space-y-2">
               <Label htmlFor="email">Email Address</Label>
@@ -144,7 +162,7 @@ function LoginForm() {
                   id="email" 
                   type="email"
                   placeholder="alex@techxera.edu" 
-                  className="pl-10 h-12 bg-background/50" 
+                  className="pl-10 h-11 bg-background/50" 
                   required 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -161,7 +179,7 @@ function LoginForm() {
                   id="password" 
                   type="password" 
                   placeholder="••••••••" 
-                  className="pl-10 h-12 bg-background/50" 
+                  className="pl-10 h-11 bg-background/50" 
                   required 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
