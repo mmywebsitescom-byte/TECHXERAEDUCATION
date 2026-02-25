@@ -81,7 +81,7 @@ export default function Home() {
       <Navbar />
 
       <main>
-        {/* Hero Section - Reduced height */}
+        {/* Hero Section */}
         <section className="relative py-20 px-6 overflow-hidden">
           <motion.div 
             initial={{ opacity: 0, y: 40 }}
@@ -127,34 +127,34 @@ export default function Home() {
           </motion.div>
         </section>
 
-        {/* Technologies Section - Reduced height */}
-        <section className="bg-[#0b0b0b] py-24 relative overflow-hidden">
-          <div className="max-w-7xl mx-auto px-6 text-center space-y-12">
+        {/* Technologies Section - Compacted significantly */}
+        <section className="bg-[#0b0b0b] py-12 relative overflow-hidden">
+          <div className="max-w-7xl mx-auto px-6 text-center space-y-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="space-y-4"
+              className="space-y-3"
             >
-              <h2 className="text-4xl md:text-6xl font-headline font-bold tracking-tight text-white">
+              <h2 className="text-3xl md:text-5xl font-headline font-bold tracking-tight text-white">
                 Technologies We Leverage
               </h2>
               <div className="flex justify-center">
-                <div className="w-20 h-1 bg-gradient-to-r from-primary to-secondary rounded-full"></div>
+                <div className="w-16 h-1 bg-gradient-to-r from-primary to-secondary rounded-full"></div>
               </div>
-              <p className="text-[#888] text-lg font-medium max-w-2xl mx-auto leading-relaxed">
+              <p className="text-[#888] text-base font-medium max-w-2xl mx-auto leading-relaxed">
                 Driving innovation with a modern, high-performance tech stack.
               </p>
             </motion.div>
 
-            <div className="relative pt-8 flex flex-col items-center">
+            <div className="relative pt-4 flex flex-col items-center">
               {mounted && (
                 <div className="w-full relative z-10">
                   <LogoLoop 
                     logos={techStackLogos} 
                     speed={40} 
-                    logoHeight={48} 
-                    gap={80} 
+                    logoHeight={40} 
+                    gap={60} 
                     fadeOut={true} 
                     fadeOutColor="#0b0b0b"
                     scaleOnHover={true}
@@ -162,26 +162,26 @@ export default function Home() {
                 </div>
               )}
               
-              <div className="mt-12">
+              <div className="mt-8">
                 <motion.div 
                   animate={{ 
                     boxShadow: [
-                      "0 0 20px 5px rgba(125, 107, 219, 0.4)",
-                      "0 0 50px 20px rgba(125, 107, 219, 0.7)",
-                      "0 0 20px 5px rgba(125, 107, 219, 0.4)"
+                      "0 0 15px 3px rgba(125, 107, 219, 0.4)",
+                      "0 0 40px 15px rgba(125, 107, 219, 0.7)",
+                      "0 0 15px 3px rgba(125, 107, 219, 0.4)"
                     ]
                   }}
                   transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                  className="w-12 h-12 rounded-full bg-black border-[3px] border-primary/50 flex items-center justify-center"
+                  className="w-10 h-10 rounded-full bg-black border-[3px] border-primary/50 flex items-center justify-center"
                 >
-                  <div className="w-5 h-5 rounded-full bg-primary/80 blur-[2px]"></div>
+                  <div className="w-4 h-4 rounded-full bg-primary/80 blur-[2px]"></div>
                 </motion.div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Features Section - Reduced height */}
+        {/* Features Section */}
         <section className="py-20 px-6">
           <div className="max-w-7xl mx-auto">
             <motion.div 
@@ -227,7 +227,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Stats Section - Reduced height */}
+        {/* Stats Section */}
         <section className="py-16 bg-white/40 backdrop-blur-sm border-y border-white/20">
           <div className="max-w-7xl mx-auto px-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-10 text-center">
@@ -253,7 +253,7 @@ export default function Home() {
         </section>
       </main>
 
-      {/* Footer - Reduced height */}
+      {/* Footer */}
       <footer className="py-12 px-6 border-t border-white/20">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8 text-muted-foreground">
           <div className="flex items-center gap-3">
