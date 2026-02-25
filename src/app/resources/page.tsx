@@ -30,7 +30,7 @@ export default function ResourcesPage() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-[#F5F5FA]">
         <Navbar />
         <div className="flex items-center justify-center pt-32">
           <Loader2 className="animate-spin text-primary" size={48} />
@@ -40,7 +40,7 @@ export default function ResourcesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-[#F5F5FA] text-foreground">
       <Navbar />
       
       <main className="max-w-7xl mx-auto p-6 md:p-12 space-y-16 pt-32 pb-20">
@@ -51,7 +51,7 @@ export default function ResourcesPage() {
           </p>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-6 items-center bg-white p-6 rounded-[2.5rem] shadow-sm border border-border/50">
+        <div className="flex flex-col md:flex-row gap-6 items-center bg-white p-6 rounded-[2.5rem] shadow-sm border border-white">
           <div className="relative flex-1 w-full">
             <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-muted-foreground/40" size={20} />
             <input 
@@ -82,7 +82,7 @@ export default function ResourcesPage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.9 }}
                 >
-                  <Card className="bg-white border-border/40 hover:bg-primary/[0.02] transition-all duration-500 rounded-[2.5rem] overflow-hidden group shadow-sm hover:shadow-xl">
+                  <Card className="bg-white border-none hover:bg-primary/[0.02] transition-all duration-500 rounded-[2.5rem] overflow-hidden group shadow-sm hover:shadow-xl">
                     <CardContent className="p-10">
                       <div className="flex justify-between items-start mb-8">
                         <div className="p-4 bg-primary/5 text-primary rounded-2xl group-hover:scale-110 transition-transform">
