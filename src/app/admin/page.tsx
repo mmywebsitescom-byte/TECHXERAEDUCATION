@@ -34,8 +34,7 @@ export default function AdminPage() {
   // Data fetching for the dashboard
   const noticesQuery = useMemoFirebase(() => db ? query(collection(db, 'notices'), orderBy('publishDate', 'desc')) : null, [db])
   const materialsQuery = useMemoFirebase(() => db ? query(collection(db, 'studyMaterials'), orderBy('uploadDate', 'desc')) : null, [db])
-  const globalResultsQuery = useMemoFirebase(() => db ? collection(db, 'results_global') : null, [db]) // Note: results are usually nested, using a mock global path for admin overview if needed, but for MVP we'll show notice/materials mainly or allow searching students.
-
+  
   const { data: notices, isLoading: isNoticesLoading } = useCollection(noticesQuery)
   const { data: materials, isLoading: isMaterialsLoading } = useCollection(materialsQuery)
 
@@ -153,7 +152,7 @@ export default function AdminPage() {
     <div className="min-h-screen bg-background text-foreground">
       <Navbar />
       
-      <main className="max-w-7xl mx-auto p-6 md:p-10">
+      <main className="max-w-7xl mx-auto p-6 md:p-10 pt-24 md:pt-32">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-10">
           <div className="flex items-center gap-4">
             <div className="p-4 bg-primary text-white rounded-2xl shadow-xl shadow-primary/20">
