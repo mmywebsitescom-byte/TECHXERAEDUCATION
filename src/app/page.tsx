@@ -43,14 +43,14 @@ const ReactIcon = () => (
 )
 
 const techStackLogos: LogoItem[] = [
-  { node: <div className="p-4 opacity-70 hover:opacity-100 transition-opacity"><VercelIcon /></div> },
-  { node: <div className="p-4 opacity-70 hover:opacity-100 transition-opacity"><GithubIcon /></div> },
-  { node: <div className="p-4 opacity-70 hover:opacity-100 transition-opacity"><div className="text-4xl font-bold font-code text-white">TS</div></div> },
-  { node: <div className="p-4 opacity-70 hover:opacity-100 transition-opacity"><div className="text-4xl font-bold font-code text-white">JS</div></div> },
-  { node: <div className="p-4 opacity-70 hover:opacity-100 transition-opacity"><NextJsIcon /></div> },
-  { node: <div className="p-4 opacity-70 hover:opacity-100 transition-opacity"><ReactIcon /></div> },
-  { node: <div className="p-4 opacity-70 hover:opacity-100 transition-opacity"><Zap size={48} className="text-white" /></div> },
-  { node: <div className="p-4 opacity-70 hover:opacity-100 transition-opacity"><Cpu size={48} className="text-white" /></div> },
+  { node: <div className="p-4 opacity-70 hover:opacity-100 transition-all"><VercelIcon /></div> },
+  { node: <div className="p-4 opacity-70 hover:opacity-100 transition-all"><GithubIcon /></div> },
+  { node: <div className="p-4 opacity-70 hover:opacity-100 transition-all"><div className="text-4xl font-bold font-code text-white">TS</div></div> },
+  { node: <div className="p-4 opacity-70 hover:opacity-100 transition-all"><div className="text-4xl font-bold font-code text-white">JS</div></div> },
+  { node: <div className="p-4 opacity-70 hover:opacity-100 transition-all"><NextJsIcon /></div> },
+  { node: <div className="p-4 opacity-70 hover:opacity-100 transition-all"><ReactIcon /></div> },
+  { node: <div className="p-4 opacity-70 hover:opacity-100 transition-all"><Zap size={48} className="text-white" /></div> },
+  { node: <div className="p-4 opacity-70 hover:opacity-100 transition-all"><Cpu size={48} className="text-white" /></div> },
 ]
 
 const container = {
@@ -127,8 +127,8 @@ export default function Home() {
           </motion.div>
         </section>
 
-        {/* Technologies Section - Dedicated Black Page Style */}
-        <section className="bg-black py-40 relative overflow-hidden">
+        {/* Technologies Section - Premium Design Inspired by LISZKA */}
+        <section className="bg-[#0b0b0b] py-40 relative overflow-hidden">
           <div className="max-w-7xl mx-auto px-6 text-center space-y-16">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -136,13 +136,11 @@ export default function Home() {
               viewport={{ once: true }}
               className="space-y-4"
             >
-              <h2 className="text-5xl md:text-7xl font-headline font-bold tracking-tight">
-                <span className="bg-gradient-to-r from-[#4CA9FF] to-[#A056FF] bg-clip-text text-transparent">
-                  Technologies We Leverage
-                </span>
+              <h2 className="text-5xl md:text-7xl font-headline font-bold tracking-tight text-white">
+                Technologies We Leverage
               </h2>
               <div className="flex justify-center">
-                <div className="w-24 h-1.5 bg-gradient-to-r from-[#4CA9FF] to-[#A056FF] rounded-full"></div>
+                <div className="w-24 h-1.5 bg-gradient-to-r from-primary to-secondary rounded-full"></div>
               </div>
               <p className="text-[#888] text-xl font-medium max-w-2xl mx-auto leading-relaxed">
                 Driving innovation with a modern, high-performance tech stack.
@@ -158,26 +156,26 @@ export default function Home() {
                     logoHeight={56} 
                     gap={100} 
                     fadeOut={true} 
-                    fadeOutColor="#000000"
+                    fadeOutColor="#0b0b0b"
                     scaleOnHover={true}
                   />
                 </div>
               )}
               
-              {/* Pulsing Purple Orb - Premium Signature Style */}
+              {/* Pulsing Orb Signature Style */}
               <div className="mt-20">
                 <motion.div 
                   animate={{ 
                     boxShadow: [
-                      "0 0 15px 5px rgba(160, 86, 255, 0.4)",
-                      "0 0 40px 15px rgba(160, 86, 255, 0.7)",
-                      "0 0 15px 5px rgba(160, 86, 255, 0.4)"
+                      "0 0 20px 5px rgba(125, 107, 219, 0.4)",
+                      "0 0 50px 20px rgba(125, 107, 219, 0.7)",
+                      "0 0 20px 5px rgba(125, 107, 219, 0.4)"
                     ]
                   }}
                   transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                  className="w-12 h-12 rounded-full bg-black border-[4px] border-[#A056FF]/50 flex items-center justify-center"
+                  className="w-14 h-14 rounded-full bg-black border-[4px] border-primary/50 flex items-center justify-center"
                 >
-                  <div className="w-5 h-5 rounded-full bg-[#A056FF]/80 blur-[2px]"></div>
+                  <div className="w-6 h-6 rounded-full bg-primary/80 blur-[2px]"></div>
                 </motion.div>
               </div>
             </div>
@@ -262,7 +260,7 @@ export default function Home() {
             <div className="bg-primary p-2 rounded-xl text-white">
               <Zap size={24} />
             </div>
-            <span className="font-headline font-bold text-2xl text-foreground tracking-tight">TechXera Campus</span>
+            <span className="font-headline font-bold text-2xl text-foreground tracking-tight text-white lg:text-foreground">TechXera Campus</span>
           </div>
           <div className="flex gap-12 text-sm font-bold uppercase tracking-widest">
             <Link href="#" className="hover:text-primary transition-colors">Security</Link>
