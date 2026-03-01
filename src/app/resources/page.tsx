@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect } from 'react'
@@ -31,7 +30,7 @@ export default function ResourcesPage() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-[#F5F5FA]">
+      <div className="min-h-screen bg-background">
         <Navbar />
         <div className="flex items-center justify-center pt-96">
           <Loader2 className="animate-spin text-primary" size={48} />
@@ -41,10 +40,10 @@ export default function ResourcesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F5FA] text-foreground">
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar />
       
-      <main className="max-w-6xl mx-auto p-6 md:p-10 space-y-12 pt-96 pb-32">
+      <main className="max-w-6xl mx-auto p-6 md:p-10 space-y-12 pt-48 pb-32">
         <div className="space-y-4">
           <motion.div 
             initial={{ opacity: 0, x: -20 }}
@@ -60,7 +59,7 @@ export default function ResourcesPage() {
         </div>
 
         {/* Search Bar */}
-        <div className="flex flex-col md:flex-row gap-4 items-center bg-white p-4 rounded-3xl shadow-sm border border-white">
+        <div className="flex flex-col md:flex-row gap-4 items-center bg-white p-4 rounded-3xl shadow-sm border border-border/40">
           <div className="relative flex-1 w-full">
             <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-muted-foreground/40" size={20} />
             <input 
@@ -93,7 +92,7 @@ export default function ResourcesPage() {
                   transition={{ delay: idx * 0.05 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                 >
-                  <Card className="bg-white border-none hover:bg-primary/[0.01] transition-all duration-300 rounded-[2rem] overflow-hidden group shadow-sm hover:shadow-md h-full flex flex-col">
+                  <Card className="bg-white border-none hover:bg-primary/[0.01] transition-all duration-300 rounded-[2rem] overflow-hidden group shadow-sm hover:shadow-md h-full flex flex-col border border-border/20">
                     <CardContent className="p-8 flex-1 flex flex-col">
                       <div className="flex justify-between items-start mb-6">
                         <div className="p-4 bg-primary/5 text-primary rounded-xl group-hover:scale-105 transition-transform duration-300">
@@ -139,7 +138,7 @@ export default function ResourcesPage() {
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-center py-20 text-muted-foreground/40 border-2 border-dashed border-border/50 rounded-[2rem] bg-white/50"
+            className="text-center py-20 text-muted-foreground/40 border-2 border-dashed border-border rounded-[2rem] bg-white/50"
           >
             <div className="p-6 bg-muted/20 w-fit mx-auto rounded-full mb-4">
               <Search size={32} className="opacity-20" />

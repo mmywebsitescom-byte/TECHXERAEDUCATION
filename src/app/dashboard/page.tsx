@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useEffect, useState } from 'react'
@@ -77,10 +76,7 @@ export default function DashboardPage() {
 
     setIsUpdatingAvatar(true)
     try {
-      // 1. Update Firebase Auth Profile
       await updateProfile(user, { photoURL: newAvatarUrl.trim() })
-
-      // 2. Update Firestore Student Document
       const studentDocRef = doc(db, 'students', user.uid)
       await updateDoc(studentDocRef, { photoURL: newAvatarUrl.trim() })
 
@@ -103,7 +99,7 @@ export default function DashboardPage() {
 
   if (!mounted || isUserLoading || isProfileLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F5F5FA]">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="animate-spin text-primary" size={48} />
       </div>
     )
@@ -111,22 +107,21 @@ export default function DashboardPage() {
 
   if (!user) return null
 
-  // Approval Check View
   if (profile && !profile.isApproved) {
     return (
-      <div className="min-h-screen bg-[#F5F5FA] flex flex-col">
+      <div className="min-h-screen bg-background flex flex-col">
         <Navbar />
         <main className="flex-1 flex items-center justify-center p-6 pt-32">
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
             <Card className="max-w-xl w-full text-center p-12 glass border-none rounded-[3rem] shadow-2xl">
-              <div className="mx-auto w-24 h-24 bg-orange-500/10 text-orange-500 rounded-[2rem] flex items-center justify-center mb-8">
+              <div className="mx-auto w-24 h-24 bg-primary/10 text-primary rounded-[2rem] flex items-center justify-center mb-8">
                 <ShieldAlert size={48} />
               </div>
               <h2 className="text-4xl font-headline font-bold mb-4">Account Pending Approval</h2>
               <p className="text-muted-foreground text-lg mb-8 leading-relaxed">
                 Your registration has been received. A campus administrator must review and approve your account before you can access academic records.
               </p>
-              <div className="p-6 bg-muted/50 rounded-2xl flex items-center gap-4 text-left">
+              <div className="p-6 bg-muted/50 rounded-2xl flex items-center gap-4 text-left border border-border">
                 <AlertCircle className="text-primary shrink-0" />
                 <p className="text-sm font-medium">Please contact the IT department if this takes longer than 24 hours. Your assigned Roll No is <span className="text-primary font-bold">{profile?.studentId}</span>.</p>
               </div>
@@ -146,7 +141,7 @@ export default function DashboardPage() {
   const currentPhotoURL = user?.photoURL || profile?.photoURL || `https://picsum.photos/seed/${user.uid}/300/300`
 
   return (
-    <div className="min-h-screen bg-[#F5F5FA]">
+    <div className="min-h-screen bg-background">
       <Navbar />
       
       <main className="max-w-7xl mx-auto w-full px-6 md:px-10 pt-32 pb-32 space-y-16">
@@ -215,7 +210,7 @@ export default function DashboardPage() {
                     {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
                   </button>
                 </div>
-                <div className="bg-muted text-muted-foreground px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest flex items-center gap-2">
+                <div className="bg-muted text-muted-foreground px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest flex items-center gap-2 border border-border">
                   <GraduationCap size={14} /> {profile?.currentSemester || 'SEMESTER 1'}
                 </div>
               </div>
@@ -223,7 +218,7 @@ export default function DashboardPage() {
           </div>
           
           <div className="flex gap-8 w-full lg:w-auto">
-            <div className="flex-1 lg:flex-none bg-white p-6 md:p-8 rounded-[2.5rem] shadow-sm border border-white text-center min-w-[140px]">
+            <div className="flex-1 lg:flex-none bg-white p-6 md:p-8 rounded-[2.5rem] shadow-sm border border-border/50 text-center min-w-[140px]">
               <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mb-2">Rank</p>
               <p className="text-3xl md:text-4xl font-headline font-bold text-primary tracking-tighter">#04</p>
             </div>
@@ -242,7 +237,7 @@ export default function DashboardPage() {
         >
           <motion.div variants={itemVariant} className="lg:col-span-2">
             <Card className="glass border-none rounded-[3rem] overflow-hidden h-full shadow-lg">
-              <CardHeader className="p-8 md:p-12 border-b border-white/40 bg-white/30">
+              <CardHeader className="p-8 md:p-12 border-b border-border/40 bg-white/30">
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle className="text-3xl md:text-4xl font-headline font-bold tracking-tight">Academic Engine</CardTitle>
@@ -261,7 +256,7 @@ export default function DashboardPage() {
                       <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#888', fontSize: 13, fontWeight: 700 }} />
                       <YAxis axisLine={false} tickLine={false} tick={{ fill: '#888', fontSize: 13, fontWeight: 700 }} domain={[0, 100]} />
                       <Tooltip 
-                        cursor={{ fill: 'rgba(125, 107, 219, 0.05)' }}
+                        cursor={{ fill: 'rgba(227, 106, 106, 0.05)' }}
                         contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 30px 60px -15px rgba(0, 0, 0, 0.1)', padding: '24px' }}
                       />
                       <Bar dataKey="score" radius={[15, 15, 0, 0]} barSize={60}>
@@ -310,7 +305,7 @@ export default function DashboardPage() {
                 whileHover={{ scale: 1.05, y: -4 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => router.push('/resources')}
-                className="flex flex-col items-center justify-center p-8 md:p-10 bg-white text-foreground rounded-[2.5rem] shadow-sm hover:shadow-xl transition-all border-none"
+                className="flex flex-col items-center justify-center p-8 md:p-10 bg-white text-foreground rounded-[2.5rem] shadow-sm hover:shadow-xl transition-all border border-border/50"
               >
                 <div className="p-4 md:p-5 bg-primary/5 rounded-2xl mb-5 text-primary">
                   <BookOpen size={36} />
