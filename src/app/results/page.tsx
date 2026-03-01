@@ -12,7 +12,6 @@ import { ClipboardList, Search, Loader2, Download, AlertCircle, RefreshCw } from
 import { motion, AnimatePresence } from 'framer-motion'
 import { useFirestore } from '@/firebase'
 import { collection, query, where, getDocs, orderBy, DocumentData, limit } from 'firebase/firestore'
-import { format } from 'date-fns'
 import { useToast } from '@/hooks/use-toast'
 
 export default function ResultsLookupPage() {
@@ -54,6 +53,7 @@ export default function ResultsLookupPage() {
 
     try {
       const studentsRef = collection(db, 'students')
+      // Added limit(1) to comply with security rules and prevent permission errors
       const q = query(studentsRef, where('studentId', '==', trimmedId), limit(1))
       const querySnapshot = await getDocs(q)
 
@@ -73,6 +73,7 @@ export default function ResultsLookupPage() {
       
       let fetchedResults = resultsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
       
+      // Client-side sorting as a fallback for missing indexes
       fetchedResults.sort((a, b) => {
         const dateA = a.examDate ? new Date(a.examDate).getTime() : 0
         const dateB = b.examDate ? new Date(b.examDate).getTime() : 0
@@ -98,6 +99,7 @@ export default function ResultsLookupPage() {
     }
   }
 
+  // Prevents hydration and chunk load mismatches by waiting for mount
   if (!mounted) {
     return (
       <div className="min-h-screen relative flex flex-col">
