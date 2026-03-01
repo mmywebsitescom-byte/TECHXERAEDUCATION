@@ -11,7 +11,7 @@ import Navbar, { TechXeraLogo } from '@/components/Navbar'
 import { Lock, User, ArrowRight, Loader2, UserPlus, Calendar, CreditCard } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { useAuth, useUser, useFirestore } from '@/firebase'
+import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase'
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth'
 import { doc, setDoc } from 'firebase/firestore'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -35,6 +35,10 @@ function LoginForm() {
   const { toast } = useToast()
 
   const redirectTo = searchParams.get('redirect') || '/dashboard'
+
+  // Dynamic branding fetch
+  const settingsRef = useMemoFirebase(() => (db ? doc(db, 'settings', 'site-config') : null), [db])
+  const { data: settings } = useDoc(settingsRef)
 
   useEffect(() => {
     if (!isUserLoading && user) {
@@ -104,7 +108,10 @@ function LoginForm() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="mx-auto flex items-center justify-center mb-2"
           >
-            <TechXeraLogo className="w-20 h-20 shadow-xl shadow-primary/20" />
+            <TechXeraLogo 
+              className="w-20 h-20 shadow-xl shadow-primary/20" 
+              customUrl={settings?.logoUrl}
+            />
           </motion.div>
           <CardTitle className="text-3xl font-headline font-bold">
             {isSignUp ? "Student Sign Up" : "Student Login"}
