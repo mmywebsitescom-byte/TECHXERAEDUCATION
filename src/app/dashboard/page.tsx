@@ -6,11 +6,13 @@ import Navbar from '@/components/Navbar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
-import { GraduationCap, Award, BookOpen, Clock, TrendingUp, Loader2, Sparkles, AlertCircle, ShieldAlert } from 'lucide-react'
+import { GraduationCap, Award, BookOpen, Clock, TrendingUp, Loader2, Sparkles, AlertCircle, ShieldAlert, CreditCard, Copy, Check } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase'
 import { doc, collection } from 'firebase/firestore'
 import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/button'
+import { useToast } from '@/hooks/use-toast'
 
 const container = {
   hidden: { opacity: 0 },
@@ -29,9 +31,11 @@ const itemVariant = {
 
 export default function DashboardPage() {
   const [mounted, setMounted] = useState(false)
+  const [copied, setCopied] = useState(false)
   const { user, isUserLoading } = useUser()
   const db = useFirestore()
   const router = useRouter()
+  const { toast } = useToast()
 
   useEffect(() => {
     setMounted(true)
@@ -48,6 +52,16 @@ export default function DashboardPage() {
       router.push('/login')
     }
   }, [user, isUserLoading, router, mounted])
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
+    setCopied(true)
+    toast({
+      title: "Copied!",
+      description: "Roll Number copied to clipboard.",
+    })
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   if (!mounted || isUserLoading || isProfileLoading) {
     return (
@@ -76,7 +90,7 @@ export default function DashboardPage() {
               </p>
               <div className="p-6 bg-muted/50 rounded-2xl flex items-center gap-4 text-left">
                 <AlertCircle className="text-primary shrink-0" />
-                <p className="text-sm font-medium">Please contact the IT department if this takes longer than 24 hours.</p>
+                <p className="text-sm font-medium">Please contact the IT department if this takes longer than 24 hours. Your assigned Roll No is <span className="text-primary font-bold">{profile?.studentId}</span>.</p>
               </div>
             </Card>
           </motion.div>
@@ -121,9 +135,17 @@ export default function DashboardPage() {
               <h1 className="text-5xl md:text-6xl font-headline font-bold tracking-tighter">
                 Hello, {profile?.firstName || 'Student'}!
               </h1>
-              <p className="text-muted-foreground/80 font-bold text-sm uppercase tracking-[0.2em] flex items-center gap-2">
-                <GraduationCap size={18} /> {profile?.studentId || 'STUDENT'} • {profile?.currentSemester || 'SEMESTER'}
-              </p>
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="bg-primary/10 text-primary px-4 py-1.5 rounded-full text-xs font-black tracking-widest flex items-center gap-2">
+                  <CreditCard size={14} /> ROLL NO: {profile?.studentId || 'N/A'}
+                  <button onClick={() => copyToClipboard(profile?.studentId || '')} className="hover:text-primary/70 transition-colors">
+                    {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                  </button>
+                </div>
+                <div className="bg-muted text-muted-foreground px-4 py-1.5 rounded-full text-xs font-black tracking-widest flex items-center gap-2">
+                  <GraduationCap size={14} /> {profile?.currentSemester || 'SEMESTER 1'}
+                </div>
+              </div>
             </div>
           </div>
           

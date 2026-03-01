@@ -14,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Shield, List, GraduationCap, Megaphone, Loader2, UserCheck, Trash2, Users, CheckCircle, XCircle, Search, ClipboardList } from 'lucide-react'
+import { Plus, Shield, List, GraduationCap, Megaphone, Loader2, UserCheck, Trash2, Users, CheckCircle, XCircle, Search, ClipboardList, CreditCard } from 'lucide-react'
 import { useFirestore, useUser, useDoc, useMemoFirebase, useCollection, errorEmitter, FirestorePermissionError } from '@/firebase'
 import { doc, setDoc, collection, deleteDoc, query, orderBy, updateDoc } from 'firebase/firestore'
 import { useToast } from '@/hooks/use-toast'
@@ -372,7 +372,7 @@ export default function AdminPage() {
                         <>
                           <TableHead className="px-8">Name</TableHead>
                           <TableHead>Email</TableHead>
-                          <TableHead>Student ID</TableHead>
+                          <TableHead>Roll Number</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead className="text-right px-8">Actions</TableHead>
                         </>
@@ -409,16 +409,21 @@ export default function AdminPage() {
                       <TableRow key={student.id}>
                         <TableCell className="px-8 font-bold">{student.firstName} {student.lastName}</TableCell>
                         <TableCell>{student.email}</TableCell>
-                        <TableCell className="font-medium text-xs">{student.studentId || 'N/A'}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <CreditCard size={14} className="text-primary" />
+                            <span className="font-bold text-sm tracking-tight">{student.studentId || 'N/A'}</span>
+                          </div>
+                        </TableCell>
                         <TableCell><Badge variant={student.isApproved ? "default" : "secondary"}>{student.status || 'pending'}</Badge></TableCell>
                         <TableCell className="text-right px-8 space-x-2">
-                          <Button variant="ghost" size="icon" onClick={() => { setSelectedStudentId(student.id); setActiveTab('results'); }}><Search size={18} /></Button>
+                          <Button variant="ghost" size="icon" title="View Results" onClick={() => { setSelectedStudentId(student.id); setActiveTab('results'); }}><Search size={18} /></Button>
                           {!student.isApproved ? (
-                            <Button variant="ghost" size="icon" onClick={() => handleApproveStudent(student.id, true)} className="text-green-600"><CheckCircle size={18} /></Button>
+                            <Button variant="ghost" size="icon" title="Approve" onClick={() => handleApproveStudent(student.id, true)} className="text-green-600"><CheckCircle size={18} /></Button>
                           ) : (
-                            <Button variant="ghost" size="icon" onClick={() => handleApproveStudent(student.id, false)} className="text-orange-600"><XCircle size={18} /></Button>
+                            <Button variant="ghost" size="icon" title="Deactivate" onClick={() => handleApproveStudent(student.id, false)} className="text-orange-600"><XCircle size={18} /></Button>
                           )}
-                          <Button variant="ghost" size="icon" onClick={() => handleDelete('students', student.id)} className="text-destructive"><Trash2 size={18} /></Button>
+                          <Button variant="ghost" size="icon" title="Delete" onClick={() => handleDelete('students', student.id)} className="text-destructive"><Trash2 size={18} /></Button>
                         </TableCell>
                       </TableRow>
                     ))}
