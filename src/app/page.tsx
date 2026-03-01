@@ -361,9 +361,14 @@ export default function Home() {
 
         {/* Bottom Bar */}
         <div className="max-w-7xl mx-auto pt-16 mt-16 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-8">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em]">
-            © 2025 {settings?.siteName || 'TechXera Campus'}. All Rights Reserved.
-          </p>
+          <div className="flex flex-col items-center md:items-start gap-2">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em]">
+              © 2025 {settings?.siteName || 'TechXera Campus'}. All Rights Reserved.
+            </p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary/60">
+              Powered by <a href="https://logisaar.in" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">logisaar.in</a>
+            </p>
+          </div>
           <div className="flex gap-10 text-[10px] font-bold uppercase tracking-[0.2em]">
             <Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
             <Link href="/security" className="hover:text-primary transition-colors">Security Protocols</Link>
