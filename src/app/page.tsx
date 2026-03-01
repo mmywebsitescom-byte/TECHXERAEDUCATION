@@ -2,7 +2,7 @@
 "use client"
 
 import React, { useEffect, useState } from 'react'
-import Navbar from '@/components/Navbar'
+import Navbar, { TechXeraLogo } from '@/components/Navbar'
 import TechBackground from '@/components/TechBackground'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -268,9 +268,7 @@ export default function Home() {
           {/* Brand Column */}
           <div className="lg:col-span-2 space-y-6">
             <Link href="/" className="flex items-center gap-4 group">
-              <div className="bg-primary p-3 rounded-xl text-white shadow-lg shadow-primary/30">
-                <Zap size={24} />
-              </div>
+              <TechXeraLogo className="w-16 h-16 shadow-lg shadow-primary/30" />
               <span className="font-headline font-bold text-2xl text-foreground tracking-tight">TechXera Campus</span>
             </Link>
             <p className="text-sm font-medium leading-relaxed max-w-sm">

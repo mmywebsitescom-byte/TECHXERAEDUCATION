@@ -7,8 +7,8 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import TechBackground from '@/components/TechBackground'
-import Navbar from '@/components/Navbar'
-import { Shield, Lock, User, ArrowRight, Loader2, Info, UserPlus } from 'lucide-react'
+import Navbar, { TechXeraLogo } from '@/components/Navbar'
+import { Lock, User, ArrowRight, Loader2, Info } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { useAuth, useUser } from '@/firebase'
@@ -77,9 +77,9 @@ function AdminLoginForm() {
             initial={{ rotate: -20 }}
             animate={{ rotate: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="mx-auto w-16 h-16 bg-primary text-white rounded-2xl flex items-center justify-center mb-2"
+            className="mx-auto flex items-center justify-center mb-2"
           >
-            {isSignUp ? <UserPlus size={32} /> : <Shield size={32} />}
+            <TechXeraLogo className="w-20 h-20 shadow-xl shadow-primary/20" />
           </motion.div>
           <CardTitle className="text-3xl font-headline font-bold">
             {isSignUp ? "Admin Registration" : "Admin Console"}
