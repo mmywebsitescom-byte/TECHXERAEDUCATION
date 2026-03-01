@@ -14,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Shield, List, GraduationCap, Megaphone, Loader2, UserCheck, Trash2, Users, CheckCircle, XCircle, Search, ClipboardList, CreditCard, Filter, Edit2 } from 'lucide-react'
+import { Plus, Shield, List, GraduationCap, Megaphone, Loader2, UserCheck, Trash2, Users, CheckCircle, XCircle, Search, ClipboardList, CreditCard, Filter, Edit2, ArrowLeft } from 'lucide-react'
 import { useFirestore, useUser, useDoc, useMemoFirebase, useCollection, errorEmitter, FirestorePermissionError } from '@/firebase'
 import { doc, setDoc, collection, deleteDoc, query, orderBy, updateDoc, getDocs, where } from 'firebase/firestore'
 import { useToast } from '@/hooks/use-toast'
@@ -25,19 +25,20 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState('results')
   const [isCreating, setIsCreating] = useState(false)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isManageResultsOpen, setIsManageResultsOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
   
-  // Selected Student for Results
+  // Selection States
+  const [selectedExamId, setSelectedExamId] = useState<string | null>(null)
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
-  const [viewingExamId, setViewingExamId] = useState<string | null>(null)
-  const [examResults, setExamResults] = useState<any[]>([])
-  const [isFetchingExamResults, setIsFetchingExamResults] = useState(false)
+  
+  // Results states
   const [editingResultId, setEditingResultId] = useState<string | null>(null)
 
   // Form States
   const [newNotice, setNewNotice] = useState({ title: '', description: '', isUrgent: false })
   const [newMaterial, setNewMaterial] = useState({ title: '', subject: '', semester: '', fileUrl: '', materialType: 'Notes' })
-  const [newResult, setNewResult] = useState({ examId: '', subject: '', semester: '', marks: 0, grade: '', examDate: new Date().toISOString().split('T')[0] })
+  const [newResult, setNewResult] = useState({ subject: '', semester: '', marks: 0, grade: '', examDate: new Date().toISOString().split('T')[0] })
   const [newExam, setNewExam] = useState({ title: '', semester: '', examDate: new Date().toISOString().split('T')[0], status: 'upcoming' })
 
   const { user, isUserLoading } = useUser()
@@ -49,7 +50,7 @@ export default function AdminPage() {
   const { data: adminDoc, isLoading: isAdminLoading } = useDoc(adminRef)
   const isAdmin = !!adminDoc
 
-  // Fetch collections only if user is an admin
+  // Fetch collections
   const noticesQuery = useMemoFirebase(() => (db && isAdmin) ? query(collection(db, 'notices'), orderBy('publishDate', 'desc')) : null, [db, isAdmin])
   const materialsQuery = useMemoFirebase(() => (db && isAdmin) ? query(collection(db, 'studyMaterials'), orderBy('uploadDate', 'desc')) : null, [db, isAdmin])
   const studentsQuery = useMemoFirebase(() => (db && isAdmin) ? collection(db, 'students') : null, [db, isAdmin])
@@ -60,9 +61,12 @@ export default function AdminPage() {
   const { data: students } = useCollection(studentsQuery)
   const { data: exams } = useCollection(examsQuery)
 
-  // Results query for selected student
+  // Results for specific student+exam context
   const resultsQuery = useMemoFirebase(() => (db && selectedStudentId && isAdmin) ? query(collection(db, 'students', selectedStudentId, 'results'), orderBy('examDate', 'desc')) : null, [db, selectedStudentId, isAdmin])
-  const { data: selectedStudentResults } = useCollection(resultsQuery)
+  const { data: allStudentResults } = useCollection(resultsQuery)
+  
+  // Filtered results for the selected exam
+  const selectedStudentExamResults = allStudentResults?.filter(r => r.examId === selectedExamId) || []
 
   useEffect(() => {
     setMounted(true)
@@ -187,22 +191,20 @@ export default function AdminPage() {
   const handleEditResult = (res: any) => {
     setEditingResultId(res.id)
     setNewResult({
-      examId: res.examId || '',
       subject: res.subject,
       semester: res.semester,
       marks: res.marks,
       grade: res.grade,
       examDate: res.examDate ? res.examDate.split('T')[0] : new Date().toISOString().split('T')[0]
     })
-    setIsDialogOpen(true)
   }
 
-  const handleAddResult = (e: React.FormEvent) => {
+  const handleSaveResult = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!db || !isAdmin || !selectedStudentId) return
+    if (!db || !isAdmin || !selectedStudentId || !selectedExamId) return
     setIsCreating(true)
 
-    const selectedExam = exams?.find(ex => ex.id === newResult.examId)
+    const selectedExam = exams?.find(ex => ex.id === selectedExamId)
     const docRef = editingResultId 
       ? doc(db, 'students', selectedStudentId, 'results', editingResultId)
       : doc(collection(db, 'students', selectedStudentId, 'results'))
@@ -211,6 +213,7 @@ export default function AdminPage() {
       ...newResult,
       id: docRef.id,
       studentId: selectedStudentId,
+      examId: selectedExamId,
       examTitle: selectedExam?.title || 'General Assessment',
       examDate: new Date(newResult.examDate).toISOString()
     }
@@ -218,39 +221,21 @@ export default function AdminPage() {
     setDoc(docRef, data, { merge: true })
       .then(() => {
         toast({ title: editingResultId ? "Result Updated" : "Result Recorded" })
-        setNewResult({ examId: '', subject: '', semester: '', marks: 0, grade: '', examDate: new Date().toISOString().split('T')[0] })
+        setNewResult({ subject: '', semester: '', marks: 0, grade: '', examDate: new Date().toISOString().split('T')[0] })
         setEditingResultId(null)
-        setIsDialogOpen(false)
       })
       .finally(() => setIsCreating(false))
   }
 
-  const fetchExamResults = async (examId: string) => {
-    if (!db || !students) return
-    setIsFetchingExamResults(true)
-    setViewingExamId(examId)
-    
-    const results: any[] = []
-    
-    for (const student of students) {
-      const q = query(collection(db, 'students', student.id, 'results'), where('examId', '==', examId))
-      const snap = await getDocs(q)
-      snap.forEach(doc => {
-        results.push({ ...doc.data(), studentName: `${student.firstName} ${student.lastName}`, studentRoll: student.studentId })
-      })
-    }
-    
-    setExamResults(results)
-    setIsFetchingExamResults(false)
-  }
-
-  const handleOpenCreateDialog = () => {
+  const handleOpenManageResults = (studentId: string) => {
+    setSelectedStudentId(studentId)
+    setIsManageResultsOpen(true)
     setEditingResultId(null)
-    setNewResult({ examId: '', subject: '', semester: '', marks: 0, grade: '', examDate: new Date().toISOString().split('T')[0] })
-    setIsDialogOpen(true)
+    setNewResult({ subject: '', semester: '', marks: 0, grade: '', examDate: new Date().toISOString().split('T')[0] })
   }
 
   const selectedStudent = students?.find(s => s.id === selectedStudentId)
+  const selectedExam = exams?.find(e => e.id === selectedExamId)
 
   if (!mounted || isUserLoading || isAdminLoading) {
     return (
@@ -266,7 +251,7 @@ export default function AdminPage() {
     <div className="min-h-screen bg-background text-foreground">
       <Navbar />
       
-      <main className="max-w-7xl mx-auto p-6 md:p-10 pt-64 pb-20">
+      <main className="max-w-7xl mx-auto p-6 md:p-10 pt-48 pb-20">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-12">
           <div className="flex items-center gap-6">
             <div className="p-5 bg-primary text-white rounded-[2rem] shadow-2xl shadow-primary/20">
@@ -287,11 +272,10 @@ export default function AdminPage() {
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button 
-                  disabled={!isAdmin || (activeTab === 'results' && !selectedStudentId)} 
-                  onClick={handleOpenCreateDialog}
+                  disabled={!isAdmin || activeTab === 'results'} 
                   className="h-14 px-8 bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 text-white rounded-2xl font-bold"
                 >
-                  <Plus className="mr-2" size={24} /> Create Record
+                  <Plus className="mr-2" size={24} /> Create New
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[550px] rounded-[2rem]">
@@ -299,8 +283,7 @@ export default function AdminPage() {
                   <DialogTitle className="text-2xl font-headline font-bold">
                     {activeTab === 'notices' ? 'Publish Announcement' : 
                      activeTab === 'resources' ? 'Upload Resource' : 
-                     activeTab === 'exams' ? 'Schedule Exam' :
-                     editingResultId ? `Edit Result: ${selectedStudent?.firstName}` : `Record Result: ${selectedStudent?.firstName || 'Student'}`}
+                     activeTab === 'exams' ? 'Schedule Exam' : 'New Entry'}
                   </DialogTitle>
                   <DialogDescription>
                     Fill in the details below to update the campus ecosystem.
@@ -344,33 +327,7 @@ export default function AdminPage() {
                     </div>
                     <Button type="submit" disabled={isCreating} className="w-full h-12 rounded-xl text-lg font-bold">Establish Exam Cycle</Button>
                   </form>
-                ) : (
-                  <form onSubmit={handleAddResult} className="space-y-6 pt-6">
-                    <div className="space-y-2">
-                      <Label>Associated Exam Cycle</Label>
-                      <Select value={newResult.examId} onValueChange={(val) => setNewResult({ ...newResult, examId: val })}>
-                        <SelectTrigger className="h-12"><SelectValue placeholder="Link to existing session" /></SelectTrigger>
-                        <SelectContent>
-                          {exams?.map(exam => (
-                            <SelectItem key={exam.id} value={exam.id}>{exam.title}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2"><Label>Subject Code/Name</Label><Input required value={newResult.subject} onChange={e => setNewResult({ ...newResult, subject: e.target.value })} /></div>
-                      <div className="space-y-2"><Label>Semester</Label><Input required value={newResult.semester} onChange={e => setNewResult({ ...newResult, semester: e.target.value })} /></div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2"><Label>Percentage Marks</Label><Input required type="number" min="0" max="100" value={newResult.marks} onChange={e => setNewResult({ ...newResult, marks: Number(e.target.value) })} /></div>
-                      <div className="space-y-2"><Label>Academic Grade</Label><Input required placeholder="O, A+, B..." value={newResult.grade} onChange={e => setNewResult({ ...newResult, grade: e.target.value })} /></div>
-                    </div>
-                    <div className="space-y-2"><Label>Evaluation Date</Label><Input required type="date" value={newResult.examDate} onChange={e => setNewResult({ ...newResult, examDate: e.target.value })} /></div>
-                    <Button type="submit" disabled={isCreating} className="w-full h-12 rounded-xl text-lg font-bold">
-                      {editingResultId ? "Update Result" : "Finalize Grade"}
-                    </Button>
-                  </form>
-                )}
+                ) : null}
               </DialogContent>
             </Dialog>
           </div>
@@ -397,22 +354,16 @@ export default function AdminPage() {
                 <div className="p-10 border-b border-border/40 bg-muted/20">
                   <div className="flex flex-col md:flex-row gap-8 items-end">
                     <div className="flex-1 space-y-4">
-                      <Label className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Select Student to Manage Academic Records</Label>
+                      <Label className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Step 1: Select Exam Cycle to Manage Results</Label>
                       <select 
                         className="flex h-14 w-full rounded-3xl border-2 border-primary/10 bg-background px-6 py-2 text-lg font-bold outline-none focus:border-primary transition-all"
-                        value={selectedStudentId || ''}
-                        onChange={(e) => setSelectedStudentId(e.target.value)}
+                        value={selectedExamId || ''}
+                        onChange={(e) => setSelectedExamId(e.target.value)}
                       >
-                        <option value="">-- Choose Student Identity --</option>
-                        {students && students.length > 0 ? (
-                          students.map(student => (
-                            <option key={student.id} value={student.id}>
-                              {student.firstName} {student.lastName} | ID: {student.studentId || 'UNASSIGNED'} | Status: {student.status?.toUpperCase() || 'PENDING'}
-                            </option>
-                          ))
-                        ) : (
-                          <option disabled>Initializing roster...</option>
-                        )}
+                        <option value="">-- Choose Exam Session --</option>
+                        {exams?.map(exam => (
+                          <option key={exam.id} value={exam.id}>{exam.title} ({exam.semester})</option>
+                        ))}
                       </select>
                     </div>
                   </div>
@@ -433,12 +384,10 @@ export default function AdminPage() {
                         </>
                       ) : activeTab === 'results' ? (
                         <>
-                          <TableHead className="px-10">Subject</TableHead>
-                          <TableHead>Semester</TableHead>
-                          <TableHead>Score</TableHead>
-                          <TableHead>Grade</TableHead>
-                          <TableHead>Exam Cycle</TableHead>
-                          <TableHead className="text-right px-10">Operations</TableHead>
+                          <TableHead className="px-10">Student Name</TableHead>
+                          <TableHead>Roll Number</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="text-right px-10">Manage Academic Records</TableHead>
                         </>
                       ) : activeTab === 'exams' ? (
                         <>
@@ -486,25 +435,28 @@ export default function AdminPage() {
                         </TableCell>
                       </TableRow>
                     ))}
-                    {activeTab === 'results' && selectedStudentResults?.map((res) => {
-                      const exam = exams?.find(e => e.id === res.examId);
-                      return (
-                        <TableRow key={res.id} className="border-b border-border/40 hover:bg-primary/[0.02]">
-                          <TableCell className="px-10 font-bold text-lg">{res.subject}</TableCell>
-                          <TableCell>{res.semester}</TableCell>
-                          <TableCell className="font-medium">{res.marks}%</TableCell>
-                          <TableCell className="font-black text-2xl text-primary">{res.grade}</TableCell>
-                          <TableCell className="text-xs font-bold text-muted-foreground uppercase">{exam?.title || res.examTitle || 'General'}</TableCell>
-                          <TableCell className="text-right px-10 space-x-2">
-                            <Button variant="ghost" size="icon" onClick={() => handleEditResult(res)} className="text-primary"><Edit2 size={20} /></Button>
-                            <Button variant="ghost" size="icon" onClick={() => handleDelete('students', selectedStudentId!, 'results', res.id)} className="text-destructive"><Trash2 size={22} /></Button>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                    {activeTab === 'results' && !selectedStudentId && (
-                      <TableRow><TableCell colSpan={6} className="text-center py-32 text-muted-foreground font-bold uppercase tracking-widest text-sm italic opacity-40">Choose a student identity to manage records</TableCell></TableRow>
+                    
+                    {activeTab === 'results' && selectedExamId && students?.map((student) => (
+                      <TableRow key={student.id} className="border-b border-border/40 hover:bg-primary/[0.02]">
+                        <TableCell className="px-10 font-bold text-lg">{student.firstName} {student.lastName}</TableCell>
+                        <TableCell className="font-black text-primary tracking-tighter">{student.studentId}</TableCell>
+                        <TableCell>
+                          <Badge variant={student.isApproved ? "default" : "secondary"} className="uppercase text-[9px] font-black tracking-widest">
+                            {student.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right px-10">
+                          <Button onClick={() => handleOpenManageResults(student.id)} className="rounded-xl font-bold bg-primary hover:bg-primary/90">
+                            Manage Marks
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+
+                    {activeTab === 'results' && !selectedExamId && (
+                      <TableRow><TableCell colSpan={4} className="text-center py-32 text-muted-foreground font-bold uppercase tracking-widest text-sm italic opacity-40">Choose an exam cycle to begin grade entry</TableCell></TableRow>
                     )}
+
                     {activeTab === 'exams' && exams?.map((exam) => (
                       <TableRow key={exam.id} className="border-b border-border/40 hover:bg-primary/[0.02]">
                         <TableCell className="px-10 font-bold text-lg">{exam.title}</TableCell>
@@ -515,52 +467,7 @@ export default function AdminPage() {
                             {exam.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-right px-10 space-x-2">
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button variant="ghost" size="icon" onClick={() => fetchExamResults(exam.id)}><Filter size={20} /></Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto rounded-[3rem]">
-                              <DialogHeader>
-                                <DialogTitle className="text-3xl font-headline font-bold">Consolidated Results: {exam.title}</DialogTitle>
-                                <DialogDescription>Review performance metrics across the entire cohort for this session.</DialogDescription>
-                              </DialogHeader>
-                              <div className="pt-8">
-                                {isFetchingExamResults ? (
-                                  <div className="flex flex-col items-center py-20 gap-4">
-                                    <Loader2 className="animate-spin text-primary" size={48} />
-                                    <p className="font-bold text-muted-foreground uppercase tracking-widest">Compiling grades...</p>
-                                  </div>
-                                ) : (
-                                  <Table>
-                                    <TableHeader>
-                                      <TableRow className="bg-muted">
-                                        <TableHead>Student Name</TableHead>
-                                        <TableHead>Roll No</TableHead>
-                                        <TableHead>Subject</TableHead>
-                                        <TableHead>Score</TableHead>
-                                        <TableHead>Grade</TableHead>
-                                      </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                      {examResults.map((r, i) => (
-                                        <TableRow key={i}>
-                                          <TableCell className="font-bold">{r.studentName}</TableCell>
-                                          <TableCell className="font-black text-primary text-xs">{r.studentRoll}</TableCell>
-                                          <TableCell>{r.subject}</TableCell>
-                                          <TableCell>{r.marks}%</TableCell>
-                                          <TableCell className="font-black text-primary">{r.grade}</TableCell>
-                                        </TableRow>
-                                      ))}
-                                      {examResults.length === 0 && (
-                                        <TableRow><TableCell colSpan={5} className="text-center py-10 opacity-50">No grades recorded for this cycle yet.</TableCell></TableRow>
-                                      )}
-                                    </TableBody>
-                                  </Table>
-                                )}
-                              </div>
-                            </DialogContent>
-                          </Dialog>
+                        <TableCell className="text-right px-10">
                           <Button variant="ghost" size="icon" onClick={() => handleDelete('exams', exam.id)} className="text-destructive"><Trash2 size={22} /></Button>
                         </TableCell>
                       </TableRow>
@@ -598,6 +505,81 @@ export default function AdminPage() {
             </Card>
           </Tabs>
         )}
+
+        {/* Specialized Manage Results Dialog */}
+        <Dialog open={isManageResultsOpen} onOpenChange={setIsManageResultsOpen}>
+          <DialogContent className="sm:max-w-[800px] rounded-[3rem] max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <div className="flex items-center gap-4 mb-4">
+                <div className="p-4 bg-primary/10 text-primary rounded-2xl">
+                  <GraduationCap size={24} />
+                </div>
+                <div>
+                  <DialogTitle className="text-2xl font-headline font-bold">Manage Grades</DialogTitle>
+                  <DialogDescription>
+                    Student: <span className="text-primary font-bold">{selectedStudent?.firstName} {selectedStudent?.lastName}</span> | 
+                    Exam: <span className="text-primary font-bold">{selectedExam?.title}</span>
+                  </DialogDescription>
+                </div>
+              </div>
+            </DialogHeader>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 pt-6">
+              {/* Form Section */}
+              <div className="space-y-6">
+                <h3 className="text-lg font-bold flex items-center gap-2"><Plus size={18} /> {editingResultId ? 'Edit Result' : 'Add New Subject'}</h3>
+                <form onSubmit={handleSaveResult} className="space-y-6 p-6 bg-muted/20 rounded-[2rem] border border-border/40">
+                  <div className="space-y-2"><Label>Subject Code / Name</Label><Input required value={newResult.subject} onChange={e => setNewResult({ ...newResult, subject: e.target.value })} /></div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2"><Label>Semester</Label><Input required value={newResult.semester} onChange={e => setNewResult({ ...newResult, semester: e.target.value })} /></div>
+                    <div className="space-y-2"><Label>Grade</Label><Input required placeholder="O, A+, B..." value={newResult.grade} onChange={e => setNewResult({ ...newResult, grade: e.target.value })} /></div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2"><Label>Percentage %</Label><Input required type="number" min="0" max="100" value={newResult.marks} onChange={e => setNewResult({ ...newResult, marks: Number(e.target.value) })} /></div>
+                    <div className="space-y-2"><Label>Evaluation Date</Label><Input required type="date" value={newResult.examDate} onChange={e => setNewResult({ ...newResult, examDate: e.target.value })} /></div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button type="submit" disabled={isCreating} className="flex-1 h-12 rounded-xl font-bold bg-primary">
+                      {editingResultId ? "Update Entry" : "Commit Result"}
+                    </Button>
+                    {editingResultId && (
+                      <Button type="button" variant="outline" onClick={() => { setEditingResultId(null); setNewResult({ subject: '', semester: '', marks: 0, grade: '', examDate: new Date().toISOString().split('T')[0] }); }} className="rounded-xl">Cancel</Button>
+                    )}
+                  </div>
+                </form>
+              </div>
+
+              {/* Records Section */}
+              <div className="space-y-6">
+                <h3 className="text-lg font-bold flex items-center gap-2"><List size={18} /> Existing Records</h3>
+                <div className="space-y-4">
+                  {selectedStudentExamResults.length > 0 ? selectedStudentExamResults.map(res => (
+                    <div key={res.id} className="p-5 bg-white border border-border/40 rounded-[1.5rem] shadow-sm flex items-center justify-between group">
+                      <div className="space-y-1">
+                        <p className="font-bold text-lg">{res.subject}</p>
+                        <div className="flex gap-3 text-xs font-medium text-muted-foreground uppercase tracking-widest">
+                          <span>{res.marks}%</span>
+                          <span className="text-primary font-black">{res.grade}</span>
+                        </div>
+                      </div>
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button variant="ghost" size="icon" onClick={() => handleEditResult(res)} className="text-primary"><Edit2 size={18} /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete('students', selectedStudentId!, 'results', res.id)} className="text-destructive"><Trash2 size={18} /></Button>
+                      </div>
+                    </div>
+                  )) : (
+                    <div className="py-20 text-center border-2 border-dashed rounded-[2rem] text-muted-foreground italic text-sm">
+                      No results found for this exam cycle.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            <DialogFooter className="pt-10">
+               <Button variant="ghost" className="rounded-xl font-bold" onClick={() => setIsManageResultsOpen(false)}><ArrowLeft className="mr-2" size={18} /> Back to Roster</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   )
