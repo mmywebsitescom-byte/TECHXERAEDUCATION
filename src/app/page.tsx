@@ -7,7 +7,7 @@ import TechBackground from '@/components/TechBackground'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { ArrowRight, BookOpen, GraduationCap, ShieldCheck, Zap, Sparkles, Cpu, LifeBuoy, Github, Instagram, Linkedin, Mail } from 'lucide-react'
+import { ArrowRight, BookOpen, GraduationCap, ShieldCheck, Zap, Sparkles, Cpu, LifeBuoy, Github, Instagram, Linkedin, Mail, ShieldAlert, Settings, Layout } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import LogoLoop, { type LogoItem } from '@/components/LogoLoop'
@@ -155,12 +155,17 @@ export default function Home() {
         {/* Features Section */}
         <section className="py-24 md:py-32 lg:py-40 px-6 bg-white/30">
           <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-20 space-y-4">
+              <h2 className="text-4xl md:text-5xl font-headline font-bold tracking-tight">Ecosystem Architecture</h2>
+              <p className="text-muted-foreground text-lg max-w-2xl mx-auto font-medium">A multi-layered infrastructure designed for speed, security, and academic excellence.</p>
+            </div>
+            
             <motion.div 
               variants={container}
               initial="hidden"
               whileInView="show"
               viewport={{ once: true, margin: "-50px" }}
-              className="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-12"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 lg:gap-12"
             >
               {[
                 {
@@ -180,6 +185,24 @@ export default function Home() {
                   desc: "Priority notification system for exam schedules and critical campus updates.",
                   icon: <ShieldCheck className="text-primary" size={32} />,
                   accent: "bg-primary/10"
+                },
+                {
+                  title: "Verified Identity",
+                  desc: "Secure authentication framework ensuring student data integrity and academic sovereignty.",
+                  icon: <ShieldAlert className="text-secondary" size={32} />,
+                  accent: "bg-secondary/10"
+                },
+                {
+                  title: "Faculty Control",
+                  desc: "Comprehensive administrative suite for managing results, materials, and official bulletins.",
+                  icon: <Settings className="text-primary" size={32} />,
+                  accent: "bg-primary/10"
+                },
+                {
+                  title: "Adaptive Architecture",
+                  desc: "Glassmorphic, 3D-enhanced interface optimized for ultimate cross-platform responsiveness.",
+                  icon: <Layout className="text-secondary" size={32} />,
+                  accent: "bg-secondary/10"
                 }
               ].map((feature, i) => (
                 <motion.div key={i} variants={item}>
