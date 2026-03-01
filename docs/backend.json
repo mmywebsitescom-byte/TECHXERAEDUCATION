@@ -25,18 +25,23 @@
         },
         "email": {
           "type": "string",
-          "description": "The email address of the student.",
-          "format": "email"
+          "format": "email",
+          "description": "The email address of the student."
+        },
+        "photoURL": {
+          "type": "string",
+          "format": "uri",
+          "description": "The URL of the student's profile picture."
         },
         "enrollmentDate": {
           "type": "string",
-          "description": "The date and time when the student was officially enrolled.",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "The date and time when the student was officially enrolled."
         },
         "dateOfBirth": {
           "type": "string",
-          "description": "The student's date of birth.",
-          "format": "date"
+          "format": "date",
+          "description": "The student's date of birth."
         },
         "currentSemester": {
           "type": "string",
@@ -48,7 +53,11 @@
         },
         "status": {
           "type": "string",
-          "enum": ["pending", "approved", "rejected"],
+          "enum": [
+            "pending",
+            "approved",
+            "rejected"
+          ],
           "description": "The current status of the student account."
         }
       },
@@ -83,12 +92,16 @@
         },
         "examDate": {
           "type": "string",
-          "description": "The date when the exam cycle starts.",
-          "format": "date"
+          "format": "date",
+          "description": "The date when the exam cycle starts."
         },
         "status": {
           "type": "string",
-          "enum": ["upcoming", "active", "completed"],
+          "enum": [
+            "upcoming",
+            "active",
+            "completed"
+          ],
           "description": "The current status of the exam session."
         },
         "totalMarks": {
@@ -96,7 +109,14 @@
           "description": "The maximum possible marks for subjects in this exam cycle."
         }
       },
-      "required": ["id", "title", "semester", "examDate", "status", "totalMarks"]
+      "required": [
+        "id",
+        "title",
+        "semester",
+        "examDate",
+        "status",
+        "totalMarks"
+      ]
     },
     "Result": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -142,8 +162,8 @@
         },
         "examDate": {
           "type": "string",
-          "description": "The date and time when the examination or assessment was conducted.",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "The date and time when the examination or assessment was conducted."
         },
         "performanceNotes": {
           "type": "string",
@@ -182,8 +202,8 @@
         },
         "fileUrl": {
           "type": "string",
-          "description": "The URL or URI pointing to the downloadable file for the study material.",
-          "format": "uri"
+          "format": "uri",
+          "description": "The URL or URI pointing to the downloadable file for the study material."
         },
         "subject": {
           "type": "string",
@@ -199,8 +219,8 @@
         },
         "uploadDate": {
           "type": "string",
-          "description": "The date and time when the study material was uploaded to the system.",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "The date and time when the study material was uploaded to the system."
         }
       },
       "required": [
@@ -233,8 +253,8 @@
         },
         "publishDate": {
           "type": "string",
-          "description": "The date and time when the notice was officially published.",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "The date and time when the notice was officially published."
         },
         "isUrgent": {
           "type": "boolean",
@@ -242,8 +262,8 @@
         },
         "expiryDate": {
           "type": "string",
-          "description": "The date and time after which the notice is no longer considered active or should be removed.",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "The date and time after which the notice is no longer considered active or should be removed."
         }
       },
       "required": [

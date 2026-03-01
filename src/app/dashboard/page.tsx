@@ -6,12 +6,16 @@ import Navbar from '@/components/Navbar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
-import { GraduationCap, Award, BookOpen, Clock, TrendingUp, Loader2, Sparkles, AlertCircle, ShieldAlert, CreditCard, Copy, Check } from 'lucide-react'
+import { GraduationCap, Award, BookOpen, Clock, TrendingUp, Loader2, Sparkles, AlertCircle, ShieldAlert, CreditCard, Copy, Check, Camera } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase'
-import { doc, collection } from 'firebase/firestore'
+import { doc, updateDoc } from 'firebase/firestore'
+import { updateProfile } from 'firebase/auth'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { useToast } from '@/hooks/use-toast'
 
 const container = {
@@ -32,6 +36,10 @@ const itemVariant = {
 export default function DashboardPage() {
   const [mounted, setMounted] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [isUpdatingAvatar, setIsUpdatingAvatar] = useState(false)
+  const [newAvatarUrl, setNewAvatarUrl] = useState('')
+  const [isAvatarDialogOpen, setIsAvatarDialogOpen] = useState(false)
+
   const { user, isUserLoading } = useUser()
   const db = useFirestore()
   const router = useRouter()
@@ -61,6 +69,36 @@ export default function DashboardPage() {
       description: "Roll Number copied to clipboard.",
     })
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleUpdateAvatar = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!user || !db || !newAvatarUrl.trim()) return
+
+    setIsUpdatingAvatar(true)
+    try {
+      // 1. Update Firebase Auth Profile
+      await updateProfile(user, { photoURL: newAvatarUrl.trim() })
+
+      // 2. Update Firestore Student Document
+      const studentDocRef = doc(db, 'students', user.uid)
+      await updateDoc(studentDocRef, { photoURL: newAvatarUrl.trim() })
+
+      toast({
+        title: "Avatar Updated",
+        description: "Your profile picture has been changed successfully.",
+      })
+      setIsAvatarDialogOpen(false)
+      setNewAvatarUrl('')
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Update Failed",
+        description: error.message || "Could not update profile picture.",
+      })
+    } finally {
+      setIsUpdatingAvatar(false)
+    }
   }
 
   if (!mounted || isUserLoading || isProfileLoading) {
@@ -105,6 +143,8 @@ export default function DashboardPage() {
     color: 'hsl(var(--primary))'
   })) || []
 
+  const currentPhotoURL = user?.photoURL || profile?.photoURL || `https://picsum.photos/seed/${user.uid}/300/300`
+
   return (
     <div className="min-h-screen bg-[#F5F5FA]">
       <Navbar />
@@ -118,14 +158,47 @@ export default function DashboardPage() {
           <div className="flex items-center gap-10">
             <motion.div 
               whileHover={{ scale: 1.05 }}
-              className="relative"
+              className="relative group cursor-pointer"
             >
-              <div className="w-28 h-28 rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-white">
+              <div className="w-28 h-28 rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-white relative">
                 <img 
-                  src={user?.photoURL || `https://picsum.photos/seed/${user.uid}/300/300`} 
+                  src={currentPhotoURL} 
                   alt="Profile" 
                   className="w-full h-full object-cover"
                 />
+                <Dialog open={isAvatarDialogOpen} onOpenChange={setIsAvatarDialogOpen}>
+                  <DialogTrigger asChild>
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Camera size={24} className="text-white" />
+                    </div>
+                  </DialogTrigger>
+                  <DialogContent className="rounded-[2rem]">
+                    <DialogHeader>
+                      <DialogTitle>Update Profile Picture</DialogTitle>
+                      <DialogDescription>
+                        Enter a URL for your new profile picture.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleUpdateAvatar} className="space-y-4 pt-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="photoUrl">Image URL</Label>
+                        <Input 
+                          id="photoUrl" 
+                          placeholder="https://..." 
+                          value={newAvatarUrl}
+                          onChange={(e) => setNewAvatarUrl(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <DialogFooter>
+                        <Button type="submit" disabled={isUpdatingAvatar} className="rounded-xl font-bold">
+                          {isUpdatingAvatar ? <Loader2 className="animate-spin mr-2" /> : null}
+                          Save Changes
+                        </Button>
+                      </DialogFooter>
+                    </form>
+                  </DialogContent>
+                </Dialog>
               </div>
               <div className="absolute -bottom-2 -right-2 bg-primary text-white p-3 rounded-2xl shadow-lg border-2 border-white">
                 <Sparkles size={20} />
