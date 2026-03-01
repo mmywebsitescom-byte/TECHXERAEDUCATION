@@ -195,11 +195,13 @@ export default function AdminPage() {
     if (!db || !isAdmin || !selectedStudentId) return
     setIsCreating(true)
 
+    const selectedExam = exams?.find(ex => ex.id === newResult.examId)
     const docRef = doc(collection(db, 'students', selectedStudentId, 'results'))
     const data = {
       ...newResult,
       id: docRef.id,
       studentId: selectedStudentId,
+      examTitle: selectedExam?.title || 'General Assessment',
       examDate: new Date(newResult.examDate).toISOString()
     }
 
@@ -423,7 +425,7 @@ export default function AdminPage() {
                           <TableCell>{res.semester}</TableCell>
                           <TableCell>{res.marks}%</TableCell>
                           <TableCell className="font-bold text-primary">{res.grade}</TableCell>
-                          <TableCell className="text-xs">{exam?.title || 'General'}</TableCell>
+                          <TableCell className="text-xs">{exam?.title || res.examTitle || 'General'}</TableCell>
                           <TableCell className="text-right px-8">
                             <Button variant="ghost" size="icon" onClick={() => handleDelete('students', selectedStudentId!, 'results', res.id)} className="text-destructive"><Trash2 size={18} /></Button>
                           </TableCell>

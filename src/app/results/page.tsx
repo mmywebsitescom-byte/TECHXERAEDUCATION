@@ -188,6 +188,7 @@ export default function ResultsLookupPage() {
                       <thead className="bg-muted/50 border-b border-border/40">
                         <tr>
                           <th className="p-5 px-8 font-bold text-xs uppercase tracking-widest text-muted-foreground">Subject</th>
+                          <th className="p-5 font-bold text-xs uppercase tracking-widest text-muted-foreground">Exam Session</th>
                           <th className="p-5 font-bold text-xs uppercase tracking-widest text-muted-foreground">Semester</th>
                           <th className="p-5 font-bold text-xs uppercase tracking-widest text-muted-foreground">Marks</th>
                           <th className="p-5 px-8 text-right font-bold text-xs uppercase tracking-widest text-muted-foreground">Grade</th>
@@ -204,13 +205,14 @@ export default function ResultsLookupPage() {
                               className="border-b border-border/40 hover:bg-muted/20 transition-colors"
                             >
                               <td className="p-5 px-8 font-bold">{res.subject}</td>
+                              <td className="p-5 text-sm font-bold text-muted-foreground">{res.examTitle || 'General'}</td>
                               <td className="p-5 text-sm font-medium">{res.semester}</td>
                               <td className="p-5 text-sm">{res.marks}%</td>
                               <td className="p-5 px-8 text-right font-black text-2xl text-primary">{res.grade}</td>
                             </motion.tr>
                           ))
                         ) : (
-                          <tr><td colSpan={4} className="p-20 text-center text-muted-foreground font-medium">No results found for this student.</td></tr>
+                          <tr><td colSpan={5} className="p-20 text-center text-muted-foreground font-medium">No results found for this student.</td></tr>
                         )}
                       </tbody>
                     </table>
