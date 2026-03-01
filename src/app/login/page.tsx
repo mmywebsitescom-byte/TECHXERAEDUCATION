@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Label } from '@/components/ui/label'
 import TechBackground from '@/components/TechBackground'
 import Navbar from '@/components/Navbar'
-import { Lock, User, ArrowRight, Loader2, GraduationCap, UserPlus, Calendar } from 'lucide-react'
+import { Lock, User, ArrowRight, Loader2, GraduationCap, UserPlus, Calendar, CreditCard } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { useAuth, useUser, useFirestore } from '@/firebase'
@@ -22,6 +22,7 @@ function LoginForm() {
   const [password, setPassword] = useState('')
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
+  const [studentId, setStudentId] = useState('')
   const [dateOfBirth, setDateOfBirth] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isSignUp, setIsSignUp] = useState(false)
@@ -54,7 +55,7 @@ function LoginForm() {
         // Create initial student profile (pending approval)
         await setDoc(doc(db, 'students', newUser.uid), {
           id: newUser.uid,
-          studentId: `TX-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+          studentId: studentId.trim(),
           firstName,
           lastName,
           email,
@@ -135,6 +136,20 @@ function LoginForm() {
                       required 
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="studentId">Student ID (Roll Number)</Label>
+                  <div className="relative">
+                    <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+                    <Input 
+                      id="studentId" 
+                      placeholder="TX-2025-001" 
+                      className="pl-10 h-11 bg-background/50" 
+                      required 
+                      value={studentId}
+                      onChange={(e) => setStudentId(e.target.value)}
                     />
                   </div>
                 </div>
