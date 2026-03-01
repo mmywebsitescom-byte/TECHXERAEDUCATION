@@ -1,9 +1,10 @@
+
 "use client"
 
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Button } from './ui/button'
-import { Zap, LogIn, ClipboardList, BookOpen, Bell, Home, LogOut, LayoutDashboard, Shield, CalendarDays } from 'lucide-react'
+import { Zap, LogIn, ClipboardList, BookOpen, Bell, Home, LogOut, LayoutDashboard, Shield, CalendarDays, LifeBuoy } from 'lucide-react'
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from '@/firebase'
 import { signOut } from 'firebase/auth'
 import { doc } from 'firebase/firestore'
@@ -61,6 +62,9 @@ export default function Navbar() {
           </Link>
           <Link href="/results" className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-2">
             <ClipboardList size={14} /> Results
+          </Link>
+          <Link href="/support" className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-2">
+            <LifeBuoy size={14} /> Support
           </Link>
         </div>
 

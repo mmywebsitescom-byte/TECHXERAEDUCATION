@@ -7,7 +7,7 @@ import TechBackground from '@/components/TechBackground'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { ArrowRight, BookOpen, GraduationCap, ShieldCheck, Zap, Sparkles, Cpu } from 'lucide-react'
+import { ArrowRight, BookOpen, GraduationCap, ShieldCheck, Zap, Sparkles, Cpu, LifeBuoy } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import LogoLoop, { type LogoItem } from '@/components/LogoLoop'
@@ -81,7 +81,7 @@ export default function Home() {
       <Navbar />
 
       <main>
-        {/* Hero Section - Increased Height */}
+        {/* Hero Section */}
         <section className="relative py-24 md:py-32 lg:py-40 px-6 overflow-hidden">
           <motion.div 
             initial={{ opacity: 0, y: 40 }}
@@ -127,7 +127,7 @@ export default function Home() {
           </motion.div>
         </section>
 
-        {/* Technologies Section - Maintained Height */}
+        {/* Technologies Section */}
         <section className="bg-[#0b0b0b] py-16 md:py-20 relative overflow-hidden">
           <div className="max-w-7xl mx-auto px-6 text-center space-y-10">
             <motion.div
@@ -161,28 +161,11 @@ export default function Home() {
                   />
                 </div>
               )}
-              
-              {/* Pulsing Orb Effect */}
-              <div className="mt-12">
-                <motion.div 
-                  animate={{ 
-                    boxShadow: [
-                      "0 0 20px 8px rgba(125, 107, 219, 0.4)",
-                      "0 0 50px 20px rgba(125, 107, 219, 0.7)",
-                      "0 0 20px 8px rgba(125, 107, 219, 0.4)"
-                    ]
-                  }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                  className="w-12 h-12 rounded-full bg-black border-[2px] border-primary/50 flex items-center justify-center"
-                >
-                  <div className="w-4 h-4 rounded-full bg-primary/80 blur-[2px]"></div>
-                </motion.div>
-              </div>
             </div>
           </div>
         </section>
 
-        {/* Features Section - Increased Height */}
+        {/* Features Section */}
         <section className="py-24 md:py-32 lg:py-40 px-6">
           <div className="max-w-7xl mx-auto">
             <motion.div 
@@ -228,7 +211,32 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Stats Section - Increased Height */}
+        {/* Support CTA Section */}
+        <section className="py-24 md:py-32 px-6">
+          <div className="max-w-5xl mx-auto">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              className="bg-primary rounded-[3rem] p-12 md:p-20 text-center text-white relative overflow-hidden shadow-2xl shadow-primary/30"
+            >
+              <div className="absolute top-0 right-0 p-10 opacity-10">
+                <LifeBuoy size={200} />
+              </div>
+              <h2 className="text-4xl md:text-6xl font-headline font-bold mb-6 tracking-tighter">Need Technical Support?</h2>
+              <p className="text-xl md:text-2xl text-white/80 mb-10 font-medium max-w-2xl mx-auto leading-relaxed">
+                Our support desk is ready to assist you with access issues, portal navigation, or any technical queries you may have.
+              </p>
+              <Link href="/support">
+                <Button size="lg" className="h-16 px-12 bg-white text-primary hover:bg-white/90 rounded-2xl text-lg font-bold transition-all hover:scale-105 active:scale-95 shadow-xl">
+                  Contact Support Hub <LifeBuoy className="ml-2" size={20} />
+                </Button>
+              </Link>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Stats Section */}
         <section className="py-24 md:py-32 bg-white/40 backdrop-blur-sm border-y border-white/20">
           <div className="max-w-7xl mx-auto px-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-12 md:gap-16 text-center">
@@ -254,7 +262,7 @@ export default function Home() {
         </section>
       </main>
 
-      {/* Footer - Increased Height */}
+      {/* Footer */}
       <footer className="py-16 md:py-20 px-6 border-t border-white/20">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10 text-muted-foreground">
           <div className="flex items-center gap-4">
@@ -264,9 +272,9 @@ export default function Home() {
             <span className="font-headline font-bold text-2xl text-foreground tracking-tight">TechXera Campus</span>
           </div>
           <div className="flex gap-10 text-xs font-bold uppercase tracking-widest">
-            <Link href="#" className="hover:text-primary transition-colors">Security</Link>
-            <Link href="#" className="hover:text-primary transition-colors">Privacy</Link>
-            <Link href="#" className="hover:text-primary transition-colors">Help</Link>
+            <Link href="/support" className="hover:text-primary transition-colors">Security</Link>
+            <Link href="/support" className="hover:text-primary transition-colors">Privacy</Link>
+            <Link href="/support" className="hover:text-primary transition-colors">Help & Support</Link>
           </div>
           <p className="text-xs font-medium">© 2025 TechXera. High-Performance Campus Engine.</p>
         </div>
