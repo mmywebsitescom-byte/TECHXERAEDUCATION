@@ -33,7 +33,7 @@ export default function ResourcesPage() {
     return (
       <div className="min-h-screen bg-[#F5F5FA]">
         <Navbar />
-        <div className="flex items-center justify-center pt-40">
+        <div className="flex items-center justify-center pt-80">
           <Loader2 className="animate-spin text-primary" size={48} />
         </div>
       </div>
@@ -44,7 +44,7 @@ export default function ResourcesPage() {
     <div className="min-h-screen bg-[#F5F5FA] text-foreground">
       <Navbar />
       
-      <main className="max-w-6xl mx-auto p-6 md:p-10 space-y-12 pt-40 pb-32">
+      <main className="max-w-6xl mx-auto p-6 md:p-10 space-y-12 pt-80 pb-32">
         <div className="space-y-4">
           <motion.div 
             initial={{ opacity: 0, x: -20 }}
@@ -59,7 +59,7 @@ export default function ResourcesPage() {
           </p>
         </div>
 
-        {/* Search Bar - More Compact */}
+        {/* Search Bar */}
         <div className="flex flex-col md:flex-row gap-4 items-center bg-white p-4 rounded-3xl shadow-sm border border-white">
           <div className="relative flex-1 w-full">
             <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-muted-foreground/40" size={20} />
@@ -114,7 +114,7 @@ export default function ResourcesPage() {
 
                       <div className="pt-6 border-t border-border/40 flex items-center justify-between">
                         <span className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-[0.2em]">
-                          {new Date(item.uploadDate).toLocaleDateString()}
+                          {item.uploadDate ? new Date(item.uploadDate).toLocaleDateString() : 'N/A'}
                         </span>
                         <a 
                           href={item.fileUrl} 
