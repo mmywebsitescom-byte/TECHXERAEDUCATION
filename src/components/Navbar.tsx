@@ -10,63 +10,58 @@ import { signOut } from 'firebase/auth'
 import { doc } from 'firebase/firestore'
 import { cn } from '@/lib/utils'
 
-export const TechXeraLogo = ({ className }: { className?: string }) => (
+export const TechXeraLogo = ({ className, customUrl }: { className?: string; customUrl?: string }) => (
   <div className={cn("relative flex items-center justify-center bg-black rounded-full overflow-hidden shadow-2xl ring-1 ring-white/10", className)}>
-    <svg viewBox="0 0 100 100" className="w-full h-full p-1" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="cyan-glow" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#00f2fe" />
-          <stop offset="100%" stopColor="#4facfe" />
-        </linearGradient>
-      </defs>
-      
-      {/* Intricate Circular Tech Border */}
-      <circle cx="50" cy="50" r="47" stroke="white" strokeWidth="0.5" strokeDasharray="1 2" opacity="0.3" />
-      <circle cx="50" cy="50" r="44" stroke="white" strokeWidth="1.5" />
-      <circle cx="50" cy="50" r="40" stroke="white" strokeWidth="1" strokeDasharray="2 2" opacity="0.5" />
-      
-      {/* Decorative Top Gear Icon */}
-      <g transform="translate(46, 10)">
-        <circle cx="4" cy="4" r="3" stroke="white" strokeWidth="1" />
-        <path d="M4 0 V2 M4 6 V8 M0 4 H2 M6 4 H8 M1 1 L2.5 2.5 M5.5 5.5 L7 7 M7 1 L5.5 2.5 M2.5 5.5 L1 7" stroke="white" strokeWidth="0.5" />
-      </g>
-
-      {/* Side Tech Patterns */}
-      <path d="M8 50 H12 M88 50 H92 M50 88 V92" stroke="white" strokeWidth="1" strokeLinecap="round" />
-      <path d="M15 40 Q12 50 15 60" stroke="white" strokeWidth="0.5" opacity="0.4" />
-      <path d="M85 40 Q88 50 85 60" stroke="white" strokeWidth="0.5" opacity="0.4" />
-      
-      {/* The Central Monitor */}
-      <rect x="25" y="32" width="50" height="34" rx="3" stroke="white" strokeWidth="3" />
-      <rect x="28" y="35" width="44" height="28" rx="1.5" fill="#0a0a0a" />
-      
-      {/* Stand */}
-      <path d="M46 66 L43 74 H57 L54 66 Z" fill="white" />
-      <rect x="36" y="74" width="28" height="2" rx="1" fill="white" />
-
-      {/* Branded Monitor Code Content */}
-      <g transform="translate(32, 40)">
-        {/* Row 1: { C C [ ] */}
-        <path d="M0 0 Q3 0 3 3" stroke="white" strokeWidth="2" strokeLinecap="round" />
-        <path d="M6 0 Q9 0 9 3" stroke="url(#cyan-glow)" strokeWidth="2" strokeLinecap="round" />
-        <path d="M12 0 Q15 0 15 3" stroke="white" strokeWidth="2" strokeLinecap="round" />
-        <path d="M18 3 Q18 0 21 0" stroke="url(#cyan-glow)" strokeWidth="2" strokeLinecap="round" />
-        <path d="M24 0 Q27 0 27 3" stroke="white" strokeWidth="2" strokeLinecap="round" />
+    {customUrl ? (
+      <img src={customUrl} alt="Logo" className="w-full h-full object-cover" />
+    ) : (
+      <svg viewBox="0 0 100 100" className="w-full h-full p-1" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="cyan-glow" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#00f2fe" />
+            <stop offset="100%" stopColor="#4facfe" />
+          </linearGradient>
+        </defs>
         
-        {/* Row 2: > C C < */}
-        <path d="M1 8 L4 5 L1 2" stroke="white" strokeWidth="1.5" />
-        <path d="M8 2 L12 5 L8 8" stroke="url(#cyan-glow)" strokeWidth="1.5" />
-        <path d="M17 8 L21 5 L17 2" stroke="white" strokeWidth="1.5" />
-        <path d="M24 2 L28 5 L24 8" stroke="url(#cyan-glow)" strokeWidth="1.5" />
+        <circle cx="50" cy="50" r="47" stroke="white" strokeWidth="0.5" strokeDasharray="1 2" opacity="0.3" />
+        <circle cx="50" cy="50" r="44" stroke="white" strokeWidth="1.5" />
+        <circle cx="50" cy="50" r="40" stroke="white" strokeWidth="1" strokeDasharray="2 2" opacity="0.5" />
         
-        {/* Row 3: [ ] C C */}
-        <path d="M0 18 Q3 18 3 15" stroke="url(#cyan-glow)" strokeWidth="2" strokeLinecap="round" />
-        <path d="M6 18 Q9 18 9 15" stroke="white" strokeWidth="2" strokeLinecap="round" />
-        <path d="M12 18 Q15 18 15 15" stroke="url(#cyan-glow)" strokeWidth="2" strokeLinecap="round" />
-        <path d="M18 15 Q18 18 21 18" stroke="white" strokeWidth="2" strokeLinecap="round" />
-        <path d="M24 18 Q27 18 27 15" stroke="url(#cyan-glow)" strokeWidth="2" strokeLinecap="round" />
-      </g>
-    </svg>
+        <g transform="translate(46, 10)">
+          <circle cx="4" cy="4" r="3" stroke="white" strokeWidth="1" />
+          <path d="M4 0 V2 M4 6 V8 M0 4 H2 M6 4 H8 M1 1 L2.5 2.5 M5.5 5.5 L7 7 M7 1 L5.5 2.5 M2.5 5.5 L1 7" stroke="white" strokeWidth="0.5" />
+        </g>
+
+        <path d="M8 50 H12 M88 50 H92 M50 88 V92" stroke="white" strokeWidth="1" strokeLinecap="round" />
+        <path d="M15 40 Q12 50 15 60" stroke="white" strokeWidth="0.5" opacity="0.4" />
+        <path d="M85 40 Q88 50 85 60" stroke="white" strokeWidth="0.5" opacity="0.4" />
+        
+        <rect x="25" y="32" width="50" height="34" rx="3" stroke="white" strokeWidth="3" />
+        <rect x="28" y="35" width="44" height="28" rx="1.5" fill="#0a0a0a" />
+        
+        <path d="M46 66 L43 74 H57 L54 66 Z" fill="white" />
+        <rect x="36" y="74" width="28" height="2" rx="1" fill="white" />
+
+        <g transform="translate(32, 40)">
+          <path d="M0 0 Q3 0 3 3" stroke="white" strokeWidth="2" strokeLinecap="round" />
+          <path d="M6 0 Q9 0 9 3" stroke="url(#cyan-glow)" strokeWidth="2" strokeLinecap="round" />
+          <path d="M12 0 Q15 0 15 3" stroke="white" strokeWidth="2" strokeLinecap="round" />
+          <path d="M18 3 Q18 0 21 0" stroke="url(#cyan-glow)" strokeWidth="2" strokeLinecap="round" />
+          <path d="M24 0 Q27 0 27 3" stroke="white" strokeWidth="2" strokeLinecap="round" />
+          
+          <path d="M1 8 L4 5 L1 2" stroke="white" strokeWidth="1.5" />
+          <path d="M8 2 L12 5 L8 8" stroke="url(#cyan-glow)" strokeWidth="1.5" />
+          <path d="M17 8 L21 5 L17 2" stroke="white" strokeWidth="1.5" />
+          <path d="M24 2 L28 5 L24 8" stroke="url(#cyan-glow)" strokeWidth="1.5" />
+          
+          <path d="M0 18 Q3 18 3 15" stroke="url(#cyan-glow)" strokeWidth="2" strokeLinecap="round" />
+          <path d="M6 18 Q9 18 9 15" stroke="white" strokeWidth="2" strokeLinecap="round" />
+          <path d="M12 18 Q15 18 15 15" stroke="url(#cyan-glow)" strokeWidth="2" strokeLinecap="round" />
+          <path d="M18 15 Q18 18 21 18" stroke="white" strokeWidth="2" strokeLinecap="round" />
+          <path d="M24 18 Q27 18 27 15" stroke="url(#cyan-glow)" strokeWidth="2" strokeLinecap="round" />
+        </g>
+      </svg>
+    )}
   </div>
 )
 
@@ -88,6 +83,13 @@ export default function Navbar() {
   const { data: adminDoc } = useDoc(adminRef)
   const isAdmin = !!adminDoc
 
+  // Site branding
+  const settingsRef = useMemoFirebase(() => (db ? doc(db, 'settings', 'site-config') : null), [db])
+  const { data: settings } = useDoc(settingsRef)
+
+  const siteName = settings?.siteName || 'TECHXERA'
+  const customLogoUrl = settings?.logoUrl || null
+
   const handleLogout = () => {
     signOut(auth)
   }
@@ -99,9 +101,17 @@ export default function Navbar() {
     )}>
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <Link href="/" className="flex items-center gap-4 group">
-          <TechXeraLogo className="w-12 h-12 group-hover:scale-110 transition-transform duration-500" />
-          <span className="font-headline text-2xl font-bold tracking-tighter text-foreground">
-            TECH<span className="text-primary">XERA</span>
+          <TechXeraLogo 
+            className="w-12 h-12 group-hover:scale-110 transition-transform duration-500" 
+            customUrl={customLogoUrl} 
+          />
+          <span className="font-headline text-2xl font-bold tracking-tighter text-foreground uppercase">
+            {siteName.includes(' ') ? (
+              <>
+                {siteName.split(' ')[0]}
+                <span className="text-primary">{siteName.split(' ').slice(1).join(' ')}</span>
+              </>
+            ) : siteName}
           </span>
         </Link>
 

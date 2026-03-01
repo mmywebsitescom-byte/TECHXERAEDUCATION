@@ -38,7 +38,6 @@ service cloud.firestore {
     }
 
     match /exams/{examId} {
-      // Explicitly allow public read for exam sessions
       allow get, list: if true;
       allow create, update, delete: if isAdmin();
     }
@@ -51,6 +50,11 @@ service cloud.firestore {
     match /notices/{noticeId} {
       allow get, list: if true;
       allow create, update, delete: if isAdmin();
+    }
+
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     match /roles_admin/{adminUid} {

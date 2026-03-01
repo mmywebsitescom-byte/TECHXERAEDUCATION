@@ -12,6 +12,8 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import LogoLoop, { type LogoItem } from '@/components/LogoLoop'
 import SplitText from '@/components/SplitText'
+import { useFirestore, useDoc, useMemoFirebase } from '@/firebase'
+import { doc } from 'firebase/firestore'
 
 // Custom SVGs for Tech Stack Icons
 const NextJsIcon = () => (
@@ -73,10 +75,18 @@ const item = {
 
 export default function Home() {
   const [mounted, setMounted] = useState(false)
+  const db = useFirestore()
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // Dynamic branding
+  const settingsRef = useMemoFirebase(() => (db ? doc(db, 'settings', 'site-config') : null), [db])
+  const { data: settings } = useDoc(settingsRef)
+
+  const siteName = settings?.siteName || 'Tech Excellence'
+  const heroDesc = settings?.heroDescription || 'A high-performance student portal engineered for TechXera. Manage results, resources, and announcements with a seamless, data-driven interface.'
 
   return (
     <div className="relative min-h-screen">
@@ -113,7 +123,7 @@ export default function Home() {
               <br />
               <motion.span className="text-primary bg-clip-text">
                 <SplitText 
-                  text="Tech Excellence"
+                  text={siteName}
                   tag="span"
                   textAlign="center"
                   duration={0.8}
@@ -123,7 +133,7 @@ export default function Home() {
             </h1>
             
             <p className="max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground/80 mb-10 leading-relaxed font-medium">
-              A high-performance student portal engineered for TechXera. Manage results, resources, and announcements with a seamless, data-driven interface.
+              {heroDesc}
             </p>
             
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-16">
@@ -290,8 +300,11 @@ export default function Home() {
           {/* Brand Column */}
           <div className="lg:col-span-2 space-y-6">
             <Link href="/" className="flex items-center gap-4 group">
-              <TechXeraLogo className="w-16 h-16 shadow-lg shadow-primary/30" />
-              <span className="font-headline font-bold text-2xl text-foreground tracking-tight">TechXera Campus</span>
+              <TechXeraLogo 
+                className="w-16 h-16 shadow-lg shadow-primary/30" 
+                customUrl={settings?.logoUrl}
+              />
+              <span className="font-headline font-bold text-2xl text-foreground tracking-tight">{settings?.siteName || 'TechXera Campus'}</span>
             </Link>
             <p className="text-sm font-medium leading-relaxed max-w-sm">
               Your all-in-one high-performance campus engine. Empowering students with seamless digital access to academic excellence.
@@ -349,7 +362,7 @@ export default function Home() {
         {/* Bottom Bar */}
         <div className="max-w-7xl mx-auto pt-16 mt-16 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-8">
           <p className="text-[10px] font-bold uppercase tracking-[0.2em]">
-            © 2025 TechXera Campus. All Rights Reserved.
+            © 2025 {settings?.siteName || 'TechXera Campus'}. All Rights Reserved.
           </p>
           <div className="flex gap-10 text-[10px] font-bold uppercase tracking-[0.2em]">
             <Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
