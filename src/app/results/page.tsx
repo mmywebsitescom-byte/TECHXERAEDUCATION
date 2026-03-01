@@ -16,6 +16,7 @@ import { format } from 'date-fns'
 import { useToast } from '@/hooks/use-toast'
 
 export default function ResultsLookupPage() {
+  const [mounted, setMounted] = useState(false)
   const [loading, setLoading] = useState(false)
   const [studentIdInput, setStudentIdInput] = useState('')
   const [dobInput, setDobInput] = useState('')
@@ -25,6 +26,10 @@ export default function ResultsLookupPage() {
   
   const db = useFirestore()
   const { toast } = useToast()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const handleLookup = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -48,8 +53,6 @@ export default function ResultsLookupPage() {
     setResults([])
 
     try {
-      // 1. Find the student by official Roll Number (studentId)
-      // The security rules require a limit of 1 for public student lookups
       const studentsRef = collection(db, 'students')
       const q = query(studentsRef, where('studentId', '==', trimmedId), limit(1))
       const querySnapshot = await getDocs(q)
@@ -61,18 +64,15 @@ export default function ResultsLookupPage() {
       const studentDoc = querySnapshot.docs[0]
       const data = studentDoc.data()
 
-      // 2. Verify Date of Birth (format stored: YYYY-MM-DD)
       if (data.dateOfBirth !== trimmedDob) {
         throw new Error("Student ID and Date of Birth do not match our records.")
       }
 
-      // 3. Fetch Academic Results from the student's sub-collection
       const resultsRef = collection(db, 'students', studentDoc.id, 'results')
       const resultsSnapshot = await getDocs(resultsRef)
       
       let fetchedResults = resultsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
       
-      // Sort manually in memory to ensure reliability and avoid index issues
       fetchedResults.sort((a, b) => {
         const dateA = a.examDate ? new Date(a.examDate).getTime() : 0
         const dateB = b.examDate ? new Date(b.examDate).getTime() : 0
@@ -98,12 +98,24 @@ export default function ResultsLookupPage() {
     }
   }
 
+  if (!mounted) {
+    return (
+      <div className="min-h-screen relative flex flex-col">
+        <TechBackground />
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center pt-48">
+          <Loader2 className="animate-spin text-primary" size={48} />
+        </main>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen relative flex flex-col">
       <TechBackground />
       <Navbar />
 
-      <main className="flex-1 max-w-7xl mx-auto w-full p-6 flex flex-col items-center justify-center pt-48">
+      <main className="flex-1 max-w-7xl mx-auto w-full p-6 flex flex-col items-center justify-center pt-48 pb-20">
         <AnimatePresence mode="wait">
           {!studentData ? (
             <motion.div 
