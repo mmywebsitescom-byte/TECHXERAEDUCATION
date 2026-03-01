@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label'
 import { ClipboardList, Search, Loader2, Download, AlertCircle, RefreshCw } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useFirestore } from '@/firebase'
-import { collection, query, where, getDocs, orderBy, DocumentData } from 'firebase/firestore'
+import { collection, query, where, getDocs, orderBy, DocumentData, limit } from 'firebase/firestore'
 import { format } from 'date-fns'
 import { useToast } from '@/hooks/use-toast'
 
@@ -49,8 +49,9 @@ export default function ResultsLookupPage() {
 
     try {
       // 1. Find the student by official Roll Number (studentId)
+      // The security rules require a limit of 1 for public student lookups
       const studentsRef = collection(db, 'students')
-      const q = query(studentsRef, where('studentId', '==', trimmedId))
+      const q = query(studentsRef, where('studentId', '==', trimmedId), limit(1))
       const querySnapshot = await getDocs(q)
 
       if (querySnapshot.empty) {
@@ -67,12 +68,11 @@ export default function ResultsLookupPage() {
 
       // 3. Fetch Academic Results from the student's sub-collection
       const resultsRef = collection(db, 'students', studentDoc.id, 'results')
-      // Try fetching all results first to ensure we get data even if examDate index is pending
       const resultsSnapshot = await getDocs(resultsRef)
       
       let fetchedResults = resultsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
       
-      // Sort manually in memory to ensure reliability
+      // Sort manually in memory to ensure reliability and avoid index issues
       fetchedResults.sort((a, b) => {
         const dateA = a.examDate ? new Date(a.examDate).getTime() : 0
         const dateB = b.examDate ? new Date(b.examDate).getTime() : 0
@@ -199,7 +199,10 @@ export default function ResultsLookupPage() {
                     </div>
                     <div className="space-y-1">
                       <p className="text-xs text-muted-foreground uppercase font-bold tracking-widest">Current Status</p>
-                      <Badge className="bg-green-500 hover:bg-green-600 text-white font-bold px-4 py-1 uppercase">Enrolled</Badge>
+                      <div className="flex items-center">
+                        <div className="w-2 h-2 rounded-full bg-green-500 mr-2" />
+                        <span className="font-bold text-green-600 uppercase text-sm">Enrolled</span>
+                      </div>
                     </div>
                   </div>
                   
