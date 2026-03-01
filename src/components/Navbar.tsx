@@ -11,22 +11,60 @@ import { doc } from 'firebase/firestore'
 import { cn } from '@/lib/utils'
 
 export const TechXeraLogo = ({ className }: { className?: string }) => (
-  <div className={cn("relative flex items-center justify-center bg-black rounded-xl overflow-hidden shadow-2xl", className)}>
-    <svg viewBox="0 0 100 100" className="w-full h-full p-2" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <div className={cn("relative flex items-center justify-center bg-black rounded-full overflow-hidden shadow-2xl ring-1 ring-white/10", className)}>
+    <svg viewBox="0 0 100 100" className="w-full h-full p-1" fill="none" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="hsl(var(--primary))" />
-          <stop offset="100%" stopColor="hsl(var(--secondary))" />
+        <linearGradient id="cyan-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#00f2fe" />
+          <stop offset="100%" stopColor="#4facfe" />
         </linearGradient>
       </defs>
-      {/* Hexagon Background */}
-      <path d="M50 5 L90 27.5 V72.5 L50 95 L10 72.5 V27.5 L50 5Z" fill="url(#logo-grad)" fillOpacity="0.15" stroke="url(#logo-grad)" strokeWidth="2" />
-      {/* Central X */}
-      <path d="M35 35 L65 65 M65 35 L35 65" stroke="url(#logo-grad)" strokeWidth="8" strokeLinecap="round" />
-      {/* Pulse Dots */}
-      <circle cx="50" cy="50" r="5" fill="white" className="animate-pulse" />
-      <circle cx="35" cy="35" r="3" fill="hsl(var(--secondary))" />
-      <circle cx="65" cy="65" r="3" fill="hsl(var(--primary))" />
+      
+      {/* Intricate Circular Tech Border */}
+      <circle cx="50" cy="50" r="47" stroke="white" strokeWidth="0.5" strokeDasharray="1 2" opacity="0.3" />
+      <circle cx="50" cy="50" r="44" stroke="white" strokeWidth="1.5" />
+      <circle cx="50" cy="50" r="40" stroke="white" strokeWidth="1" strokeDasharray="2 2" opacity="0.5" />
+      
+      {/* Decorative Top Icon (Gear-like) */}
+      <circle cx="50" cy="14" r="3.5" stroke="white" strokeWidth="1" />
+      <path d="M50 11 V17 M47 14 H53" stroke="white" strokeWidth="0.5" />
+      <path d="M48 12 L52 16 M52 12 L48 16" stroke="white" strokeWidth="0.5" />
+
+      {/* Side Tech Patterns */}
+      <path d="M8 50 H12 M88 50 H92 M50 88 V92" stroke="white" strokeWidth="1" strokeLinecap="round" />
+      <path d="M15 40 Q12 50 15 60" stroke="white" strokeWidth="0.5" opacity="0.4" />
+      <path d="M85 40 Q88 50 85 60" stroke="white" strokeWidth="0.5" opacity="0.4" />
+      
+      {/* The Central Monitor */}
+      <rect x="25" y="32" width="50" height="34" rx="3" stroke="white" strokeWidth="3" />
+      <rect x="28" y="35" width="44" height="28" rx="1.5" fill="#0a0a0a" />
+      
+      {/* Stand */}
+      <path d="M46 66 L43 74 H57 L54 66 Z" fill="white" />
+      <rect x="36" y="74" width="28" height="2" rx="1" fill="white" />
+
+      {/* Code characters inside the monitor - simplified recreations of the C/Bracket shapes */}
+      <g transform="translate(32, 40)">
+        {/* Row 1 */}
+        <path d="M0 0 Q3 0 3 3" stroke="white" strokeWidth="2" strokeLinecap="round" />
+        <path d="M6 0 Q9 0 9 3" stroke="url(#cyan-grad)" strokeWidth="2" strokeLinecap="round" />
+        <path d="M12 0 Q15 0 15 3" stroke="white" strokeWidth="2" strokeLinecap="round" />
+        <path d="M18 3 Q18 0 21 0" stroke="url(#cyan-grad)" strokeWidth="2" strokeLinecap="round" />
+        <path d="M24 0 Q27 0 27 3" stroke="white" strokeWidth="2" strokeLinecap="round" />
+        
+        {/* Row 2 */}
+        <path d="M1 8 L4 5 L1 2" stroke="white" strokeWidth="1.5" />
+        <path d="M8 2 L12 5 L8 8" stroke="url(#cyan-grad)" strokeWidth="1.5" />
+        <path d="M17 8 L21 5 L17 2" stroke="white" strokeWidth="1.5" />
+        <path d="M24 2 L28 5 L24 8" stroke="url(#cyan-grad)" strokeWidth="1.5" />
+        
+        {/* Row 3 */}
+        <path d="M0 18 Q3 18 3 15" stroke="url(#cyan-grad)" strokeWidth="2" strokeLinecap="round" />
+        <path d="M6 18 Q9 18 9 15" stroke="white" strokeWidth="2" strokeLinecap="round" />
+        <path d="M12 18 Q15 18 15 15" stroke="url(#cyan-grad)" strokeWidth="2" strokeLinecap="round" />
+        <path d="M18 15 Q18 18 21 18" stroke="white" strokeWidth="2" strokeLinecap="round" />
+        <path d="M24 18 Q27 18 27 15" stroke="url(#cyan-grad)" strokeWidth="2" strokeLinecap="round" />
+      </g>
     </svg>
   </div>
 )
