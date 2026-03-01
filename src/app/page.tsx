@@ -272,8 +272,8 @@ export default function Home() {
             <span className="font-headline font-bold text-2xl text-foreground tracking-tight">TechXera Campus</span>
           </div>
           <div className="flex gap-10 text-xs font-bold uppercase tracking-widest">
-            <Link href="/support" className="hover:text-primary transition-colors">Security</Link>
-            <Link href="/support" className="hover:text-primary transition-colors">Privacy</Link>
+            <Link href="/security" className="hover:text-primary transition-colors">Security</Link>
+            <Link href="/privacy" className="hover:text-primary transition-colors">Privacy</Link>
             <Link href="/support" className="hover:text-primary transition-colors">Help & Support</Link>
           </div>
           <p className="text-xs font-medium">© 2025 TechXera. High-Performance Campus Engine.</p>
