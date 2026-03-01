@@ -14,45 +14,45 @@ export default function TechBackground() {
       <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-primary/5 rounded-full blur-[160px] animate-float opacity-40"></div>
       <div className="absolute bottom-[-10%] right-[-5%] w-[50%] h-[50%] bg-secondary/10 rounded-full blur-[140px] animate-float opacity-30" style={{ animationDelay: '2s' }}></div>
       
-      {/* Floating Tech Icons - Scattered for depth, highlighted with slightly more opacity and reduced size */}
+      {/* Floating Tech Icons - Decreased size and highlighted as requested */}
       <motion.div 
-        animate={{ y: [0, -20, 0], opacity: [0.1, 0.2, 0.1] }}
+        animate={{ y: [0, -20, 0], opacity: [0.15, 0.3, 0.15] }}
         transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
         className="absolute top-[15%] left-[12%] text-primary"
       >
-        <Code size={40} />
+        <Code size={24} />
       </motion.div>
 
       <motion.div 
-        animate={{ y: [0, 30, 0], opacity: [0.08, 0.15, 0.08] }}
+        animate={{ y: [0, 30, 0], opacity: [0.12, 0.25, 0.12] }}
         transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 1 }}
         className="absolute top-[40%] right-[15%] text-secondary"
       >
-        <Terminal size={48} />
+        <Terminal size={28} />
       </motion.div>
 
       <motion.div 
-        animate={{ x: [0, 20, 0], y: [0, -10, 0], opacity: [0.1, 0.2, 0.1] }}
+        animate={{ x: [0, 20, 0], y: [0, -10, 0], opacity: [0.15, 0.3, 0.15] }}
         transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
         className="absolute bottom-[20%] left-[20%] text-primary"
       >
-        <Database size={32} />
+        <Database size={20} />
       </motion.div>
 
       <motion.div 
-        animate={{ scale: [1, 1.1, 1], opacity: [0.06, 0.12, 0.06] }}
+        animate={{ scale: [1, 1.1, 1], opacity: [0.1, 0.2, 0.1] }}
         transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
         className="absolute top-[20%] right-[35%] text-primary"
       >
-        <Chip size={64} />
+        <Chip size={32} />
       </motion.div>
 
       <motion.div 
         animate={{ rotate: [0, 360] }}
         transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
-        className="absolute bottom-[10%] right-[10%] text-primary opacity-[0.1]"
+        className="absolute bottom-[10%] right-[10%] text-primary opacity-[0.15]"
       >
-        <Globe size={120} />
+        <Globe size={80} />
       </motion.div>
 
       {/* Subtle Grid Points */}
