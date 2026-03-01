@@ -1,16 +1,19 @@
+
 "use client"
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import Navbar from '@/components/Navbar'
 import TechBackground from '@/components/TechBackground'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { CalendarDays, Clock, MapPin, GraduationCap, Loader2, Sparkles } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase'
+import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase'
 import { collection, query, orderBy } from 'firebase/firestore'
+import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
 import SplitText from '@/components/SplitText'
+import { TechXeraLogo } from '@/components/Navbar'
 
 const container = {
   hidden: { opacity: 0 },
@@ -28,9 +31,35 @@ const itemVariant = {
 }
 
 export default function ExamsPage() {
+  const [mounted, setMounted] = useState(false)
+  const { user, isUserLoading } = useUser()
+  const router = useRouter()
   const db = useFirestore()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (mounted && !isUserLoading && !user) {
+      router.push('/login?redirect=/exams')
+    }
+  }, [user, isUserLoading, router, mounted])
+
   const examsQuery = useMemoFirebase(() => query(collection(db, 'exams'), orderBy('examDate', 'asc')), [db])
   const { data: exams, isLoading } = useCollection(examsQuery)
+
+  if (!mounted || isUserLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }}>
+          <TechXeraLogo className="w-16 h-16 opacity-50" />
+        </motion.div>
+      </div>
+    )
+  }
+
+  if (!user) return null
 
   return (
     <div className="min-h-screen relative flex flex-col">

@@ -1,21 +1,49 @@
 
 "use client"
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import Navbar from '@/components/Navbar'
 import { Badge } from '@/components/ui/badge'
 import { Calendar, AlertCircle, Info, Megaphone, Loader2 } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase'
+import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase'
 import { collection, query, orderBy } from 'firebase/firestore'
+import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
 import SplitText from '@/components/SplitText'
 import ScrollStack, { ScrollStackItem } from '@/components/ScrollStack'
+import { TechXeraLogo } from '@/components/Navbar'
 
 export default function NoticesPage() {
+  const [mounted, setMounted] = useState(false)
+  const { user, isUserLoading } = useUser()
+  const router = useRouter()
   const db = useFirestore()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (mounted && !isUserLoading && !user) {
+      router.push('/login?redirect=/notices')
+    }
+  }, [user, isUserLoading, router, mounted])
+
   const noticesQuery = useMemoFirebase(() => query(collection(db, 'notices'), orderBy('publishDate', 'desc')), [db])
   const { data: notices, isLoading } = useCollection(noticesQuery)
+
+  if (!mounted || isUserLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }}>
+          <TechXeraLogo className="w-16 h-16 opacity-50" />
+        </motion.div>
+      </div>
+    )
+  }
+
+  if (!user) return null
 
   return (
     <div className="min-h-screen bg-background">
@@ -58,7 +86,7 @@ export default function NoticesPage() {
               {notices.map((notice) => (
                 <ScrollStackItem 
                   key={notice.id} 
-                  itemClassName={`border-l-8 ${notice.isUrgent ? 'border-l-destructive' : 'border-l-primary'} bg-white`}
+                  itemClassName={`border-l-8 ${notice.isUrgent ? 'border-l-destructive' : 'border-l-primary'} bg-white !h-64`}
                 >
                   <div className="flex flex-col h-full">
                     <div className="flex justify-between items-start mb-4">

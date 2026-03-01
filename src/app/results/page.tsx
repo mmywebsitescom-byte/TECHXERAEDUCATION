@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect } from 'react'
@@ -9,10 +10,12 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { ClipboardList, Search, Loader2, Download, AlertCircle, RefreshCw } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useFirestore } from '@/firebase'
-import { collection, query, where, getDocs, orderBy, DocumentData, limit } from 'firebase/firestore'
+import { useFirestore, useUser } from '@/firebase'
+import { collection, query, where, getDocs, DocumentData, limit } from 'firebase/firestore'
+import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import SplitText from '@/components/SplitText'
+import { TechXeraLogo } from '@/components/Navbar'
 
 export default function ResultsLookupPage() {
   const [mounted, setMounted] = useState(false)
@@ -23,12 +26,20 @@ export default function ResultsLookupPage() {
   const [results, setResults] = useState<DocumentData[]>([])
   const [error, setError] = useState<string | null>(null)
   
+  const { user, isUserLoading } = useUser()
+  const router = useRouter()
   const db = useFirestore()
   const { toast } = useToast()
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  useEffect(() => {
+    if (mounted && !isUserLoading && !user) {
+      router.push('/login?redirect=/results')
+    }
+  }, [user, isUserLoading, router, mounted])
 
   const handleLookup = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -97,17 +108,17 @@ export default function ResultsLookupPage() {
     }
   }
 
-  if (!mounted) {
+  if (!mounted || isUserLoading) {
     return (
-      <div className="min-h-screen relative flex flex-col">
-        <TechBackground />
-        <Navbar />
-        <main className="flex-1 flex items-center justify-center pt-32">
-          <Loader2 className="animate-spin text-primary" size={48} />
-        </main>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }}>
+          <TechXeraLogo className="w-16 h-16 opacity-50" />
+        </motion.div>
       </div>
     )
   }
+
+  if (!user) return null
 
   return (
     <div className="min-h-screen relative flex flex-col">

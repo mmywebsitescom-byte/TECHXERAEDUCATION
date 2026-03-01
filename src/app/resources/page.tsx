@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect } from 'react'
@@ -7,21 +8,31 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Search, Download, FileText, Loader2, BookOpen } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase'
+import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase'
 import { collection, query, orderBy } from 'firebase/firestore'
+import { useRouter } from 'next/navigation'
 import SplitText from '@/components/SplitText'
+import { TechXeraLogo } from '@/components/Navbar'
 
 export default function ResourcesPage() {
   const [mounted, setMounted] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const { user, isUserLoading } = useUser()
+  const router = useRouter()
   const db = useFirestore()
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
+  useEffect(() => {
+    if (mounted && !isUserLoading && !user) {
+      router.push('/login?redirect=/resources')
+    }
+  }, [user, isUserLoading, router, mounted])
+
   const resourcesQuery = useMemoFirebase(() => db ? query(collection(db, 'studyMaterials'), orderBy('uploadDate', 'desc')) : null, [db])
-  const { data: resources, isLoading } = useCollection(resourcesQuery)
+  const { data: resources, isLoading: isResourcesLoading } = useCollection(resourcesQuery)
 
   const filtered = resources?.filter(r => 
     r.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -29,16 +40,17 @@ export default function ResourcesPage() {
     r.materialType.toLowerCase().includes(searchTerm.toLowerCase())
   ) || []
 
-  if (!mounted) {
+  if (!mounted || isUserLoading) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="flex items-center justify-center pt-96">
-          <Loader2 className="animate-spin text-primary" size={48} />
-        </div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }}>
+          <TechXeraLogo className="w-16 h-16 opacity-50" />
+        </motion.div>
       </div>
     )
   }
+
+  if (!user) return null
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -83,7 +95,7 @@ export default function ResourcesPage() {
           </Button>
         </div>
 
-        {isLoading ? (
+        {isResourcesLoading ? (
           <div className="text-center py-20 flex flex-col items-center gap-4">
             <Loader2 className="animate-spin text-primary" size={40} />
             <p className="font-bold text-muted-foreground uppercase tracking-widest text-xs">Accessing Archives...</p>
@@ -142,7 +154,7 @@ export default function ResourcesPage() {
           </div>
         )}
 
-        {filtered.length === 0 && !isLoading && (
+        {filtered.length === 0 && !isResourcesLoading && (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
