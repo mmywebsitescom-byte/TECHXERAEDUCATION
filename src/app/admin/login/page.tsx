@@ -168,7 +168,9 @@ export default function AdminLoginPage() {
   if (!mounted) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="animate-spin text-primary" size={32} />
+        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }}>
+          <TechXeraLogo className="w-16 h-16 opacity-50" />
+        </motion.div>
       </div>
     )
   }
@@ -179,7 +181,7 @@ export default function AdminLoginPage() {
       <Navbar />
       
       <main className="flex-1 flex items-center justify-center p-6">
-        <Suspense fallback={<Loader2 className="animate-spin text-primary" size={32} />}>
+        <Suspense fallback={<TechXeraLogo className="w-16 h-16 animate-pulse opacity-50" />}>
           <AdminLoginForm />
         </Suspense>
       </main>
