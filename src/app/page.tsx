@@ -155,7 +155,7 @@ export default function Home() {
         {/* Features Section */}
         <section className="py-24 md:py-32 lg:py-40 px-6 bg-white/30">
           <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-16 space-y-4">
+            <div className="text-center mb-32 space-y-4">
               <h2 className="text-4xl md:text-5xl font-headline font-bold tracking-tight">Ecosystem Architecture</h2>
               <p className="text-muted-foreground text-lg max-w-2xl mx-auto font-medium">A multi-layered infrastructure designed for speed, security, and academic excellence.</p>
             </div>
