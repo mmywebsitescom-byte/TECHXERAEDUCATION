@@ -1,4 +1,3 @@
-
 "use client"
 
 import React from 'react'
@@ -10,6 +9,7 @@ import { useFirestore, useCollection, useMemoFirebase } from '@/firebase'
 import { collection, query, orderBy } from 'firebase/firestore'
 import { format } from 'date-fns'
 import CardSwap, { Card as SwapCard } from '@/components/CardSwap'
+import SplitText from '@/components/SplitText'
 
 export default function NoticesPage() {
   const db = useFirestore()
@@ -27,7 +27,14 @@ export default function NoticesPage() {
           className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-24"
         >
           <div className="space-y-2">
-            <h1 className="text-5xl md:text-7xl font-headline font-bold tracking-tighter">Notice Board</h1>
+            <h1 className="text-5xl md:text-7xl font-headline font-bold tracking-tighter">
+              <SplitText 
+                text="Notice Board"
+                tag="span"
+                duration={0.6}
+                delay={40}
+              />
+            </h1>
             <p className="text-muted-foreground text-xl font-medium">Stay updated with the latest campus news.</p>
           </div>
           <motion.div 

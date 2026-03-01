@@ -1,4 +1,3 @@
-
 "use client"
 
 import React from 'react'
@@ -11,6 +10,7 @@ import { motion } from 'framer-motion'
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase'
 import { collection, query, orderBy } from 'firebase/firestore'
 import { format } from 'date-fns'
+import SplitText from '@/components/SplitText'
 
 const container = {
   hidden: { opacity: 0 },
@@ -46,7 +46,14 @@ export default function ExamsPage() {
           <div className="inline-flex items-center gap-3 px-6 py-2 bg-primary/10 text-primary rounded-full text-xs font-black tracking-[0.2em] uppercase">
             <Sparkles size={16} /> Campus Calendar
           </div>
-          <h1 className="text-5xl md:text-7xl font-headline font-bold tracking-tighter">Exam Schedule</h1>
+          <h1 className="text-5xl md:text-7xl font-headline font-bold tracking-tighter">
+            <SplitText 
+              text="Exam Schedule"
+              tag="span"
+              duration={0.6}
+              delay={35}
+            />
+          </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-3xl font-medium leading-relaxed">
             Official examination dates and sessions for TechXera students. Please ensure you arrive 30 minutes before the scheduled start time.
           </p>

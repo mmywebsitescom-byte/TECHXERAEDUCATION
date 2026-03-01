@@ -9,6 +9,7 @@ import { Search, Download, FileText, Loader2, BookOpen } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase'
 import { collection, query, orderBy } from 'firebase/firestore'
+import SplitText from '@/components/SplitText'
 
 export default function ResourcesPage() {
   const [mounted, setMounted] = useState(false)
@@ -52,7 +53,14 @@ export default function ResourcesPage() {
           >
             <BookOpen size={16} /> Repository
           </motion.div>
-          <h1 className="text-4xl md:text-5xl font-headline font-bold tracking-tighter">Campus Repository</h1>
+          <h1 className="text-4xl md:text-5xl font-headline font-bold tracking-tighter">
+            <SplitText 
+              text="Campus Repository"
+              tag="span"
+              duration={0.6}
+              delay={30}
+            />
+          </h1>
           <p className="text-lg text-muted-foreground max-w-2xl font-medium leading-relaxed">
             Access the technical library for TechXera students. Explore a curated collection of lecture notes, research papers, and coding guides.
           </p>

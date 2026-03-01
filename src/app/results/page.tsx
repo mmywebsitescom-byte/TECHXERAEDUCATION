@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect } from 'react'
@@ -13,6 +12,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useFirestore } from '@/firebase'
 import { collection, query, where, getDocs, orderBy, DocumentData, limit } from 'firebase/firestore'
 import { useToast } from '@/hooks/use-toast'
+import SplitText from '@/components/SplitText'
 
 export default function ResultsLookupPage() {
   const [mounted, setMounted] = useState(false)
@@ -129,7 +129,14 @@ export default function ResultsLookupPage() {
                   <div className="mx-auto w-16 h-16 bg-primary text-white rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-primary/20">
                     <ClipboardList size={32} />
                   </div>
-                  <CardTitle className="text-3xl font-headline font-bold">Check Results</CardTitle>
+                  <CardTitle className="text-3xl font-headline font-bold">
+                    <SplitText 
+                      text="Check Results"
+                      tag="span"
+                      duration={0.6}
+                      delay={30}
+                    />
+                  </CardTitle>
                   <CardDescription className="text-base">Enter credentials to view mark sheet</CardDescription>
                 </CardHeader>
                 <form onSubmit={handleLookup}>

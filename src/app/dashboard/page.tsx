@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { useToast } from '@/hooks/use-toast'
+import SplitText from '@/components/SplitText'
 
 const container = {
   hidden: { opacity: 0 },
@@ -201,7 +202,12 @@ export default function DashboardPage() {
             </motion.div>
             <div className="space-y-2">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-headline font-bold tracking-tighter">
-                Hello, {profile?.firstName || 'Student'}!
+                <SplitText 
+                  text={`Hello, ${profile?.firstName || 'Student'}!`}
+                  tag="span"
+                  duration={0.6}
+                  delay={30}
+                />
               </h1>
               <div className="flex flex-wrap items-center gap-4">
                 <div className="bg-primary/10 text-primary px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest flex items-center gap-2">
