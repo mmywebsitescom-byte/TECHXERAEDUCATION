@@ -102,7 +102,7 @@ export default function ResultsLookupPage() {
       <div className="min-h-screen relative flex flex-col">
         <TechBackground />
         <Navbar />
-        <main className="flex-1 flex items-center justify-center pt-96">
+        <main className="flex-1 flex items-center justify-center pt-40">
           <Loader2 className="animate-spin text-primary" size={48} />
         </main>
       </div>
@@ -114,7 +114,7 @@ export default function ResultsLookupPage() {
       <TechBackground />
       <Navbar />
 
-      <main className="flex-1 max-w-7xl mx-auto w-full p-6 flex flex-col items-center justify-center pt-96 pb-20">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-6 pt-40 pb-32 flex flex-col items-center">
         <AnimatePresence mode="wait">
           {!studentData ? (
             <motion.div 
@@ -122,50 +122,50 @@ export default function ResultsLookupPage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-lg"
+              className="w-full max-w-lg mt-12"
             >
-              <Card className="glass border-border/40 shadow-2xl overflow-hidden">
-                <CardHeader className="text-center pb-8 border-b border-border/40 bg-primary/5">
+              <Card className="glass border-none shadow-2xl overflow-hidden rounded-[2.5rem]">
+                <CardHeader className="text-center pb-8 border-b border-border/40 bg-primary/5 p-10">
                   <div className="mx-auto w-16 h-16 bg-primary text-white rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-primary/20">
                     <ClipboardList size={32} />
                   </div>
                   <CardTitle className="text-3xl font-headline font-bold">Check Results</CardTitle>
-                  <CardDescription>Enter your credentials to view your mark sheet</CardDescription>
+                  <CardDescription className="text-base">Enter credentials to view mark sheet</CardDescription>
                 </CardHeader>
                 <form onSubmit={handleLookup}>
-                  <CardContent className="space-y-6 pt-8">
+                  <CardContent className="space-y-6 p-10">
                     {error && (
                       <div className="p-4 bg-destructive/10 text-destructive rounded-xl flex items-center gap-3 text-sm font-medium border border-destructive/20">
                         <AlertCircle size={18} /> {error}
                       </div>
                     )}
                     <div className="space-y-2">
-                      <Label htmlFor="id">Student ID (Roll Number)</Label>
+                      <Label htmlFor="id" className="text-xs uppercase font-bold tracking-widest text-muted-foreground">Roll Number</Label>
                       <Input 
                         id="id" 
                         placeholder="e.g. TX-2025-001" 
-                        className="h-12 bg-background/50 text-lg font-medium" 
+                        className="h-14 bg-background/50 text-lg font-bold rounded-2xl border-none ring-1 ring-border focus-visible:ring-primary" 
                         required 
                         value={studentIdInput}
                         onChange={(e) => setStudentIdInput(e.target.value)}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="dob">Date of Birth</Label>
+                      <Label htmlFor="dob" className="text-xs uppercase font-bold tracking-widest text-muted-foreground">Date of Birth</Label>
                       <Input 
                         id="dob" 
                         type="date" 
-                        className="h-12 bg-background/50" 
+                        className="h-14 bg-background/50 rounded-2xl border-none ring-1 ring-border focus-visible:ring-primary" 
                         required 
                         value={dobInput}
                         onChange={(e) => setDobInput(e.target.value)}
                       />
                     </div>
                   </CardContent>
-                  <div className="p-6 pt-0">
-                    <Button disabled={loading} className="w-full h-14 text-lg font-bold bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20">
+                  <div className="p-10 pt-0">
+                    <Button disabled={loading} className="w-full h-14 text-lg font-bold bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 rounded-2xl">
                       {loading ? <Loader2 className="animate-spin mr-2" /> : <Search className="mr-2" size={20} />}
-                      {loading ? 'Searching Records...' : 'View Mark Sheet'}
+                      {loading ? 'Searching...' : 'Retrieve Results'}
                     </Button>
                   </div>
                 </form>
@@ -177,15 +177,15 @@ export default function ResultsLookupPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
-              className="w-full"
+              className="w-full mt-12"
             >
-              <Card className="glass border-border/40 shadow-2xl overflow-hidden max-w-4xl mx-auto">
-                <CardHeader className="bg-primary text-white p-8">
+              <Card className="glass border-none shadow-2xl overflow-hidden max-w-4xl mx-auto rounded-[3rem]">
+                <CardHeader className="bg-primary text-white p-10">
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div>
                       <CardTitle className="text-3xl font-headline font-bold">Academic Transcript</CardTitle>
                       <CardDescription className="text-primary-foreground/80 text-lg font-medium">
-                        Official Academic Record • TechXera Campus
+                        Official Record • TechXera Campus
                       </CardDescription>
                     </div>
                     <div className="flex gap-4">
@@ -199,33 +199,33 @@ export default function ResultsLookupPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <div className="p-8 grid grid-cols-1 md:grid-cols-3 gap-8 border-b border-border/40 bg-muted/5">
+                  <div className="p-10 grid grid-cols-1 md:grid-cols-3 gap-10 border-b border-border/20 bg-muted/5">
                     <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground uppercase font-bold tracking-widest">Student Name</p>
-                      <p className="text-xl font-bold">{studentData.firstName} {studentData.lastName}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Student</p>
+                      <p className="text-2xl font-bold tracking-tight">{studentData.firstName} {studentData.lastName}</p>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground uppercase font-bold tracking-widest">Student ID</p>
-                      <p className="text-xl font-bold text-primary">{studentData.studentId}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Roll No</p>
+                      <p className="text-2xl font-bold text-primary tracking-tight">{studentData.studentId}</p>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground uppercase font-bold tracking-widest">Current Status</p>
+                      <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Status</p>
                       <div className="flex items-center">
-                        <div className="w-2 h-2 rounded-full bg-green-500 mr-2" />
-                        <span className="font-bold text-green-600 uppercase text-sm">Enrolled</span>
+                        <div className="w-2.5 h-2.5 rounded-full bg-green-500 mr-2" />
+                        <span className="font-black text-green-600 uppercase text-xs tracking-widest">Active</span>
                       </div>
                     </div>
                   </div>
                   
                   <div className="overflow-x-auto">
                     <table className="w-full text-left">
-                      <thead className="bg-muted/50 border-b border-border/40">
+                      <thead className="bg-muted/30 border-b border-border/20">
                         <tr>
-                          <th className="p-5 px-8 font-bold text-xs uppercase tracking-widest text-muted-foreground">Subject</th>
-                          <th className="p-5 font-bold text-xs uppercase tracking-widest text-muted-foreground">Exam Session</th>
-                          <th className="p-5 font-bold text-xs uppercase tracking-widest text-muted-foreground">Semester</th>
-                          <th className="p-5 font-bold text-xs uppercase tracking-widest text-muted-foreground">Marks</th>
-                          <th className="p-5 px-8 text-right font-bold text-xs uppercase tracking-widest text-muted-foreground">Grade</th>
+                          <th className="p-6 px-10 font-black text-[10px] uppercase tracking-widest text-muted-foreground">Subject</th>
+                          <th className="p-6 font-black text-[10px] uppercase tracking-widest text-muted-foreground">Session</th>
+                          <th className="p-6 font-black text-[10px] uppercase tracking-widest text-muted-foreground">Term</th>
+                          <th className="p-6 font-black text-[10px] uppercase tracking-widest text-muted-foreground">Score</th>
+                          <th className="p-6 px-10 text-right font-black text-[10px] uppercase tracking-widest text-muted-foreground">Grade</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -234,41 +234,41 @@ export default function ResultsLookupPage() {
                             <motion.tr 
                               initial={{ opacity: 0, x: -10 }}
                               animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: i * 0.1 }}
+                              transition={{ delay: i * 0.05 }}
                               key={res.id} 
-                              className="border-b border-border/40 hover:bg-muted/20 transition-colors"
+                              className="border-b border-border/10 hover:bg-primary/[0.02] transition-colors"
                             >
-                              <td className="p-5 px-8 font-bold">{res.subject}</td>
-                              <td className="p-5 text-sm font-bold text-muted-foreground">{res.examTitle || 'General Assessment'}</td>
-                              <td className="p-5 text-sm font-medium">{res.semester}</td>
-                              <td className="p-5 text-sm">{res.marks}%</td>
-                              <td className="p-5 px-8 text-right font-black text-2xl text-primary">{res.grade}</td>
+                              <td className="p-6 px-10 font-bold text-lg">{res.subject}</td>
+                              <td className="p-6 text-sm font-bold text-muted-foreground">{res.examTitle || 'Assessment'}</td>
+                              <td className="p-6 text-sm font-medium">{res.semester}</td>
+                              <td className="p-6 text-sm font-bold">{res.marks}%</td>
+                              <td className="p-6 px-10 text-right font-black text-3xl text-primary">{res.grade}</td>
                             </motion.tr>
                           ))
                         ) : (
-                          <tr><td colSpan={5} className="p-20 text-center text-muted-foreground font-medium italic">No results have been recorded for this student yet.</td></tr>
+                          <tr><td colSpan={5} className="p-24 text-center text-muted-foreground font-bold italic text-sm opacity-40 uppercase tracking-widest">No academic records found</td></tr>
                         )}
                       </tbody>
                     </table>
                   </div>
 
                   {results.length > 0 && (
-                    <div className="p-10 bg-primary/5 flex flex-col md:flex-row justify-between items-center gap-6 border-t border-border/40">
+                    <div className="p-10 bg-primary/5 flex flex-col md:flex-row justify-between items-center gap-10 border-t border-border/20">
                       <div>
-                        <p className="text-xs text-muted-foreground uppercase font-bold mb-1">Total Subjects Evaluated</p>
-                        <p className="text-3xl font-headline font-bold">{results.length}</p>
+                        <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-1">Evaluated Subjects</p>
+                        <p className="text-4xl font-headline font-bold text-primary">{results.length}</p>
                       </div>
                       <div className="text-center md:text-right">
-                        <p className="text-xs text-muted-foreground uppercase font-bold mb-1 tracking-widest">Final Status</p>
-                        <p className="text-2xl font-bold text-green-600 uppercase tracking-tight">Academic Record Verified</p>
+                        <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-1">Verification</p>
+                        <p className="text-2xl font-bold text-green-600 uppercase tracking-tighter">Certified Result</p>
                       </div>
                     </div>
                   )}
                 </CardContent>
               </Card>
-              <div className="mt-8 text-center">
-                <p className="text-sm text-muted-foreground italic max-w-2xl mx-auto leading-relaxed">
-                  Disclaimer: This is a digitally generated transcript for reference only. For official academic applications, please request a signed and stamped copy from the campus registrar.
+              <div className="mt-12 text-center">
+                <p className="text-sm text-muted-foreground italic max-w-2xl mx-auto leading-relaxed font-medium">
+                  Note: This is an official digital transcript. For formal validation or credentialing, please contact the campus registrar office.
                 </p>
               </div>
             </motion.div>

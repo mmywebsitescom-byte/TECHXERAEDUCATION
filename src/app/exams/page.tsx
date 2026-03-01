@@ -37,70 +37,70 @@ export default function ExamsPage() {
       <TechBackground />
       <Navbar />
       
-      <main className="max-w-7xl mx-auto p-10 md:p-24 pt-96 pb-32 w-full">
+      <main className="max-w-7xl mx-auto w-full px-6 md:px-10 pt-40 pb-32">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="space-y-6 mb-20"
+          className="space-y-6 mb-16"
         >
           <div className="inline-flex items-center gap-3 px-6 py-2 bg-primary/10 text-primary rounded-full text-xs font-black tracking-[0.2em] uppercase">
             <Sparkles size={16} /> Campus Calendar
           </div>
-          <h1 className="text-6xl md:text-8xl font-headline font-bold tracking-tighter">Exam Schedule</h1>
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl font-medium leading-relaxed">
+          <h1 className="text-5xl md:text-7xl font-headline font-bold tracking-tighter">Exam Schedule</h1>
+          <p className="text-lg md:text-xl text-muted-foreground max-w-3xl font-medium leading-relaxed">
             Official examination dates and sessions for TechXera students. Please ensure you arrive 30 minutes before the scheduled start time.
           </p>
         </motion.div>
 
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-40 gap-6">
-            <Loader2 className="animate-spin text-primary" size={64} />
-            <p className="font-bold text-muted-foreground uppercase tracking-widest">Accessing schedule...</p>
+          <div className="flex flex-col items-center justify-center py-32 gap-6">
+            <Loader2 className="animate-spin text-primary" size={48} />
+            <p className="font-bold text-muted-foreground uppercase tracking-widest text-xs">Accessing schedule...</p>
           </div>
         ) : (
           <motion.div 
             variants={container}
             initial="hidden"
             animate="show"
-            className="grid grid-cols-1 lg:grid-cols-2 gap-10"
+            className="grid grid-cols-1 lg:grid-cols-2 gap-8"
           >
             {exams?.map((exam) => (
               <motion.div key={exam.id} variants={itemVariant}>
-                <Card className="glass border-none rounded-[3rem] overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 group">
-                  <div className={`h-3 w-full ${exam.status === 'active' ? 'bg-green-500' : exam.status === 'upcoming' ? 'bg-primary' : 'bg-muted'}`} />
-                  <CardContent className="p-12">
-                    <div className="flex justify-between items-start mb-8">
+                <Card className="glass border-none rounded-[2.5rem] overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 group">
+                  <div className={`h-2 w-full ${exam.status === 'active' ? 'bg-green-500' : exam.status === 'upcoming' ? 'bg-primary' : 'bg-muted'}`} />
+                  <CardContent className="p-8 md:p-10">
+                    <div className="flex justify-between items-start mb-6">
                       <div className="space-y-1">
-                        <Badge variant={exam.status === 'active' ? 'default' : exam.status === 'upcoming' ? 'secondary' : 'outline'} className="uppercase text-[10px] font-black tracking-widest px-4 py-1.5 rounded-full mb-4">
+                        <Badge variant={exam.status === 'active' ? 'default' : exam.status === 'upcoming' ? 'secondary' : 'outline'} className="uppercase text-[9px] font-black tracking-widest px-3 py-1 rounded-full mb-3">
                           {exam.status}
                         </Badge>
-                        <h3 className="text-3xl font-headline font-bold tracking-tight group-hover:text-primary transition-colors">{exam.title}</h3>
+                        <h3 className="text-2xl md:text-3xl font-headline font-bold tracking-tight group-hover:text-primary transition-colors">{exam.title}</h3>
                       </div>
-                      <div className="p-6 bg-muted/50 rounded-3xl text-muted-foreground">
-                        <CalendarDays size={32} />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-8 mb-10">
-                      <div className="flex items-center gap-4">
-                        <div className="p-3 bg-primary/5 text-primary rounded-2xl"><GraduationCap size={20} /></div>
-                        <div>
-                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Semester</p>
-                          <p className="font-bold">{exam.semester}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="p-3 bg-primary/5 text-primary rounded-2xl"><Clock size={20} /></div>
-                        <div>
-                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Start Date</p>
-                          <p className="font-bold">{exam.examDate ? format(new Date(exam.examDate), 'MMMM d, yyyy') : 'TBD'}</p>
-                        </div>
+                      <div className="p-4 bg-muted/50 rounded-2xl text-muted-foreground">
+                        <CalendarDays size={24} />
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3 p-6 bg-muted/30 rounded-[2rem] text-sm text-muted-foreground border border-white/40">
-                      <MapPin size={18} className="text-primary shrink-0" />
-                      <p>Check your registered email for specific lab and hall allocations.</p>
+                    <div className="grid grid-cols-2 gap-6 mb-8">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2.5 bg-primary/5 text-primary rounded-xl"><GraduationCap size={18} /></div>
+                        <div>
+                          <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Semester</p>
+                          <p className="text-sm font-bold">{exam.semester}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="p-2.5 bg-primary/5 text-primary rounded-xl"><Clock size={18} /></div>
+                        <div>
+                          <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Start Date</p>
+                          <p className="text-sm font-bold">{exam.examDate ? format(new Date(exam.examDate), 'MMM d, yyyy') : 'TBD'}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 p-4 bg-muted/30 rounded-2xl text-xs text-muted-foreground border border-white/40">
+                      <MapPin size={16} className="text-primary shrink-0" />
+                      <p>Check your registered email for hall allocations.</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -108,10 +108,10 @@ export default function ExamsPage() {
             ))}
 
             {exams?.length === 0 && (
-              <div className="col-span-full py-40 text-center border-4 border-dashed border-muted rounded-[4rem] bg-white/30 backdrop-blur-sm">
-                <CalendarDays size={80} className="mx-auto text-muted-foreground/20 mb-8" />
-                <h2 className="text-2xl font-headline font-bold text-muted-foreground">No Examination Sessions Scheduled</h2>
-                <p className="text-muted-foreground mt-2 uppercase text-xs font-bold tracking-widest">Updates will appear here shortly</p>
+              <div className="col-span-full py-32 text-center border-4 border-dashed border-muted rounded-[3rem] bg-white/30 backdrop-blur-sm">
+                <CalendarDays size={64} className="mx-auto text-muted-foreground/20 mb-6" />
+                <h2 className="text-xl font-headline font-bold text-muted-foreground">No Examination Sessions Scheduled</h2>
+                <p className="text-muted-foreground mt-2 uppercase text-[10px] font-bold tracking-widest">Updates will appear here shortly</p>
               </div>
             )}
           </motion.div>

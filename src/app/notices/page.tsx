@@ -16,13 +16,13 @@ const container = {
   show: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.15
+      staggerChildren: 0.1
     }
   }
 }
 
 const item = {
-  hidden: { opacity: 0, x: -20 },
+  hidden: { opacity: 0, x: -10 },
   show: { opacity: 1, x: 0 }
 }
 
@@ -35,59 +35,59 @@ export default function NoticesPage() {
     <div className="min-h-screen bg-background">
       <Navbar />
       
-      <main className="max-w-4xl mx-auto py-12 px-6 space-y-8 pt-96">
+      <main className="max-w-4xl mx-auto w-full px-6 pt-40 pb-32">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
+          className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12"
         >
-          <div className="space-y-1">
-            <h1 className="text-3xl md:text-4xl font-headline font-bold">Notice Board</h1>
-            <p className="text-muted-foreground text-base">Stay updated with the latest campus news.</p>
+          <div className="space-y-2">
+            <h1 className="text-4xl md:text-5xl font-headline font-bold tracking-tight">Notice Board</h1>
+            <p className="text-muted-foreground text-lg font-medium">Stay updated with the latest campus news.</p>
           </div>
           <motion.div 
             whileHover={{ scale: 1.05 }}
-            className="flex items-center gap-2 p-3 bg-primary/10 text-primary rounded-2xl"
+            className="flex items-center gap-3 px-5 py-2.5 bg-primary/10 text-primary rounded-2xl border border-primary/5"
           >
-            <Megaphone size={18} />
-            <span className="font-bold text-xs">{notices?.length || 0} Announcements</span>
+            <Megaphone size={20} />
+            <span className="font-bold text-sm">{notices?.length || 0} Announcements</span>
           </motion.div>
         </motion.div>
 
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-12 gap-4">
+          <div className="flex flex-col items-center justify-center py-32 gap-4">
             <Loader2 className="animate-spin text-primary" size={40} />
-            <p className="text-muted-foreground font-medium text-sm">Loading notices...</p>
+            <p className="text-muted-foreground font-bold uppercase tracking-widest text-xs">Loading updates...</p>
           </div>
         ) : (
           <motion.div 
             variants={container}
             initial="hidden"
             animate="show"
-            className="space-y-4"
+            className="space-y-5"
           >
             {notices?.map((notice) => (
               <motion.div key={notice.id} variants={item}>
-                <Card className={`shadow-sm border-l-4 transition-all hover:translate-x-1 duration-300 ${notice.isUrgent ? 'border-l-destructive border-border/50 bg-destructive/[0.02]' : 'border-l-primary border-border/50'}`}>
-                  <CardContent className="p-6">
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex items-center gap-2">
-                        <Badge className={`text-[9px] py-0 px-2 ${notice.isUrgent ? 'bg-destructive text-white border-none' : 'bg-primary text-white border-none'}`}>
+                <Card className={`shadow-sm border-none border-l-4 transition-all hover:translate-x-1 duration-300 rounded-2xl overflow-hidden ${notice.isUrgent ? 'border-l-destructive bg-destructive/[0.02]' : 'border-l-primary bg-white/50'}`}>
+                  <CardContent className="p-8">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex items-center gap-3">
+                        <Badge className={`text-[9px] py-0.5 px-3 uppercase tracking-widest font-black ${notice.isUrgent ? 'bg-destructive text-white border-none' : 'bg-primary text-white border-none'}`}>
                           {notice.isUrgent ? 'Urgent' : 'Normal'}
                         </Badge>
-                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1">
-                          <Calendar size={10} /> {notice.publishDate ? format(new Date(notice.publishDate), 'MMM d, yyyy') : 'N/A'}
+                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+                          <Calendar size={12} /> {notice.publishDate ? format(new Date(notice.publishDate), 'MMM d, yyyy') : 'N/A'}
                         </span>
                       </div>
                     </div>
                     
-                    <div className="flex gap-4">
-                      <div className={`hidden sm:flex shrink-0 w-10 h-10 rounded-full items-center justify-center ${notice.isUrgent ? 'bg-destructive/10 text-destructive' : 'bg-primary/10 text-primary'}`}>
-                        {notice.isUrgent ? <AlertCircle size={20} /> : <Info size={20} />}
+                    <div className="flex gap-5">
+                      <div className={`hidden sm:flex shrink-0 w-12 h-12 rounded-2xl items-center justify-center ${notice.isUrgent ? 'bg-destructive/10 text-destructive' : 'bg-primary/10 text-primary'}`}>
+                        {notice.isUrgent ? <AlertCircle size={24} /> : <Info size={24} />}
                       </div>
-                      <div>
-                        <h3 className="text-xl font-headline font-bold mb-2">{notice.title}</h3>
-                        <p className="text-muted-foreground leading-relaxed text-sm whitespace-pre-wrap">{notice.description}</p>
+                      <div className="space-y-2">
+                        <h3 className="text-2xl font-headline font-bold tracking-tight">{notice.title}</h3>
+                        <p className="text-muted-foreground leading-relaxed text-base whitespace-pre-wrap font-medium">{notice.description}</p>
                       </div>
                     </div>
                   </CardContent>
@@ -96,8 +96,9 @@ export default function NoticesPage() {
             ))}
 
             {notices?.length === 0 && (
-              <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-3xl text-sm">
-                No active notices at the moment.
+              <div className="text-center py-24 text-muted-foreground border-2 border-dashed rounded-[2.5rem] bg-white/30 backdrop-blur-sm">
+                <Megaphone size={48} className="mx-auto opacity-10 mb-4" />
+                <p className="font-bold uppercase tracking-widest text-xs">No active notices at the moment.</p>
               </div>
             )}
           </motion.div>
