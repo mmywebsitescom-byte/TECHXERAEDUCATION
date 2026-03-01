@@ -7,7 +7,7 @@ import TechBackground from '@/components/TechBackground'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { ArrowRight, BookOpen, GraduationCap, ShieldCheck, Zap, Sparkles, Cpu, LifeBuoy } from 'lucide-react'
+import { ArrowRight, BookOpen, GraduationCap, ShieldCheck, Zap, Sparkles, Cpu, LifeBuoy, Github, Twitter, Linkedin, Mail } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import LogoLoop, { type LogoItem } from '@/components/LogoLoop'
@@ -25,7 +25,7 @@ const VercelIcon = () => (
   </svg>
 )
 
-const GithubIcon = () => (
+const GithubStackIcon = () => (
   <svg width="48" height="48" viewBox="0 0 24 24" fill="white">
     <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22v3.293c0 .319.192.694.805.576C20.565 21.795 24 17.298 24 12c0-6.627-5.373-12-12-12z" />
   </svg>
@@ -44,7 +44,7 @@ const ReactIcon = () => (
 
 const techStackLogos: LogoItem[] = [
   { node: <div className="p-4 opacity-70 hover:opacity-100 transition-all"><VercelIcon /></div> },
-  { node: <div className="p-4 opacity-70 hover:opacity-100 transition-all"><GithubIcon /></div> },
+  { node: <div className="p-4 opacity-70 hover:opacity-100 transition-all"><GithubStackIcon /></div> },
   { node: <div className="p-4 opacity-70 hover:opacity-100 transition-all"><div className="text-4xl font-bold font-code text-white">TS</div></div> },
   { node: <div className="p-4 opacity-70 hover:opacity-100 transition-all"><div className="text-4xl font-bold font-code text-white">JS</div></div> },
   { node: <div className="p-4 opacity-70 hover:opacity-100 transition-all"><NextJsIcon /></div> },
@@ -263,20 +263,79 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="py-16 md:py-20 px-6 border-t border-white/20">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10 text-muted-foreground">
-          <div className="flex items-center gap-4">
-            <div className="bg-primary p-3 rounded-xl text-white">
-              <Zap size={24} />
+      <footer className="py-20 px-6 border-t border-white/20 bg-white/10 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 text-muted-foreground">
+          {/* Brand Column */}
+          <div className="lg:col-span-2 space-y-6">
+            <Link href="/" className="flex items-center gap-4 group">
+              <div className="bg-primary p-3 rounded-xl text-white shadow-lg shadow-primary/30">
+                <Zap size={24} />
+              </div>
+              <span className="font-headline font-bold text-2xl text-foreground tracking-tight">TechXera Campus</span>
+            </Link>
+            <p className="text-sm font-medium leading-relaxed max-w-sm">
+              Your all-in-one high-performance campus engine. Empowering students with seamless digital access to academic excellence.
+            </p>
+            <div className="flex gap-4 pt-4">
+              <Link href="https://github.com" target="_blank" className="p-2 bg-muted hover:bg-primary/10 hover:text-primary transition-all rounded-lg">
+                <Github size={18} />
+              </Link>
+              <Link href="https://twitter.com" target="_blank" className="p-2 bg-muted hover:bg-primary/10 hover:text-primary transition-all rounded-lg">
+                <Twitter size={18} />
+              </Link>
+              <Link href="https://linkedin.com" target="_blank" className="p-2 bg-muted hover:bg-primary/10 hover:text-primary transition-all rounded-lg">
+                <Linkedin size={18} />
+              </Link>
+              <Link href="mailto:support@techxera.edu" className="p-2 bg-muted hover:bg-primary/10 hover:text-primary transition-all rounded-lg">
+                <Mail size={18} />
+              </Link>
             </div>
-            <span className="font-headline font-bold text-2xl text-foreground tracking-tight">TechXera Campus</span>
           </div>
-          <div className="flex gap-10 text-xs font-bold uppercase tracking-widest">
-            <Link href="/security" className="hover:text-primary transition-colors">Security</Link>
-            <Link href="/privacy" className="hover:text-primary transition-colors">Privacy</Link>
-            <Link href="/support" className="hover:text-primary transition-colors">Help & Support</Link>
+
+          {/* Portal Links */}
+          <div className="space-y-6">
+            <h4 className="font-headline font-bold text-foreground text-sm uppercase tracking-[0.2em]">Portal</h4>
+            <ul className="space-y-4 text-xs font-bold uppercase tracking-widest">
+              <li><Link href="/dashboard" className="hover:text-primary transition-colors">Student Dashboard</Link></li>
+              <li><Link href="/results" className="hover:text-primary transition-colors">Academic Results</Link></li>
+              <li><Link href="/exams" className="hover:text-primary transition-colors">Exam Schedule</Link></li>
+              <li><Link href="/admin" className="hover:text-primary transition-colors">Admin Console</Link></li>
+            </ul>
           </div>
-          <p className="text-xs font-medium">© 2025 TechXera. High-Performance Campus Engine.</p>
+
+          {/* Resources Links */}
+          <div className="space-y-6">
+            <h4 className="font-headline font-bold text-foreground text-sm uppercase tracking-[0.2em]">Resources</h4>
+            <ul className="space-y-4 text-xs font-bold uppercase tracking-widest">
+              <li><Link href="/resources" className="hover:text-primary transition-colors">Campus Repository</Link></li>
+              <li><Link href="/notices" className="hover:text-primary transition-colors">Official Notices</Link></li>
+              <li><Link href="/support" className="hover:text-primary transition-colors">Study Guides</Link></li>
+              <li><Link href="/resources" className="hover:text-primary transition-colors">Coding Library</Link></li>
+            </ul>
+          </div>
+
+          {/* Support Links */}
+          <div className="space-y-6">
+            <h4 className="font-headline font-bold text-foreground text-sm uppercase tracking-[0.2em]">Assistance</h4>
+            <ul className="space-y-4 text-xs font-bold uppercase tracking-widest">
+              <li><Link href="/support" className="hover:text-primary transition-colors">Help Center</Link></li>
+              <li><Link href="/support" className="hover:text-primary transition-colors">Contact IT Hub</Link></li>
+              <li><Link href="/security" className="hover:text-primary transition-colors">Security Desk</Link></li>
+              <li><Link href="/privacy" className="hover:text-primary transition-colors">Student Privacy</Link></li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Bottom Bar */}
+        <div className="max-w-7xl mx-auto pt-16 mt-16 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-8">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em]">
+            © 2025 TechXera Campus. All Rights Reserved.
+          </p>
+          <div className="flex gap-10 text-[10px] font-bold uppercase tracking-[0.2em]">
+            <Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
+            <Link href="/security" className="hover:text-primary transition-colors">Security Protocols</Link>
+            <Link href="/support" className="hover:text-primary transition-colors">Terms of Service</Link>
+          </div>
         </div>
       </footer>
     </div>
