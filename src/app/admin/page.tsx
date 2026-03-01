@@ -37,7 +37,7 @@ export default function AdminPage() {
 
   // Form States
   const [newNotice, setNewNotice] = useState({ title: '', description: '', isUrgent: false })
-  const [newMaterial, setNewMaterial] = useState({ title: '', subject: '', semester: '', fileUrl: '', materialType: 'Notes' })
+  const [newMaterial, setNewMaterial] = useState({ title: '', description: '', subject: '', semester: '', fileUrl: '', materialType: 'Notes' })
   const [newResult, setNewResult] = useState({ subject: '', semester: '', marksObtained: 0, grade: '', examDate: new Date().toISOString().split('T')[0] })
   const [newExam, setNewExam] = useState({ title: '', semester: '', examDate: new Date().toISOString().split('T')[0], status: 'upcoming', totalMarks: 100 })
 
@@ -189,7 +189,7 @@ export default function AdminPage() {
     setDoc(docRef, data)
       .then(() => {
         toast({ title: "Resource Uploaded" })
-        setNewMaterial({ title: '', subject: '', semester: '', fileUrl: '', materialType: 'Notes' })
+        setNewMaterial({ title: '', description: '', subject: '', semester: '', fileUrl: '', materialType: 'Notes' })
         setIsDialogOpen(false)
       })
       .finally(() => setIsCreating(false))
@@ -338,6 +338,7 @@ export default function AdminPage() {
                       <div className="space-y-2"><Label>Academic Subject</Label><Input required value={newMaterial.subject} onChange={e => setNewMaterial({ ...newMaterial, subject: e.target.value })} /></div>
                       <div className="space-y-2"><Label>Term / Semester</Label><Input required value={newMaterial.semester} onChange={e => setNewMaterial({ ...newMaterial, semester: e.target.value })} /></div>
                     </div>
+                    <div className="space-y-2"><Label>Resource Description</Label><Textarea placeholder="Briefly describe the content..." value={newMaterial.description} onChange={e => setNewMaterial({ ...newMaterial, description: e.target.value })} className="min-h-[100px]" /></div>
                     <div className="space-y-2"><Label>Source / File URL</Label><Input required type="url" placeholder="https://..." value={newMaterial.fileUrl} onChange={e => setNewMaterial({ ...newMaterial, fileUrl: e.target.value })} /></div>
                     <Button type="submit" disabled={isCreating} className="w-full h-12 rounded-xl text-lg font-bold">Commit to Repository</Button>
                   </form>
