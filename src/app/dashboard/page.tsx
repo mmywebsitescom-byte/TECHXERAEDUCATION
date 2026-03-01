@@ -9,7 +9,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { GraduationCap, Award, BookOpen, Clock, TrendingUp, Loader2, Sparkles, AlertCircle, ShieldAlert, CreditCard, Copy, Check, Camera } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase'
-import { doc, updateDoc } from 'firebase/firestore'
+import { doc, updateDoc, collection } from 'firebase/firestore'
 import { updateProfile } from 'firebase/auth'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
