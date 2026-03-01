@@ -3,9 +3,22 @@
 
 A modern, high-performance campus management ecosystem designed for TechXera students and administrators.
 
+## Deployment to GitHub
+
+To push this project to your repository, run the following commands in your terminal:
+
+```bash
+git init
+git add .
+git commit -m "first commit"
+git branch -M main
+git remote add origin https://github.com/mmywebsitescom-byte/TECHXERAEDUCATION.git
+git push -u origin main
+```
+
 ## Deployment to Vercel
 
-1. Push your code to a GitHub repository.
+1. Push your code to your GitHub repository.
 2. Connect the repository to Vercel.
 3. In the Vercel project settings, add the following Environment Variables:
    - `GEMINI_API_KEY`: `AIzaSyB3pajL682m1oUDcA3d-yYwQMYYRLG1bdw`
