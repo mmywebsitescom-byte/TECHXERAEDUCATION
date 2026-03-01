@@ -1,3 +1,4 @@
+
 "use client"
 
 import React from 'react'
@@ -8,8 +9,8 @@ import { motion } from 'framer-motion'
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase'
 import { collection, query, orderBy } from 'firebase/firestore'
 import { format } from 'date-fns'
-import CardSwap, { Card as SwapCard } from '@/components/CardSwap'
 import SplitText from '@/components/SplitText'
+import ScrollStack, { ScrollStackItem } from '@/components/ScrollStack'
 
 export default function NoticesPage() {
   const db = useFirestore()
@@ -24,15 +25,15 @@ export default function NoticesPage() {
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-24"
+          className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12"
         >
           <div className="space-y-2">
             <h1 className="text-5xl md:text-7xl font-headline font-bold tracking-tighter">
               <SplitText 
                 text="Notice Board"
                 tag="span"
-                duration={0.6}
-                delay={40}
+                duration={1.25}
+                delay={50}
               />
             </h1>
             <p className="text-muted-foreground text-xl font-medium">Stay updated with the latest campus news.</p>
@@ -52,21 +53,14 @@ export default function NoticesPage() {
             <p className="text-muted-foreground font-bold uppercase tracking-widest text-xs">Loading updates...</p>
           </div>
         ) : notices && notices.length > 0 ? (
-          <div className="flex justify-center items-center min-h-[500px] w-full overflow-visible py-20">
-            <CardSwap 
-              width={600} 
-              height={350} 
-              cardDistance={30} 
-              verticalDistance={40} 
-              delay={4000} 
-              pauseOnHover={true}
-            >
+          <div className="h-[80vh] w-full rounded-[3rem] overflow-hidden border border-border/40 bg-white/30 backdrop-blur-sm shadow-inner relative">
+            <ScrollStack useWindowScroll={false} blurAmount={2} className="bg-transparent">
               {notices.map((notice) => (
-                <SwapCard 
+                <ScrollStackItem 
                   key={notice.id} 
-                  className={`border-l-8 ${notice.isUrgent ? 'border-l-destructive' : 'border-l-primary'} cursor-pointer hover:shadow-primary/5 transition-shadow`}
+                  itemClassName={`border-l-8 ${notice.isUrgent ? 'border-l-destructive' : 'border-l-primary'} bg-white`}
                 >
-                  <div className="p-8 h-full flex flex-col">
+                  <div className="flex flex-col h-full">
                     <div className="flex justify-between items-start mb-6">
                       <div className="flex items-center gap-3">
                         <Badge className={`text-[10px] py-1 px-4 uppercase tracking-widest font-black ${notice.isUrgent ? 'bg-destructive text-white' : 'bg-primary text-white'}`}>
@@ -82,19 +76,19 @@ export default function NoticesPage() {
                       <div className={`hidden sm:flex shrink-0 w-16 h-16 rounded-[1.5rem] items-center justify-center ${notice.isUrgent ? 'bg-destructive/10 text-destructive' : 'bg-primary/10 text-primary'}`}>
                         {notice.isUrgent ? <AlertCircle size={32} /> : <Info size={32} />}
                       </div>
-                      <div className="space-y-3 flex-1 overflow-hidden">
-                        <h3 className="text-2xl md:text-3xl font-headline font-bold tracking-tight line-clamp-1">{notice.title}</h3>
-                        <p className="text-muted-foreground leading-relaxed text-base md:text-lg line-clamp-3 font-medium">{notice.description}</p>
+                      <div className="space-y-4 flex-1">
+                        <h3 className="text-3xl md:text-4xl font-headline font-bold tracking-tight line-clamp-1">{notice.title}</h3>
+                        <p className="text-muted-foreground leading-relaxed text-lg font-medium line-clamp-4">{notice.description}</p>
                       </div>
                     </div>
                     
-                    <div className="mt-4 pt-4 border-t border-border/40 text-[10px] font-black uppercase tracking-widest text-primary/40 text-right">
+                    <div className="mt-8 pt-4 border-t border-border/40 text-[10px] font-black uppercase tracking-widest text-primary/40 text-right">
                       TechXera Communication Hub
                     </div>
                   </div>
-                </SwapCard>
+                </ScrollStackItem>
               ))}
-            </CardSwap>
+            </ScrollStack>
           </div>
         ) : (
           <div className="text-center py-24 text-muted-foreground border-2 border-dashed rounded-[3rem] bg-white/30 backdrop-blur-sm">
