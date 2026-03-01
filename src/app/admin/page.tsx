@@ -14,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Shield, List, GraduationCap, Megaphone, Loader2, UserCheck, Trash2, Users, CheckCircle, XCircle, Search, ClipboardList, CreditCard, Filter, Edit2, ArrowLeft, Target } from 'lucide-react'
+import { Plus, Shield, List, GraduationCap, Megaphone, Loader2, UserCheck, Trash2, Users, CheckCircle, XCircle, Search, ClipboardList, CreditCard, Filter, Edit2, ArrowLeft, Target, Award } from 'lucide-react'
 import { useFirestore, useUser, useDoc, useMemoFirebase, useCollection, errorEmitter, FirestorePermissionError } from '@/firebase'
 import { doc, setDoc, collection, deleteDoc, query, orderBy, updateDoc } from 'firebase/firestore'
 import { useToast } from '@/hooks/use-toast'
@@ -61,6 +61,9 @@ export default function AdminPage() {
   const { data: students } = useCollection(studentsQuery)
   const { data: exams } = useCollection(examsQuery)
 
+  const selectedStudent = students?.find(s => s.id === selectedStudentId)
+  const selectedExam = exams?.find(e => e.id === selectedExamId)
+
   // Results for specific student+exam context
   const resultsQuery = useMemoFirebase(() => (db && selectedStudentId && isAdmin) ? query(collection(db, 'students', selectedStudentId, 'results'), orderBy('examDate', 'desc')) : null, [db, selectedStudentId, isAdmin])
   const { data: allStudentResults } = useCollection(resultsQuery)
@@ -77,6 +80,30 @@ export default function AdminPage() {
       router.push('/admin/login')
     }
   }, [user, isUserLoading, router, mounted])
+
+  // Grade Calculation Logic
+  const calculateGrade = (percentage: number) => {
+    if (percentage >= 90) return 'O'
+    if (percentage >= 80) return 'A+'
+    if (percentage >= 70) return 'A'
+    if (percentage >= 60) return 'B+'
+    if (percentage >= 50) return 'B'
+    if (percentage >= 40) return 'C'
+    return 'F'
+  }
+
+  const handleMarksChange = (val: number) => {
+    if (!selectedExam) return
+    const total = selectedExam.totalMarks || 100
+    const percentage = (val / total) * 100
+    const grade = calculateGrade(percentage)
+    
+    setNewResult(prev => ({ 
+      ...prev, 
+      marksObtained: val,
+      grade: grade
+    }))
+  }
 
   const handleGrantAdmin = () => {
     if (!user || !db) return
@@ -238,9 +265,6 @@ export default function AdminPage() {
     setEditingResultId(null)
     setNewResult({ subject: '', semester: '', marksObtained: 0, grade: '', examDate: new Date().toISOString().split('T')[0] })
   }
-
-  const selectedStudent = students?.find(s => s.id === selectedStudentId)
-  const selectedExam = exams?.find(e => e.id === selectedExamId)
 
   // Calculate percentage for display in form
   const currentPercentage = selectedExam 
@@ -548,12 +572,25 @@ export default function AdminPage() {
                   <div className="space-y-2"><Label>Subject Code / Name</Label><Input required value={newResult.subject} onChange={e => setNewResult({ ...newResult, subject: e.target.value })} /></div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2"><Label>Semester</Label><Input required value={newResult.semester} onChange={e => setNewResult({ ...newResult, semester: e.target.value })} /></div>
-                    <div className="space-y-2"><Label>Grade</Label><Input required placeholder="O, A+, B..." value={newResult.grade} onChange={e => setNewResult({ ...newResult, grade: e.target.value })} /></div>
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">Grade (Auto) <Award size={14} className="text-primary" /></Label>
+                      <div className="h-10 flex items-center px-4 bg-primary text-white font-black rounded-md border border-primary shadow-inner">
+                        {newResult.grade || 'F'}
+                      </div>
+                    </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Marks Obtained</Label>
-                      <Input required type="number" min="0" max={selectedExam?.totalMarks} value={newResult.marksObtained} onChange={e => setNewResult({ ...newResult, marksObtained: Number(e.target.value) })} />
+                      <Input 
+                        required 
+                        type="number" 
+                        min="0" 
+                        max={selectedExam?.totalMarks} 
+                        value={newResult.marksObtained} 
+                        onChange={e => handleMarksChange(Number(e.target.value))} 
+                        className="font-bold text-lg"
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label>Calculated Percentage (%)</Label>
@@ -567,7 +604,7 @@ export default function AdminPage() {
                     <Target size={16} /> Base Total Marks for this Exam: {selectedExam?.totalMarks || 100}
                   </div>
                   <div className="flex gap-2">
-                    <Button type="submit" disabled={isCreating} className="flex-1 h-12 rounded-xl font-bold bg-primary">
+                    <Button type="submit" disabled={isCreating} className="flex-1 h-12 rounded-xl font-bold bg-primary shadow-lg shadow-primary/20">
                       {editingResultId ? "Update Entry" : "Commit Result"}
                     </Button>
                     {editingResultId && (
