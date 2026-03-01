@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useEffect, useState } from 'react'
@@ -5,11 +6,11 @@ import Navbar from '@/components/Navbar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
-import { GraduationCap, Award, BookOpen, Clock, TrendingUp, Loader2, Sparkles, AlertCircle, ShieldAlert, CreditCard, Copy, Check, Camera } from 'lucide-react'
+import { GraduationCap, Award, BookOpen, Clock, TrendingUp, Loader2, Sparkles, AlertCircle, ShieldAlert, CreditCard, Copy, Check, Camera, LogOut } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase'
+import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase, useAuth } from '@/firebase'
 import { doc, updateDoc, collection } from 'firebase/firestore'
-import { updateProfile } from 'firebase/auth'
+import { updateProfile, signOut } from 'firebase/auth'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -41,6 +42,7 @@ export default function DashboardPage() {
   const [isAvatarDialogOpen, setIsAvatarDialogOpen] = useState(false)
 
   const { user, isUserLoading } = useUser()
+  const auth = useAuth()
   const db = useFirestore()
   const router = useRouter()
   const { toast } = useToast()
@@ -108,6 +110,37 @@ export default function DashboardPage() {
 
   if (!user) return null
 
+  // CASE: Student record was deleted or doesn't exist in Firestore
+  if (!profile && !isProfileLoading) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center p-6 pt-32">
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
+            <Card className="max-w-xl w-full text-center p-12 glass border-none rounded-[3rem] shadow-2xl">
+              <div className="mx-auto w-24 h-24 bg-destructive/10 text-destructive rounded-[2rem] flex items-center justify-center mb-8">
+                <ShieldAlert size={48} />
+              </div>
+              <h2 className="text-4xl font-headline font-bold mb-4">Access Restricted</h2>
+              <p className="text-muted-foreground text-lg mb-8 leading-relaxed">
+                Your student record could not be found or has been removed from the system. Access to academic records requires an active profile.
+              </p>
+              <div className="flex justify-center gap-4">
+                <Button onClick={() => signOut(auth)} variant="destructive" className="rounded-xl h-12 px-8 font-bold">
+                  <LogOut size={18} className="mr-2" /> Log Out
+                </Button>
+                <Button onClick={() => router.push('/')} variant="outline" className="rounded-xl h-12 px-8 font-bold">
+                  Home
+                </Button>
+              </div>
+            </Card>
+          </motion.div>
+        </main>
+      </div>
+    )
+  }
+
+  // CASE: Student record exists but is not yet approved
   if (profile && !profile.isApproved) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
