@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect } from 'react'
@@ -13,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Shield, List, GraduationCap, Megaphone, Loader2, UserCheck, Trash2, Users, CheckCircle, XCircle, Search, ClipboardList, CreditCard, Filter } from 'lucide-react'
+import { Plus, Shield, List, GraduationCap, Megaphone, Loader2, UserCheck, Trash2, Users, CheckCircle, XCircle, Search, ClipboardList, CreditCard, Filter, Edit2 } from 'lucide-react'
 import { useFirestore, useUser, useDoc, useMemoFirebase, useCollection, errorEmitter, FirestorePermissionError } from '@/firebase'
 import { doc, setDoc, collection, deleteDoc, query, orderBy, updateDoc, getDocs, where } from 'firebase/firestore'
 import { useToast } from '@/hooks/use-toast'
@@ -31,6 +32,7 @@ export default function AdminPage() {
   const [viewingExamId, setViewingExamId] = useState<string | null>(null)
   const [examResults, setExamResults] = useState<any[]>([])
   const [isFetchingExamResults, setIsFetchingExamResults] = useState(false)
+  const [editingResultId, setEditingResultId] = useState<string | null>(null)
 
   // Form States
   const [newNotice, setNewNotice] = useState({ title: '', description: '', isUrgent: false })
@@ -182,13 +184,29 @@ export default function AdminPage() {
       .finally(() => setIsCreating(false))
   }
 
+  const handleEditResult = (res: any) => {
+    setEditingResultId(res.id)
+    setNewResult({
+      examId: res.examId || '',
+      subject: res.subject,
+      semester: res.semester,
+      marks: res.marks,
+      grade: res.grade,
+      examDate: res.examDate ? res.examDate.split('T')[0] : new Date().toISOString().split('T')[0]
+    })
+    setIsDialogOpen(true)
+  }
+
   const handleAddResult = (e: React.FormEvent) => {
     e.preventDefault()
     if (!db || !isAdmin || !selectedStudentId) return
     setIsCreating(true)
 
     const selectedExam = exams?.find(ex => ex.id === newResult.examId)
-    const docRef = doc(collection(db, 'students', selectedStudentId, 'results'))
+    const docRef = editingResultId 
+      ? doc(db, 'students', selectedStudentId, 'results', editingResultId)
+      : doc(collection(db, 'students', selectedStudentId, 'results'))
+    
     const data = {
       ...newResult,
       id: docRef.id,
@@ -197,10 +215,11 @@ export default function AdminPage() {
       examDate: new Date(newResult.examDate).toISOString()
     }
 
-    setDoc(docRef, data)
+    setDoc(docRef, data, { merge: true })
       .then(() => {
-        toast({ title: "Result Recorded" })
+        toast({ title: editingResultId ? "Result Updated" : "Result Recorded" })
         setNewResult({ examId: '', subject: '', semester: '', marks: 0, grade: '', examDate: new Date().toISOString().split('T')[0] })
+        setEditingResultId(null)
         setIsDialogOpen(false)
       })
       .finally(() => setIsCreating(false))
@@ -213,9 +232,6 @@ export default function AdminPage() {
     
     const results: any[] = []
     
-    // Iterate students and check results subcollection for this examId
-    // In a production app, we would use a Collection Group query, 
-    // but for simplicity here we simulate it or fetch per student
     for (const student of students) {
       const q = query(collection(db, 'students', student.id, 'results'), where('examId', '==', examId))
       const snap = await getDocs(q)
@@ -226,6 +242,12 @@ export default function AdminPage() {
     
     setExamResults(results)
     setIsFetchingExamResults(false)
+  }
+
+  const handleOpenCreateDialog = () => {
+    setEditingResultId(null)
+    setNewResult({ examId: '', subject: '', semester: '', marks: 0, grade: '', examDate: new Date().toISOString().split('T')[0] })
+    setIsDialogOpen(true)
   }
 
   const selectedStudent = students?.find(s => s.id === selectedStudentId)
@@ -264,7 +286,11 @@ export default function AdminPage() {
             
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button disabled={!isAdmin || (activeTab === 'results' && !selectedStudentId)} className="h-14 px-8 bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 text-white rounded-2xl font-bold">
+                <Button 
+                  disabled={!isAdmin || (activeTab === 'results' && !selectedStudentId)} 
+                  onClick={handleOpenCreateDialog}
+                  className="h-14 px-8 bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 text-white rounded-2xl font-bold"
+                >
                   <Plus className="mr-2" size={24} /> Create Record
                 </Button>
               </DialogTrigger>
@@ -274,7 +300,7 @@ export default function AdminPage() {
                     {activeTab === 'notices' ? 'Publish Announcement' : 
                      activeTab === 'resources' ? 'Upload Resource' : 
                      activeTab === 'exams' ? 'Schedule Exam' :
-                     `Record Result: ${selectedStudent?.firstName || 'Student'}`}
+                     editingResultId ? `Edit Result: ${selectedStudent?.firstName}` : `Record Result: ${selectedStudent?.firstName || 'Student'}`}
                   </DialogTitle>
                   <DialogDescription>
                     Fill in the details below to update the campus ecosystem.
@@ -340,7 +366,9 @@ export default function AdminPage() {
                       <div className="space-y-2"><Label>Academic Grade</Label><Input required placeholder="O, A+, B..." value={newResult.grade} onChange={e => setNewResult({ ...newResult, grade: e.target.value })} /></div>
                     </div>
                     <div className="space-y-2"><Label>Evaluation Date</Label><Input required type="date" value={newResult.examDate} onChange={e => setNewResult({ ...newResult, examDate: e.target.value })} /></div>
-                    <Button type="submit" disabled={isCreating} className="w-full h-12 rounded-xl text-lg font-bold">Finalize Grade</Button>
+                    <Button type="submit" disabled={isCreating} className="w-full h-12 rounded-xl text-lg font-bold">
+                      {editingResultId ? "Update Result" : "Finalize Grade"}
+                    </Button>
                   </form>
                 )}
               </DialogContent>
@@ -467,7 +495,8 @@ export default function AdminPage() {
                           <TableCell className="font-medium">{res.marks}%</TableCell>
                           <TableCell className="font-black text-2xl text-primary">{res.grade}</TableCell>
                           <TableCell className="text-xs font-bold text-muted-foreground uppercase">{exam?.title || res.examTitle || 'General'}</TableCell>
-                          <TableCell className="text-right px-10">
+                          <TableCell className="text-right px-10 space-x-2">
+                            <Button variant="ghost" size="icon" onClick={() => handleEditResult(res)} className="text-primary"><Edit2 size={20} /></Button>
                             <Button variant="ghost" size="icon" onClick={() => handleDelete('students', selectedStudentId!, 'results', res.id)} className="text-destructive"><Trash2 size={22} /></Button>
                           </TableCell>
                         </TableRow>
