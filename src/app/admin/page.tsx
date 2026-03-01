@@ -348,9 +348,9 @@ export default function AdminPage() {
                         onChange={(e) => setSelectedStudentId(e.target.value)}
                       >
                         <option value="">-- Select Student --</option>
-                        {students?.filter(s => s.isApproved).map(student => (
+                        {students?.map(student => (
                           <option key={student.id} value={student.id}>
-                            {student.firstName} {student.lastName} ({student.studentId})
+                            {student.firstName} {student.lastName} ({student.studentId}) {!student.isApproved ? `[${student.status.toUpperCase()}]` : ''}
                           </option>
                         ))}
                       </select>
