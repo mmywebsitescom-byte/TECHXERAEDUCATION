@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react'
 import Navbar from '@/components/Navbar'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -48,7 +48,8 @@ export default function AdminPage() {
   // Fetch collections only if user is an admin to prevent permission errors on page load
   const noticesQuery = useMemoFirebase(() => (db && isAdmin) ? query(collection(db, 'notices'), orderBy('publishDate', 'desc')) : null, [db, isAdmin])
   const materialsQuery = useMemoFirebase(() => (db && isAdmin) ? query(collection(db, 'studyMaterials'), orderBy('uploadDate', 'desc')) : null, [db, isAdmin])
-  const studentsQuery = useMemoFirebase(() => (db && isAdmin) ? query(collection(db, 'students'), orderBy('enrollmentDate', 'desc')) : null, [db, isAdmin])
+  // Using a simpler query for students to ensure visibility
+  const studentsQuery = useMemoFirebase(() => (db && isAdmin) ? collection(db, 'students') : null, [db, isAdmin])
   const examsQuery = useMemoFirebase(() => (db && isAdmin) ? query(collection(db, 'exams'), orderBy('examDate', 'desc')) : null, [db, isAdmin])
   
   const { data: notices } = useCollection(noticesQuery)
@@ -250,7 +251,7 @@ export default function AdminPage() {
                     {activeTab === 'notices' ? 'Publish Notice' : 
                      activeTab === 'resources' ? 'Add Study Material' : 
                      activeTab === 'exams' ? 'Create Exam' :
-                     `Add Result for ${selectedStudent?.firstName}`}
+                     `Add Result for ${selectedStudent?.firstName || 'Student'}`}
                   </DialogTitle>
                 </DialogHeader>
                 
@@ -348,11 +349,15 @@ export default function AdminPage() {
                         onChange={(e) => setSelectedStudentId(e.target.value)}
                       >
                         <option value="">-- Select Student --</option>
-                        {students?.map(student => (
-                          <option key={student.id} value={student.id}>
-                            {student.firstName} {student.lastName} ({student.studentId}) {!student.isApproved ? `[${student.status.toUpperCase()}]` : ''}
-                          </option>
-                        ))}
+                        {students && students.length > 0 ? (
+                          students.map(student => (
+                            <option key={student.id} value={student.id}>
+                              {student.firstName} {student.lastName} ({student.studentId || 'N/A'}) {!student.isApproved ? `[${student.status?.toUpperCase() || 'PENDING'}]` : ''}
+                            </option>
+                          ))
+                        ) : (
+                          <option disabled>No students registered yet</option>
+                        )}
                       </select>
                     </div>
                   </div>
@@ -404,8 +409,8 @@ export default function AdminPage() {
                       <TableRow key={student.id}>
                         <TableCell className="px-8 font-bold">{student.firstName} {student.lastName}</TableCell>
                         <TableCell>{student.email}</TableCell>
-                        <TableCell className="font-medium text-xs">{student.studentId}</TableCell>
-                        <TableCell><Badge variant={student.isApproved ? "default" : "secondary"}>{student.status}</Badge></TableCell>
+                        <TableCell className="font-medium text-xs">{student.studentId || 'N/A'}</TableCell>
+                        <TableCell><Badge variant={student.isApproved ? "default" : "secondary"}>{student.status || 'pending'}</Badge></TableCell>
                         <TableCell className="text-right px-8 space-x-2">
                           <Button variant="ghost" size="icon" onClick={() => { setSelectedStudentId(student.id); setActiveTab('results'); }}><Search size={18} /></Button>
                           {!student.isApproved ? (
@@ -439,7 +444,7 @@ export default function AdminPage() {
                       <TableRow key={exam.id}>
                         <TableCell className="px-8 font-bold">{exam.title}</TableCell>
                         <TableCell>{exam.semester}</TableCell>
-                        <TableCell>{format(new Date(exam.examDate), 'MMM d, yyyy')}</TableCell>
+                        <TableCell>{exam.examDate ? format(new Date(exam.examDate), 'MMM d, yyyy') : 'N/A'}</TableCell>
                         <TableCell><Badge variant={exam.status === 'completed' ? 'secondary' : 'default'}>{exam.status}</Badge></TableCell>
                         <TableCell className="text-right px-8">
                           <Button variant="ghost" size="icon" onClick={() => handleDelete('exams', exam.id)} className="text-destructive"><Trash2 size={18} /></Button>
@@ -451,7 +456,7 @@ export default function AdminPage() {
                         <TableCell className="px-8 font-medium">{notice.id.slice(0, 8)}</TableCell>
                         <TableCell className="font-bold">{notice.title}</TableCell>
                         <TableCell>{notice.isUrgent ? <Badge variant="destructive">Urgent</Badge> : 'Standard'}</TableCell>
-                        <TableCell>{format(new Date(notice.publishDate), 'MMM d, yyyy')}</TableCell>
+                        <TableCell>{notice.publishDate ? format(new Date(notice.publishDate), 'MMM d, yyyy') : 'N/A'}</TableCell>
                         <TableCell className="text-right px-8">
                           <Button variant="ghost" size="icon" onClick={() => handleDelete('notices', notice.id)} className="text-destructive"><Trash2 size={18} /></Button>
                         </TableCell>
@@ -462,7 +467,7 @@ export default function AdminPage() {
                         <TableCell className="px-8 font-medium">{material.id.slice(0, 8)}</TableCell>
                         <TableCell className="font-bold">{material.title}</TableCell>
                         <TableCell>{material.subject} • {material.materialType}</TableCell>
-                        <TableCell>{format(new Date(material.uploadDate), 'MMM d, yyyy')}</TableCell>
+                        <TableCell>{material.uploadDate ? format(new Date(material.uploadDate), 'MMM d, yyyy') : 'N/A'}</TableCell>
                         <TableCell className="text-right px-8">
                           <Button variant="ghost" size="icon" onClick={() => handleDelete('studyMaterials', material.id)} className="text-destructive"><Trash2 size={18} /></Button>
                         </TableCell>
