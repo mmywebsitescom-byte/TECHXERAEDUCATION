@@ -14,7 +14,7 @@ export const TechXeraLogo = ({ className }: { className?: string }) => (
   <div className={cn("relative flex items-center justify-center bg-black rounded-full overflow-hidden shadow-2xl ring-1 ring-white/10", className)}>
     <svg viewBox="0 0 100 100" className="w-full h-full p-1" fill="none" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id="cyan-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id="cyan-glow" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#00f2fe" />
           <stop offset="100%" stopColor="#4facfe" />
         </linearGradient>
@@ -25,10 +25,11 @@ export const TechXeraLogo = ({ className }: { className?: string }) => (
       <circle cx="50" cy="50" r="44" stroke="white" strokeWidth="1.5" />
       <circle cx="50" cy="50" r="40" stroke="white" strokeWidth="1" strokeDasharray="2 2" opacity="0.5" />
       
-      {/* Decorative Top Icon (Gear-like) */}
-      <circle cx="50" cy="14" r="3.5" stroke="white" strokeWidth="1" />
-      <path d="M50 11 V17 M47 14 H53" stroke="white" strokeWidth="0.5" />
-      <path d="M48 12 L52 16 M52 12 L48 16" stroke="white" strokeWidth="0.5" />
+      {/* Decorative Top Gear Icon */}
+      <g transform="translate(46, 10)">
+        <circle cx="4" cy="4" r="3" stroke="white" strokeWidth="1" />
+        <path d="M4 0 V2 M4 6 V8 M0 4 H2 M6 4 H8 M1 1 L2.5 2.5 M5.5 5.5 L7 7 M7 1 L5.5 2.5 M2.5 5.5 L1 7" stroke="white" strokeWidth="0.5" />
+      </g>
 
       {/* Side Tech Patterns */}
       <path d="M8 50 H12 M88 50 H92 M50 88 V92" stroke="white" strokeWidth="1" strokeLinecap="round" />
@@ -43,27 +44,27 @@ export const TechXeraLogo = ({ className }: { className?: string }) => (
       <path d="M46 66 L43 74 H57 L54 66 Z" fill="white" />
       <rect x="36" y="74" width="28" height="2" rx="1" fill="white" />
 
-      {/* Code characters inside the monitor - simplified recreations of the C/Bracket shapes */}
+      {/* Branded Monitor Code Content */}
       <g transform="translate(32, 40)">
-        {/* Row 1 */}
+        {/* Row 1: { C C [ ] */}
         <path d="M0 0 Q3 0 3 3" stroke="white" strokeWidth="2" strokeLinecap="round" />
-        <path d="M6 0 Q9 0 9 3" stroke="url(#cyan-grad)" strokeWidth="2" strokeLinecap="round" />
+        <path d="M6 0 Q9 0 9 3" stroke="url(#cyan-glow)" strokeWidth="2" strokeLinecap="round" />
         <path d="M12 0 Q15 0 15 3" stroke="white" strokeWidth="2" strokeLinecap="round" />
-        <path d="M18 3 Q18 0 21 0" stroke="url(#cyan-grad)" strokeWidth="2" strokeLinecap="round" />
+        <path d="M18 3 Q18 0 21 0" stroke="url(#cyan-glow)" strokeWidth="2" strokeLinecap="round" />
         <path d="M24 0 Q27 0 27 3" stroke="white" strokeWidth="2" strokeLinecap="round" />
         
-        {/* Row 2 */}
+        {/* Row 2: > C C < */}
         <path d="M1 8 L4 5 L1 2" stroke="white" strokeWidth="1.5" />
-        <path d="M8 2 L12 5 L8 8" stroke="url(#cyan-grad)" strokeWidth="1.5" />
+        <path d="M8 2 L12 5 L8 8" stroke="url(#cyan-glow)" strokeWidth="1.5" />
         <path d="M17 8 L21 5 L17 2" stroke="white" strokeWidth="1.5" />
-        <path d="M24 2 L28 5 L24 8" stroke="url(#cyan-grad)" strokeWidth="1.5" />
+        <path d="M24 2 L28 5 L24 8" stroke="url(#cyan-glow)" strokeWidth="1.5" />
         
-        {/* Row 3 */}
-        <path d="M0 18 Q3 18 3 15" stroke="url(#cyan-grad)" strokeWidth="2" strokeLinecap="round" />
+        {/* Row 3: [ ] C C */}
+        <path d="M0 18 Q3 18 3 15" stroke="url(#cyan-glow)" strokeWidth="2" strokeLinecap="round" />
         <path d="M6 18 Q9 18 9 15" stroke="white" strokeWidth="2" strokeLinecap="round" />
-        <path d="M12 18 Q15 18 15 15" stroke="url(#cyan-grad)" strokeWidth="2" strokeLinecap="round" />
+        <path d="M12 18 Q15 18 15 15" stroke="url(#cyan-glow)" strokeWidth="2" strokeLinecap="round" />
         <path d="M18 15 Q18 18 21 18" stroke="white" strokeWidth="2" strokeLinecap="round" />
-        <path d="M24 18 Q27 18 27 15" stroke="url(#cyan-grad)" strokeWidth="2" strokeLinecap="round" />
+        <path d="M24 18 Q27 18 27 15" stroke="url(#cyan-glow)" strokeWidth="2" strokeLinecap="round" />
       </g>
     </svg>
   </div>
