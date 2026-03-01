@@ -14,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Shield, List, GraduationCap, Megaphone, Loader2, UserCheck, Trash2, Users, CheckCircle, XCircle, Search, ClipboardList, CreditCard, Filter, Edit2, ArrowLeft } from 'lucide-react'
+import { Plus, Shield, List, GraduationCap, Megaphone, Loader2, UserCheck, Trash2, Users, CheckCircle, XCircle, Search, ClipboardList, CreditCard, Filter, Edit2, ArrowLeft, Target } from 'lucide-react'
 import { useFirestore, useUser, useDoc, useMemoFirebase, useCollection, errorEmitter, FirestorePermissionError } from '@/firebase'
 import { doc, setDoc, collection, deleteDoc, query, orderBy, updateDoc } from 'firebase/firestore'
 import { useToast } from '@/hooks/use-toast'
@@ -38,8 +38,8 @@ export default function AdminPage() {
   // Form States
   const [newNotice, setNewNotice] = useState({ title: '', description: '', isUrgent: false })
   const [newMaterial, setNewMaterial] = useState({ title: '', subject: '', semester: '', fileUrl: '', materialType: 'Notes' })
-  const [newResult, setNewResult] = useState({ subject: '', semester: '', marks: 0, grade: '', examDate: new Date().toISOString().split('T')[0] })
-  const [newExam, setNewExam] = useState({ title: '', semester: '', examDate: new Date().toISOString().split('T')[0], status: 'upcoming' })
+  const [newResult, setNewResult] = useState({ subject: '', semester: '', marksObtained: 0, grade: '', examDate: new Date().toISOString().split('T')[0] })
+  const [newExam, setNewExam] = useState({ title: '', semester: '', examDate: new Date().toISOString().split('T')[0], status: 'upcoming', totalMarks: 100 })
 
   const { user, isUserLoading } = useUser()
   const db = useFirestore()
@@ -182,7 +182,7 @@ export default function AdminPage() {
     setDoc(docRef, data)
       .then(() => {
         toast({ title: "Exam Created" })
-        setNewExam({ title: '', semester: '', examDate: new Date().toISOString().split('T')[0], status: 'upcoming' })
+        setNewExam({ title: '', semester: '', examDate: new Date().toISOString().split('T')[0], status: 'upcoming', totalMarks: 100 })
         setIsDialogOpen(false)
       })
       .finally(() => setIsCreating(false))
@@ -193,7 +193,7 @@ export default function AdminPage() {
     setNewResult({
       subject: res.subject,
       semester: res.semester,
-      marks: res.marks,
+      marksObtained: res.marksObtained || 0,
       grade: res.grade,
       examDate: res.examDate ? res.examDate.split('T')[0] : new Date().toISOString().split('T')[0]
     })
@@ -205,6 +205,9 @@ export default function AdminPage() {
     setIsCreating(true)
 
     const selectedExam = exams?.find(ex => ex.id === selectedExamId)
+    const totalMarks = selectedExam?.totalMarks || 100
+    const percentage = Number(((newResult.marksObtained / totalMarks) * 100).toFixed(2))
+
     const docRef = editingResultId 
       ? doc(db, 'students', selectedStudentId, 'results', editingResultId)
       : doc(collection(db, 'students', selectedStudentId, 'results'))
@@ -215,13 +218,15 @@ export default function AdminPage() {
       studentId: selectedStudentId,
       examId: selectedExamId,
       examTitle: selectedExam?.title || 'General Assessment',
+      marks: percentage, // This is the percentage
+      totalMarks: totalMarks,
       examDate: new Date(newResult.examDate).toISOString()
     }
 
     setDoc(docRef, data, { merge: true })
       .then(() => {
         toast({ title: editingResultId ? "Result Updated" : "Result Recorded" })
-        setNewResult({ subject: '', semester: '', marks: 0, grade: '', examDate: new Date().toISOString().split('T')[0] })
+        setNewResult({ subject: '', semester: '', marksObtained: 0, grade: '', examDate: new Date().toISOString().split('T')[0] })
         setEditingResultId(null)
       })
       .finally(() => setIsCreating(false))
@@ -231,11 +236,16 @@ export default function AdminPage() {
     setSelectedStudentId(studentId)
     setIsManageResultsOpen(true)
     setEditingResultId(null)
-    setNewResult({ subject: '', semester: '', marks: 0, grade: '', examDate: new Date().toISOString().split('T')[0] })
+    setNewResult({ subject: '', semester: '', marksObtained: 0, grade: '', examDate: new Date().toISOString().split('T')[0] })
   }
 
   const selectedStudent = students?.find(s => s.id === selectedStudentId)
   const selectedExam = exams?.find(e => e.id === selectedExamId)
+
+  // Calculate percentage for display in form
+  const currentPercentage = selectedExam 
+    ? ((newResult.marksObtained / selectedExam.totalMarks) * 100).toFixed(2) 
+    : "0.00"
 
   if (!mounted || isUserLoading || isAdminLoading) {
     return (
@@ -251,7 +261,7 @@ export default function AdminPage() {
     <div className="min-h-screen bg-background text-foreground">
       <Navbar />
       
-      <main className="max-w-7xl mx-auto p-6 md:p-10 pt-96 pb-20">
+      <main className="max-w-7xl mx-auto p-6 md:p-10 pt-48 pb-20">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-12">
           <div className="flex items-center gap-6">
             <div className="p-5 bg-primary text-white rounded-[2rem] shadow-2xl shadow-primary/20">
@@ -314,16 +324,22 @@ export default function AdminPage() {
                       <div className="space-y-2"><Label>Target Semester</Label><Input required value={newExam.semester} onChange={e => setNewExam({ ...newExam, semester: e.target.value })} /></div>
                       <div className="space-y-2"><Label>Inauguration Date</Label><Input required type="date" value={newExam.examDate} onChange={e => setNewExam({ ...newExam, examDate: e.target.value })} /></div>
                     </div>
-                    <div className="space-y-2">
-                      <Label>Session Status</Label>
-                      <Select value={newExam.status} onValueChange={(val) => setNewExam({ ...newExam, status: val })}>
-                        <SelectTrigger className="h-12"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="upcoming">Upcoming</SelectItem>
-                          <SelectItem value="active">Active</SelectItem>
-                          <SelectItem value="completed">Completed</SelectItem>
-                        </SelectContent>
-                      </Select>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Session Status</Label>
+                        <Select value={newExam.status} onValueChange={(val) => setNewExam({ ...newExam, status: val })}>
+                          <SelectTrigger className="h-12"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="upcoming">Upcoming</SelectItem>
+                            <SelectItem value="active">Active</SelectItem>
+                            <SelectItem value="completed">Completed</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Total Possible Marks</Label>
+                        <Input required type="number" min="1" value={newExam.totalMarks} onChange={e => setNewExam({ ...newExam, totalMarks: Number(e.target.value) })} />
+                      </div>
                     </div>
                     <Button type="submit" disabled={isCreating} className="w-full h-12 rounded-xl text-lg font-bold">Establish Exam Cycle</Button>
                   </form>
@@ -362,7 +378,7 @@ export default function AdminPage() {
                       >
                         <option value="">-- Choose Exam Session --</option>
                         {exams?.map(exam => (
-                          <option key={exam.id} value={exam.id}>{exam.title} ({exam.semester})</option>
+                          <option key={exam.id} value={exam.id}>{exam.title} ({exam.semester}) - Max Marks: {exam.totalMarks || 100}</option>
                         ))}
                       </select>
                     </div>
@@ -393,7 +409,7 @@ export default function AdminPage() {
                         <>
                           <TableHead className="px-10">Cycle Title</TableHead>
                           <TableHead>Term</TableHead>
-                          <TableHead>Start Date</TableHead>
+                          <TableHead>Max Marks</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead className="text-right px-10">Operations</TableHead>
                         </>
@@ -461,7 +477,7 @@ export default function AdminPage() {
                       <TableRow key={exam.id} className="border-b border-border/40 hover:bg-primary/[0.02]">
                         <TableCell className="px-10 font-bold text-lg">{exam.title}</TableCell>
                         <TableCell>{exam.semester}</TableCell>
-                        <TableCell className="font-medium">{exam.examDate ? format(new Date(exam.examDate), 'MMM d, yyyy') : 'PENDING'}</TableCell>
+                        <TableCell className="font-bold text-primary">{exam.totalMarks || 100}</TableCell>
                         <TableCell>
                           <Badge variant={exam.status === 'active' ? 'default' : exam.status === 'completed' ? 'secondary' : 'outline'} className="uppercase text-[9px] font-black tracking-widest">
                             {exam.status}
@@ -535,15 +551,27 @@ export default function AdminPage() {
                     <div className="space-y-2"><Label>Grade</Label><Input required placeholder="O, A+, B..." value={newResult.grade} onChange={e => setNewResult({ ...newResult, grade: e.target.value })} /></div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2"><Label>Percentage %</Label><Input required type="number" min="0" max="100" value={newResult.marks} onChange={e => setNewResult({ ...newResult, marks: Number(e.target.value) })} /></div>
-                    <div className="space-y-2"><Label>Evaluation Date</Label><Input required type="date" value={newResult.examDate} onChange={e => setNewResult({ ...newResult, examDate: e.target.value })} /></div>
+                    <div className="space-y-2">
+                      <Label>Marks Obtained</Label>
+                      <Input required type="number" min="0" max={selectedExam?.totalMarks} value={newResult.marksObtained} onChange={e => setNewResult({ ...newResult, marksObtained: Number(e.target.value) })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Calculated Percentage (%)</Label>
+                      <div className="h-10 flex items-center px-4 bg-primary/10 text-primary font-black rounded-md border border-primary/20">
+                        {currentPercentage}%
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-2"><Label>Evaluation Date</Label><Input required type="date" value={newResult.examDate} onChange={e => setNewResult({ ...newResult, examDate: e.target.value })} /></div>
+                  <div className="p-4 bg-primary/5 rounded-xl flex items-center gap-3 text-xs font-bold text-primary">
+                    <Target size={16} /> Base Total Marks for this Exam: {selectedExam?.totalMarks || 100}
                   </div>
                   <div className="flex gap-2">
                     <Button type="submit" disabled={isCreating} className="flex-1 h-12 rounded-xl font-bold bg-primary">
                       {editingResultId ? "Update Entry" : "Commit Result"}
                     </Button>
                     {editingResultId && (
-                      <Button type="button" variant="outline" onClick={() => { setEditingResultId(null); setNewResult({ subject: '', semester: '', marks: 0, grade: '', examDate: new Date().toISOString().split('T')[0] }); }} className="rounded-xl">Cancel</Button>
+                      <Button type="button" variant="outline" onClick={() => { setEditingResultId(null); setNewResult({ subject: '', semester: '', marksObtained: 0, grade: '', examDate: new Date().toISOString().split('T')[0] }); }} className="rounded-xl">Cancel</Button>
                     )}
                   </div>
                 </form>
@@ -558,8 +586,9 @@ export default function AdminPage() {
                       <div className="space-y-1">
                         <p className="font-bold text-lg">{res.subject}</p>
                         <div className="flex gap-3 text-xs font-medium text-muted-foreground uppercase tracking-widest">
-                          <span>{res.marks}%</span>
-                          <span className="text-primary font-black">{res.grade}</span>
+                          <span>{res.marksObtained} / {res.totalMarks}</span>
+                          <span className="text-primary font-black">{res.marks}%</span>
+                          <span className="text-secondary font-black">{res.grade}</span>
                         </div>
                       </div>
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

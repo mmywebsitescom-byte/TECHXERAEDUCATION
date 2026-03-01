@@ -90,9 +90,13 @@
           "type": "string",
           "enum": ["upcoming", "active", "completed"],
           "description": "The current status of the exam session."
+        },
+        "totalMarks": {
+          "type": "number",
+          "description": "The maximum possible marks for subjects in this exam cycle."
         }
       },
-      "required": ["id", "title", "semester", "examDate", "status"]
+      "required": ["id", "title", "semester", "examDate", "status", "totalMarks"]
     },
     "Result": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -122,7 +126,15 @@
         },
         "marks": {
           "type": "number",
-          "description": "The numerical marks achieved by the student in the subject."
+          "description": "The percentage achieved by the student in the subject."
+        },
+        "marksObtained": {
+          "type": "number",
+          "description": "The actual marks scored by the student."
+        },
+        "totalMarks": {
+          "type": "number",
+          "description": "The total marks possible for this subject assessment."
         },
         "grade": {
           "type": "string",
@@ -144,6 +156,8 @@
         "subject",
         "semester",
         "marks",
+        "marksObtained",
+        "totalMarks",
         "grade",
         "examDate"
       ]
