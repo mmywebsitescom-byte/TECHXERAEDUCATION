@@ -78,7 +78,7 @@ export default function DashboardPage() {
     return (
       <div className="min-h-screen bg-[#F5F5FA] flex flex-col">
         <Navbar />
-        <main className="flex-1 flex items-center justify-center p-6 pt-96">
+        <main className="flex-1 flex items-center justify-center p-6 pt-32">
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
             <Card className="max-w-xl w-full text-center p-12 glass border-none rounded-[3rem] shadow-2xl">
               <div className="mx-auto w-24 h-24 bg-orange-500/10 text-orange-500 rounded-[2rem] flex items-center justify-center mb-8">
@@ -109,7 +109,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-[#F5F5FA]">
       <Navbar />
       
-      <main className="max-w-7xl mx-auto p-10 md:p-20 lg:p-24 space-y-16 pt-96 pb-32">
+      <main className="max-w-7xl mx-auto w-full px-6 md:px-10 pt-32 pb-32 space-y-16">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -132,17 +132,17 @@ export default function DashboardPage() {
               </div>
             </motion.div>
             <div className="space-y-2">
-              <h1 className="text-5xl md:text-6xl font-headline font-bold tracking-tighter">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-headline font-bold tracking-tighter">
                 Hello, {profile?.firstName || 'Student'}!
               </h1>
               <div className="flex flex-wrap items-center gap-4">
-                <div className="bg-primary/10 text-primary px-4 py-1.5 rounded-full text-xs font-black tracking-widest flex items-center gap-2">
+                <div className="bg-primary/10 text-primary px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest flex items-center gap-2">
                   <CreditCard size={14} /> ROLL NO: {profile?.studentId || 'N/A'}
                   <button onClick={() => copyToClipboard(profile?.studentId || '')} className="hover:text-primary/70 transition-colors">
                     {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
                   </button>
                 </div>
-                <div className="bg-muted text-muted-foreground px-4 py-1.5 rounded-full text-xs font-black tracking-widest flex items-center gap-2">
+                <div className="bg-muted text-muted-foreground px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest flex items-center gap-2">
                   <GraduationCap size={14} /> {profile?.currentSemester || 'SEMESTER 1'}
                 </div>
               </div>
@@ -150,13 +150,13 @@ export default function DashboardPage() {
           </div>
           
           <div className="flex gap-8 w-full lg:w-auto">
-            <div className="flex-1 lg:flex-none bg-white p-8 rounded-[2.5rem] shadow-sm border border-white text-center min-w-[160px]">
-              <p className="text-[12px] text-muted-foreground uppercase font-bold tracking-widest mb-2">Rank</p>
-              <p className="text-4xl font-headline font-bold text-primary tracking-tighter">#04</p>
+            <div className="flex-1 lg:flex-none bg-white p-6 md:p-8 rounded-[2.5rem] shadow-sm border border-white text-center min-w-[140px]">
+              <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mb-2">Rank</p>
+              <p className="text-3xl md:text-4xl font-headline font-bold text-primary tracking-tighter">#04</p>
             </div>
-            <div className="flex-1 lg:flex-none bg-primary text-white p-8 rounded-[2.5rem] shadow-xl shadow-primary/20 text-center min-w-[160px]">
-              <p className="text-[12px] text-white/70 uppercase font-bold tracking-widest mb-2">Results</p>
-              <p className="text-4xl font-headline font-bold tracking-tighter">{results?.length || 0}</p>
+            <div className="flex-1 lg:flex-none bg-primary text-white p-6 md:p-8 rounded-[2.5rem] shadow-xl shadow-primary/20 text-center min-w-[140px]">
+              <p className="text-[10px] text-white/70 uppercase font-bold tracking-widest mb-2">Results</p>
+              <p className="text-3xl md:text-4xl font-headline font-bold tracking-tighter">{results?.length || 0}</p>
             </div>
           </div>
         </motion.div>
@@ -169,18 +169,18 @@ export default function DashboardPage() {
         >
           <motion.div variants={itemVariant} className="lg:col-span-2">
             <Card className="glass border-none rounded-[3rem] overflow-hidden h-full shadow-lg">
-              <CardHeader className="p-12 border-b border-white/40 bg-white/30">
+              <CardHeader className="p-8 md:p-12 border-b border-white/40 bg-white/30">
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle className="text-4xl font-headline font-bold tracking-tight">Academic Engine</CardTitle>
-                    <p className="text-muted-foreground text-lg font-medium mt-2">Real-time performance analytics</p>
+                    <CardTitle className="text-3xl md:text-4xl font-headline font-bold tracking-tight">Academic Engine</CardTitle>
+                    <p className="text-muted-foreground text-base md:text-lg font-medium mt-2">Real-time performance analytics</p>
                   </div>
-                  <div className="p-5 bg-primary/10 text-primary rounded-2xl">
+                  <div className="p-4 md:p-5 bg-primary/10 text-primary rounded-2xl">
                     <TrendingUp size={32} />
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="p-12 h-[500px]">
+              <CardContent className="p-8 md:p-12 h-[400px] md:h-[500px]">
                 {chartData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
@@ -211,17 +211,17 @@ export default function DashboardPage() {
           <div className="space-y-12">
             <motion.div variants={itemVariant}>
               <Card className="glass border-none rounded-[3rem] shadow-lg">
-                <CardHeader className="p-10 pb-0">
-                  <CardTitle className="text-3xl font-headline font-bold flex items-center gap-4">
+                <CardHeader className="p-8 md:p-10 pb-0">
+                  <CardTitle className="text-2xl md:text-3xl font-headline font-bold flex items-center gap-4">
                     <Award className="text-secondary" size={32} /> Recent Grades
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-10 space-y-10">
+                <CardContent className="p-8 md:p-10 space-y-10">
                   {results?.slice(0, 3).map((result, i) => (
                     <div key={i} className="space-y-4">
                       <div className="flex justify-between items-end">
-                        <span className="text-lg font-bold tracking-tight">{result.subject}</span>
-                        <span className="text-primary font-black text-2xl">{result.grade}</span>
+                        <span className="text-base md:text-lg font-bold tracking-tight">{result.subject}</span>
+                        <span className="text-primary font-black text-xl md:text-2xl">{result.grade}</span>
                       </div>
                       <Progress value={result.marks} className="h-3 rounded-full bg-muted" />
                     </div>
@@ -237,23 +237,23 @@ export default function DashboardPage() {
                 whileHover={{ scale: 1.05, y: -4 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => router.push('/resources')}
-                className="flex flex-col items-center justify-center p-10 bg-white text-foreground rounded-[2.5rem] shadow-sm hover:shadow-xl transition-all border-none"
+                className="flex flex-col items-center justify-center p-8 md:p-10 bg-white text-foreground rounded-[2.5rem] shadow-sm hover:shadow-xl transition-all border-none"
               >
-                <div className="p-5 bg-primary/5 rounded-2xl mb-5 text-primary">
+                <div className="p-4 md:p-5 bg-primary/5 rounded-2xl mb-5 text-primary">
                   <BookOpen size={36} />
                 </div>
-                <span className="text-[12px] font-black uppercase tracking-widest">Library</span>
+                <span className="text-[10px] font-black uppercase tracking-widest">Library</span>
               </motion.button>
               <motion.button 
                 whileHover={{ scale: 1.05, y: -4 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => router.push('/notices')}
-                className="flex flex-col items-center justify-center p-10 bg-secondary text-white rounded-[2.5rem] shadow-xl shadow-secondary/20 transition-all border-none"
+                className="flex flex-col items-center justify-center p-8 md:p-10 bg-secondary text-white rounded-[2.5rem] shadow-xl shadow-secondary/20 transition-all border-none"
               >
-                <div className="p-5 bg-white/20 rounded-2xl mb-5">
+                <div className="p-4 md:p-5 bg-white/20 rounded-2xl mb-5">
                   <Clock size={36} />
                 </div>
-                <span className="text-[12px] font-black uppercase tracking-widest">Updates</span>
+                <span className="text-[10px] font-black uppercase tracking-widest">Updates</span>
               </motion.button>
             </div>
           </div>
