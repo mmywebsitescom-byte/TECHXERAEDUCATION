@@ -155,7 +155,7 @@ export default function Home() {
         {/* Features Section */}
         <section className="py-24 md:py-32 lg:py-40 px-6 bg-white/30">
           <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-20 space-y-4">
+            <div className="text-center mb-16 space-y-4">
               <h2 className="text-4xl md:text-5xl font-headline font-bold tracking-tight">Ecosystem Architecture</h2>
               <p className="text-muted-foreground text-lg max-w-2xl mx-auto font-medium">A multi-layered infrastructure designed for speed, security, and academic excellence.</p>
             </div>
@@ -165,54 +165,54 @@ export default function Home() {
               initial="hidden"
               whileInView="show"
               viewport={{ once: true, margin: "-50px" }}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 lg:gap-12"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8"
             >
               {[
                 {
                   title: "Smart Resources",
                   desc: "Advanced repository for lecture notes, research papers, and coding guides.",
-                  icon: <BookOpen className="text-primary" size={32} />,
+                  icon: <BookOpen className="text-primary" size={24} />,
                   accent: "bg-primary/10"
                 },
                 {
                   title: "Performance Tracking",
                   desc: "Visualize your academic growth with real-time analytics and predictive grading.",
-                  icon: <Zap className="text-secondary" size={32} />,
+                  icon: <Zap className="text-secondary" size={24} />,
                   accent: "bg-secondary/10"
                 },
                 {
                   title: "Instant Alerts",
                   desc: "Priority notification system for exam schedules and critical campus updates.",
-                  icon: <ShieldCheck className="text-primary" size={32} />,
+                  icon: <ShieldCheck className="text-primary" size={24} />,
                   accent: "bg-primary/10"
                 },
                 {
                   title: "Verified Identity",
                   desc: "Secure authentication framework ensuring student data integrity and academic sovereignty.",
-                  icon: <ShieldAlert className="text-secondary" size={32} />,
+                  icon: <ShieldAlert className="text-secondary" size={24} />,
                   accent: "bg-secondary/10"
                 },
                 {
                   title: "Faculty Control",
                   desc: "Comprehensive administrative suite for managing results, materials, and official bulletins.",
-                  icon: <Settings className="text-primary" size={32} />,
+                  icon: <Settings className="text-primary" size={24} />,
                   accent: "bg-primary/10"
                 },
                 {
                   title: "Adaptive Architecture",
                   desc: "Glassmorphic, 3D-enhanced interface optimized for ultimate cross-platform responsiveness.",
-                  icon: <Layout className="text-secondary" size={32} />,
+                  icon: <Layout className="text-secondary" size={24} />,
                   accent: "bg-secondary/10"
                 }
               ].map((feature, i) => (
                 <motion.div key={i} variants={item}>
-                  <Card className="glass group hover:bg-white transition-all duration-500 border-none rounded-[2.5rem] overflow-hidden h-full shadow-md hover:shadow-xl">
-                    <CardContent className="p-10 md:p-12">
-                      <div className={`mb-6 p-6 w-fit ${feature.accent} rounded-2xl group-hover:scale-110 transition-transform duration-500`}>
+                  <Card className="glass group hover:bg-white transition-all duration-500 border-none rounded-[2rem] overflow-hidden h-full shadow-sm hover:shadow-lg">
+                    <CardContent className="p-6 md:p-8">
+                      <div className={`mb-4 p-4 w-fit ${feature.accent} rounded-xl group-hover:scale-110 transition-transform duration-500`}>
                         {feature.icon}
                       </div>
-                      <h3 className="text-2xl md:text-3xl font-headline font-bold mb-4 tracking-tight">{feature.title}</h3>
-                      <p className="text-muted-foreground/80 leading-relaxed text-lg font-medium">{feature.desc}</p>
+                      <h3 className="text-xl md:text-2xl font-headline font-bold mb-3 tracking-tight">{feature.title}</h3>
+                      <p className="text-muted-foreground/80 leading-relaxed text-base font-medium">{feature.desc}</p>
                     </CardContent>
                   </Card>
                 </motion.div>
