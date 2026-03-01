@@ -61,7 +61,7 @@ export default function NoticesPage() {
                   itemClassName={`border-l-8 ${notice.isUrgent ? 'border-l-destructive' : 'border-l-primary'} bg-white`}
                 >
                   <div className="flex flex-col h-full">
-                    <div className="flex justify-between items-start mb-6">
+                    <div className="flex justify-between items-start mb-4">
                       <div className="flex items-center gap-3">
                         <Badge className={`text-[10px] py-1 px-4 uppercase tracking-widest font-black ${notice.isUrgent ? 'bg-destructive text-white' : 'bg-primary text-white'}`}>
                           {notice.isUrgent ? 'Urgent' : 'Official'}
@@ -72,17 +72,17 @@ export default function NoticesPage() {
                       </div>
                     </div>
                     
-                    <div className="flex gap-6 flex-1">
-                      <div className={`hidden sm:flex shrink-0 w-16 h-16 rounded-[1.5rem] items-center justify-center ${notice.isUrgent ? 'bg-destructive/10 text-destructive' : 'bg-primary/10 text-primary'}`}>
-                        {notice.isUrgent ? <AlertCircle size={32} /> : <Info size={32} />}
+                    <div className="flex gap-4 flex-1 overflow-hidden">
+                      <div className={`hidden sm:flex shrink-0 w-12 h-12 rounded-[1rem] items-center justify-center ${notice.isUrgent ? 'bg-destructive/10 text-destructive' : 'bg-primary/10 text-primary'}`}>
+                        {notice.isUrgent ? <AlertCircle size={24} /> : <Info size={24} />}
                       </div>
-                      <div className="space-y-4 flex-1">
-                        <h3 className="text-3xl md:text-4xl font-headline font-bold tracking-tight line-clamp-1">{notice.title}</h3>
-                        <p className="text-muted-foreground leading-relaxed text-lg font-medium line-clamp-4">{notice.description}</p>
+                      <div className="space-y-2 flex-1 overflow-hidden">
+                        <h3 className="text-2xl md:text-3xl font-headline font-bold tracking-tight line-clamp-1">{notice.title}</h3>
+                        <p className="text-muted-foreground leading-relaxed text-sm md:text-base font-medium line-clamp-3">{notice.description}</p>
                       </div>
                     </div>
                     
-                    <div className="mt-8 pt-4 border-t border-border/40 text-[10px] font-black uppercase tracking-widest text-primary/40 text-right">
+                    <div className="mt-4 pt-4 border-t border-border/40 text-[9px] font-black uppercase tracking-widest text-primary/40 text-right">
                       TechXera Communication Hub
                     </div>
                   </div>
