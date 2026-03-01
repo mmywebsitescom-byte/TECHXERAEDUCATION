@@ -7,7 +7,7 @@ import TechBackground from '@/components/TechBackground'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { ArrowRight, BookOpen, GraduationCap, ShieldCheck, Zap, Sparkles, Cpu, LifeBuoy, Github, Twitter, Linkedin, Mail } from 'lucide-react'
+import { ArrowRight, BookOpen, GraduationCap, ShieldCheck, Zap, Sparkles, Cpu, LifeBuoy, Github, Instagram, Linkedin, Mail } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import LogoLoop, { type LogoItem } from '@/components/LogoLoop'
@@ -278,10 +278,10 @@ export default function Home() {
               <Link href="https://github.com" target="_blank" className="p-2 bg-muted hover:bg-primary/10 hover:text-primary transition-all rounded-lg">
                 <Github size={18} />
               </Link>
-              <Link href="https://twitter.com" target="_blank" className="p-2 bg-muted hover:bg-primary/10 hover:text-primary transition-all rounded-lg">
-                <Twitter size={18} />
+              <Link href="https://www.instagram.com/techxera._nit/?hl=en" target="_blank" className="p-2 bg-muted hover:bg-primary/10 hover:text-primary transition-all rounded-lg">
+                <Instagram size={18} />
               </Link>
-              <Link href="https://linkedin.com" target="_blank" className="p-2 bg-muted hover:bg-primary/10 hover:text-primary transition-all rounded-lg">
+              <Link href="https://www.linkedin.com/company/techxera-nalanda" target="_blank" className="p-2 bg-muted hover:bg-primary/10 hover:text-primary transition-all rounded-lg">
                 <Linkedin size={18} />
               </Link>
               <Link href="mailto:support@techxera.edu" className="p-2 bg-muted hover:bg-primary/10 hover:text-primary transition-all rounded-lg">
