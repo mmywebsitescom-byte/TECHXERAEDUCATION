@@ -30,44 +30,64 @@ export default function ResultsLookupPage() {
     e.preventDefault()
     if (!db) return
     
+    const trimmedId = studentIdInput.trim()
+    const trimmedDob = dobInput.trim()
+
+    if (!trimmedId || !trimmedDob) {
+      toast({
+        variant: "destructive",
+        title: "Missing Information",
+        description: "Please enter both Student ID and Date of Birth."
+      })
+      return
+    }
+
     setLoading(true)
     setError(null)
     setStudentData(null)
     setResults([])
 
     try {
-      // 1. Find the student by ID
+      // 1. Find the student by official Roll Number (studentId)
       const studentsRef = collection(db, 'students')
-      const q = query(studentsRef, where('studentId', '==', studentIdInput))
+      const q = query(studentsRef, where('studentId', '==', trimmedId))
       const querySnapshot = await getDocs(q)
 
       if (querySnapshot.empty) {
-        throw new Error("No student record found with this ID.")
+        throw new Error("No student record found with this ID. Please verify your Roll Number.")
       }
 
       const studentDoc = querySnapshot.docs[0]
       const data = studentDoc.data()
 
-      // 2. Verify DOB
-      if (data.dateOfBirth !== dobInput) {
-        throw new Error("Student ID and Date of Birth do not match.")
+      // 2. Verify Date of Birth (format stored: YYYY-MM-DD)
+      if (data.dateOfBirth !== trimmedDob) {
+        throw new Error("Student ID and Date of Birth do not match our records.")
       }
 
-      // 3. Fetch Results
+      // 3. Fetch Academic Results from the student's sub-collection
       const resultsRef = collection(db, 'students', studentDoc.id, 'results')
-      const resultsSnapshot = await getDocs(query(resultsRef, orderBy('examDate', 'desc')))
+      // Try fetching all results first to ensure we get data even if examDate index is pending
+      const resultsSnapshot = await getDocs(resultsRef)
       
-      const fetchedResults = resultsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      let fetchedResults = resultsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      
+      // Sort manually in memory to ensure reliability
+      fetchedResults.sort((a, b) => {
+        const dateA = a.examDate ? new Date(a.examDate).getTime() : 0
+        const dateB = b.examDate ? new Date(b.examDate).getTime() : 0
+        return dateB - dateA
+      })
 
       setStudentData(data)
       setResults(fetchedResults)
       
       toast({
         title: "Record Found",
-        description: `Academic transcript retrieved for ${data.firstName}.`
+        description: `Academic transcript retrieved for ${data.firstName} ${data.lastName}.`
       })
     } catch (err: any) {
-      setError(err.message || "Something went wrong during the lookup.")
+      setError(err.message || "An unexpected error occurred during the lookup.")
       toast({
         variant: "destructive",
         title: "Lookup Failed",
@@ -99,7 +119,7 @@ export default function ResultsLookupPage() {
                     <ClipboardList size={32} />
                   </div>
                   <CardTitle className="text-3xl font-headline font-bold">Check Results</CardTitle>
-                  <CardDescription>Official student record lookup portal</CardDescription>
+                  <CardDescription>Enter your credentials to view your mark sheet</CardDescription>
                 </CardHeader>
                 <form onSubmit={handleLookup}>
                   <CardContent className="space-y-6 pt-8">
@@ -109,7 +129,7 @@ export default function ResultsLookupPage() {
                       </div>
                     )}
                     <div className="space-y-2">
-                      <Label htmlFor="id">Student Identification Number</Label>
+                      <Label htmlFor="id">Student ID (Roll Number)</Label>
                       <Input 
                         id="id" 
                         placeholder="e.g. TX-2025-001" 
@@ -179,7 +199,7 @@ export default function ResultsLookupPage() {
                     </div>
                     <div className="space-y-1">
                       <p className="text-xs text-muted-foreground uppercase font-bold tracking-widest">Current Status</p>
-                      <Badge className="bg-green-500 hover:bg-green-600 text-white font-bold px-4 py-1">ENROLLED</Badge>
+                      <Badge className="bg-green-500 hover:bg-green-600 text-white font-bold px-4 py-1 uppercase">Enrolled</Badge>
                     </div>
                   </div>
                   
@@ -205,35 +225,37 @@ export default function ResultsLookupPage() {
                               className="border-b border-border/40 hover:bg-muted/20 transition-colors"
                             >
                               <td className="p-5 px-8 font-bold">{res.subject}</td>
-                              <td className="p-5 text-sm font-bold text-muted-foreground">{res.examTitle || 'General'}</td>
+                              <td className="p-5 text-sm font-bold text-muted-foreground">{res.examTitle || 'General Assessment'}</td>
                               <td className="p-5 text-sm font-medium">{res.semester}</td>
                               <td className="p-5 text-sm">{res.marks}%</td>
                               <td className="p-5 px-8 text-right font-black text-2xl text-primary">{res.grade}</td>
                             </motion.tr>
                           ))
                         ) : (
-                          <tr><td colSpan={5} className="p-20 text-center text-muted-foreground font-medium">No results found for this student.</td></tr>
+                          <tr><td colSpan={5} className="p-20 text-center text-muted-foreground font-medium italic">No results have been recorded for this student yet.</td></tr>
                         )}
                       </tbody>
                     </table>
                   </div>
 
                   {results.length > 0 && (
-                    <div className="p-10 bg-primary/5 flex justify-between items-center border-t border-border/40">
+                    <div className="p-10 bg-primary/5 flex flex-col md:flex-row justify-between items-center gap-6 border-t border-border/40">
                       <div>
-                        <p className="text-xs text-muted-foreground uppercase font-bold mb-1">Total Subjects</p>
+                        <p className="text-xs text-muted-foreground uppercase font-bold mb-1">Total Subjects Evaluated</p>
                         <p className="text-3xl font-headline font-bold">{results.length}</p>
                       </div>
-                      <div className="text-right">
-                        <p className="text-xs text-muted-foreground uppercase font-bold mb-1 tracking-widest">Final Result Status</p>
-                        <p className="text-2xl font-bold text-green-600 uppercase tracking-tight">PASSED WITH EXCELLENCE</p>
+                      <div className="text-center md:text-right">
+                        <p className="text-xs text-muted-foreground uppercase font-bold mb-1 tracking-widest">Final Status</p>
+                        <p className="text-2xl font-bold text-green-600 uppercase tracking-tight">Academic Record Verified</p>
                       </div>
                     </div>
                   )}
                 </CardContent>
               </Card>
               <div className="mt-8 text-center">
-                <p className="text-sm text-muted-foreground italic">Disclaimer: This is a digitally generated transcript. For formal purposes, please request an original copy from the registrar.</p>
+                <p className="text-sm text-muted-foreground italic max-w-2xl mx-auto leading-relaxed">
+                  Disclaimer: This is a digitally generated transcript for reference only. For official academic applications, please request a signed and stamped copy from the campus registrar.
+                </p>
               </div>
             </motion.div>
           )}
