@@ -37,7 +37,7 @@ export default function ExamsPage() {
       <TechBackground />
       <Navbar />
       
-      <main className="max-w-7xl mx-auto p-10 md:p-24 pt-80 pb-32 w-full">
+      <main className="max-w-7xl mx-auto p-10 md:p-24 pt-96 pb-32 w-full">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

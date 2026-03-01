@@ -35,7 +35,7 @@ export default function NoticesPage() {
     <div className="min-h-screen bg-background">
       <Navbar />
       
-      <main className="max-w-4xl mx-auto py-12 px-6 space-y-8 pt-80">
+      <main className="max-w-4xl mx-auto py-12 px-6 space-y-8 pt-96">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}

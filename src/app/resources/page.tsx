@@ -33,7 +33,7 @@ export default function ResourcesPage() {
     return (
       <div className="min-h-screen bg-[#F5F5FA]">
         <Navbar />
-        <div className="flex items-center justify-center pt-80">
+        <div className="flex items-center justify-center pt-96">
           <Loader2 className="animate-spin text-primary" size={48} />
         </div>
       </div>
@@ -44,7 +44,7 @@ export default function ResourcesPage() {
     <div className="min-h-screen bg-[#F5F5FA] text-foreground">
       <Navbar />
       
-      <main className="max-w-6xl mx-auto p-6 md:p-10 space-y-12 pt-80 pb-32">
+      <main className="max-w-6xl mx-auto p-6 md:p-10 space-y-12 pt-96 pb-32">
         <div className="space-y-4">
           <motion.div 
             initial={{ opacity: 0, x: -20 }}

@@ -102,7 +102,7 @@ export default function ResultsLookupPage() {
       <div className="min-h-screen relative flex flex-col">
         <TechBackground />
         <Navbar />
-        <main className="flex-1 flex items-center justify-center pt-80">
+        <main className="flex-1 flex items-center justify-center pt-96">
           <Loader2 className="animate-spin text-primary" size={48} />
         </main>
       </div>
@@ -114,7 +114,7 @@ export default function ResultsLookupPage() {
       <TechBackground />
       <Navbar />
 
-      <main className="flex-1 max-w-7xl mx-auto w-full p-6 flex flex-col items-center justify-center pt-80 pb-20">
+      <main className="flex-1 max-w-7xl mx-auto w-full p-6 flex flex-col items-center justify-center pt-96 pb-20">
         <AnimatePresence mode="wait">
           {!studentData ? (
             <motion.div 
