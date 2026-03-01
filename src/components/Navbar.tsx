@@ -4,23 +4,30 @@
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Button } from './ui/button'
-import { LogIn, ClipboardList, BookOpen, Bell, Home, LogOut, LayoutDashboard, Shield, CalendarDays, LifeBuoy, Monitor } from 'lucide-react'
+import { LogIn, ClipboardList, BookOpen, Bell, Home, LogOut, LayoutDashboard, Shield, CalendarDays, LifeBuoy } from 'lucide-react'
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from '@/firebase'
 import { signOut } from 'firebase/auth'
 import { doc } from 'firebase/firestore'
 import { cn } from '@/lib/utils'
 
 export const TechXeraLogo = ({ className }: { className?: string }) => (
-  <div className={cn("relative flex items-center justify-center bg-black rounded-full overflow-hidden border-2 border-primary/20", className)}>
-    <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary via-transparent to-transparent"></div>
-    <div className="relative flex flex-col items-center">
-      <Monitor className="text-white" size={className?.includes('w-12') ? 24 : 32} />
-      <div className="flex gap-0.5 mt-1">
-        <div className="w-1 h-1 bg-primary rounded-full animate-pulse"></div>
-        <div className="w-1 h-1 bg-secondary rounded-full animate-pulse delay-75"></div>
-        <div className="w-1 h-1 bg-primary rounded-full animate-pulse delay-150"></div>
-      </div>
-    </div>
+  <div className={cn("relative flex items-center justify-center bg-black rounded-xl overflow-hidden shadow-2xl", className)}>
+    <svg viewBox="0 0 100 100" className="w-full h-full p-2" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="hsl(var(--primary))" />
+          <stop offset="100%" stopColor="hsl(var(--secondary))" />
+        </linearGradient>
+      </defs>
+      {/* Hexagon Background */}
+      <path d="M50 5 L90 27.5 V72.5 L50 95 L10 72.5 V27.5 L50 5Z" fill="url(#logo-grad)" fillOpacity="0.15" stroke="url(#logo-grad)" strokeWidth="2" />
+      {/* Central X */}
+      <path d="M35 35 L65 65 M65 35 L35 65" stroke="url(#logo-grad)" strokeWidth="8" strokeLinecap="round" />
+      {/* Pulse Dots */}
+      <circle cx="50" cy="50" r="5" fill="white" className="animate-pulse" />
+      <circle cx="35" cy="35" r="3" fill="hsl(var(--secondary))" />
+      <circle cx="65" cy="65" r="3" fill="hsl(var(--primary))" />
+    </svg>
   </div>
 )
 
@@ -53,7 +60,7 @@ export default function Navbar() {
     )}>
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <Link href="/" className="flex items-center gap-4 group">
-          <TechXeraLogo className="w-12 h-12 shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform" />
+          <TechXeraLogo className="w-12 h-12 group-hover:scale-110 transition-transform duration-500" />
           <span className="font-headline text-2xl font-bold tracking-tighter text-foreground">
             TECH<span className="text-primary">XERA</span>
           </span>
