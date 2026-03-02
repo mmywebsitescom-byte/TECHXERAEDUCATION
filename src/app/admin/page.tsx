@@ -45,7 +45,7 @@ export default function AdminPage() {
 
   // Form States
   const [newNotice, setNewNotice] = useState({ title: '', description: '', isUrgent: false })
-  const [newMaterial, setNewMaterial] = useState({ title: '', description: '', subject: '', semester: '', fileUrl: '', materialType: 'Notes' })
+  const [newMaterial, setNewMaterial] = useState({ title: '', description: '', subject: '', semester: '', fileUrl: '', thumbnailUrl: '', materialType: 'Notes' })
   const [newResult, setNewResult] = useState({ subject: '', semester: '', marksObtained: 0, grade: '', examDate: new Date().toISOString().split('T')[0] })
   const [newExam, setNewExam] = useState({ title: '', semester: '', examDate: new Date().toISOString().split('T')[0], status: 'upcoming', totalMarks: 100 })
   
@@ -152,7 +152,7 @@ export default function AdminPage() {
 
   const startEditMaterial = (material: any) => {
     setEditingMaterialId(material.id)
-    setNewMaterial({ title: material.title, description: material.description || '', subject: material.subject, semester: material.semester, fileUrl: material.fileUrl, materialType: material.materialType || 'Notes' })
+    setNewMaterial({ title: material.title, description: material.description || '', subject: material.subject, semester: material.semester, fileUrl: material.fileUrl, thumbnailUrl: material.thumbnailUrl || '', materialType: material.materialType || 'Notes' })
     setIsDialogOpen(true)
   }
 
@@ -167,7 +167,7 @@ export default function AdminPage() {
     setEditingMaterialId(null)
     setEditingExamId(null)
     setNewNotice({ title: '', description: '', isUrgent: false })
-    setNewMaterial({ title: '', description: '', subject: '', semester: '', fileUrl: '', materialType: 'Notes' })
+    setNewMaterial({ title: '', description: '', subject: '', semester: '', fileUrl: '', thumbnailUrl: '', materialType: 'Notes' })
     setNewExam({ title: '', semester: '', examDate: new Date().toISOString().split('T')[0], status: 'upcoming', totalMarks: 100 })
   }
 
@@ -310,6 +310,7 @@ export default function AdminPage() {
                       <Label>Material Type / Section</Label>
                       <Input required placeholder="Notes, PYQ, Syllabus..." value={newMaterial.materialType} onChange={e => setNewMaterial({ ...newMaterial, materialType: e.target.value })} />
                     </div>
+                    <div className="space-y-2"><Label>Resource Thumbnail URL (Optional)</Label><Input type="url" placeholder="https://..." value={newMaterial.thumbnailUrl} onChange={e => setNewMaterial({ ...newMaterial, thumbnailUrl: e.target.value })} /></div>
                     <div className="space-y-2"><Label>File URL</Label><Input required type="url" value={newMaterial.fileUrl} onChange={e => setNewMaterial({ ...newMaterial, fileUrl: e.target.value })} /></div>
                     <Button type="submit" disabled={isCreating} className="w-full h-12 rounded-xl text-lg font-bold">
                       {editingMaterialId ? 'Update Repository' : 'Upload to Repository'}

@@ -6,7 +6,7 @@ import Navbar from '@/components/Navbar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Search, Download, FileText, Loader2, BookOpen } from 'lucide-react'
+import { Search, Download, FileText, Loader2, BookOpen, ImageIcon } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from '@/firebase'
 import { collection, query, orderBy, doc } from 'firebase/firestore'
@@ -121,38 +121,55 @@ export default function ResourcesPage() {
                   exit={{ opacity: 0, scale: 0.95 }}
                 >
                   <Card className="bg-white border-none hover:bg-primary/[0.01] transition-all duration-300 rounded-[2rem] overflow-hidden group shadow-sm hover:shadow-md h-full flex flex-col border border-border/20">
-                    <CardContent className="p-8 flex-1 flex flex-col">
-                      <div className="flex justify-between items-start mb-6">
-                        <div className="p-4 bg-primary/5 text-primary rounded-xl group-hover:scale-105 transition-transform duration-300">
-                          <FileText size={24} />
-                        </div>
-                        <Badge variant="secondary" className="bg-muted text-muted-foreground border-none uppercase text-[10px] font-bold tracking-widest px-4 py-1 rounded-full">
+                    <CardContent className="p-0 flex-1 flex flex-col">
+                      {/* Thumbnail Header */}
+                      <div className="h-40 w-full overflow-hidden bg-muted relative">
+                        {item.thumbnailUrl ? (
+                          <img 
+                            src={item.thumbnailUrl} 
+                            alt={item.title} 
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-primary/20">
+                            <ImageIcon size={64} />
+                          </div>
+                        )}
+                        <Badge variant="secondary" className="absolute top-4 right-4 bg-white/80 backdrop-blur-md text-muted-foreground border-none uppercase text-[10px] font-bold tracking-widest px-4 py-1 rounded-full">
                           {item.semester}
                         </Badge>
                       </div>
-                      
-                      <div className="flex-1">
-                        <h3 className="text-xl font-headline font-bold mb-4 tracking-tight line-clamp-2">{item.title}</h3>
-                        <div className="space-y-1 mb-6">
-                          <p className="text-primary text-xs font-bold uppercase tracking-widest">{item.subject}</p>
-                          <p className="text-muted-foreground/60 text-[10px] font-bold uppercase tracking-widest">{item.materialType}</p>
-                        </div>
-                      </div>
 
-                      <div className="pt-6 border-t border-border/40 flex items-center justify-between">
-                        <span className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-[0.2em]">
-                          {item.uploadDate ? new Date(item.uploadDate).toLocaleDateString() : 'N/A'}
-                        </span>
-                        <a 
-                          href={item.fileUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="inline-block"
-                        >
-                          <Button variant="ghost" className="text-primary hover:bg-primary/5 px-4 rounded-xl flex items-center gap-2 font-bold text-xs uppercase tracking-widest h-10">
-                            Access <Download size={16} />
-                          </Button>
-                        </a>
+                      <div className="p-8 flex-1 flex flex-col">
+                        <div className="flex justify-between items-start mb-6">
+                          <div className="p-4 bg-primary/5 text-primary rounded-xl group-hover:scale-105 transition-transform duration-300">
+                            <FileText size={24} />
+                          </div>
+                        </div>
+                        
+                        <div className="flex-1">
+                          <h3 className="text-xl font-headline font-bold mb-4 tracking-tight line-clamp-2">{item.title}</h3>
+                          <div className="space-y-1 mb-6">
+                            <p className="text-primary text-xs font-bold uppercase tracking-widest">{item.subject}</p>
+                            <p className="text-muted-foreground/60 text-[10px] font-bold uppercase tracking-widest">{item.materialType}</p>
+                          </div>
+                        </div>
+
+                        <div className="pt-6 border-t border-border/40 flex items-center justify-between">
+                          <span className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-[0.2em]">
+                            {item.uploadDate ? new Date(item.uploadDate).toLocaleDateString() : 'N/A'}
+                          </span>
+                          <a 
+                            href={item.fileUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="inline-block"
+                          >
+                            <Button variant="ghost" className="text-primary hover:bg-primary/5 px-4 rounded-xl flex items-center gap-2 font-bold text-xs uppercase tracking-widest h-10">
+                              Access <Download size={16} />
+                            </Button>
+                          </a>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
