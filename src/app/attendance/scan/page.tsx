@@ -32,32 +32,38 @@ export default function AttendanceScanPage() {
 
   useEffect(() => {
     setMounted(true)
-    return () => {
-      if (scannerRef.current) {
-        scannerRef.current.clear().catch(console.error)
-      }
-    }
   }, [])
 
   useEffect(() => {
-    if (mounted && scanning && status === 'idle') {
-      const scanner = new Html5QrcodeScanner(
-        "qr-reader",
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        /* verbose= */ false
-      )
-      
-      scanner.render(
-        (decodedText) => handleScan(decodedText),
-        (error) => {} // Ignore scan errors
-      )
-      
-      scannerRef.current = scanner
+    if (!mounted || !scanning || status !== 'idle') return;
+
+    // Initialize the scanner only when ready and idle
+    const scanner = new Html5QrcodeScanner(
+      "qr-reader",
+      { fps: 10, qrbox: { width: 250, height: 250 } },
+      /* verbose= */ false
+    )
+    
+    scanner.render(
+      (decodedText) => handleScan(decodedText),
+      (error) => {} // Suppress noise
+    )
+    
+    scannerRef.current = scanner
+
+    // Cleanup on unmount or state change
+    return () => {
+      if (scannerRef.current) {
+        scannerRef.current.clear().catch((err) => {
+          // Silent catch to prevent 'node not found' or parent-related removeChild errors
+        });
+        scannerRef.current = null;
+      }
     }
   }, [mounted, scanning, status])
 
   const handleScan = async (data: string) => {
-    if (status === 'processing') return
+    if (status === 'processing' || !db) return
     
     try {
       const parsed = JSON.parse(data)
@@ -65,17 +71,17 @@ export default function AttendanceScanPage() {
         throw new Error("Invalid TechXera QR Code.")
       }
 
+      // Stop scanning as soon as we get a valid code
       if (scannerRef.current) {
-        await scannerRef.current.clear()
+        await scannerRef.current.clear().catch(() => {});
+        scannerRef.current = null;
       }
       
       setStatus('processing')
       
-      // Verify session and record attendance
       const recordId = `${user?.uid}_${parsed.sessionId}`
       const attendanceRef = doc(db, 'attendance', recordId)
       
-      // Checking rules will verify the token, but we can check if already exists here
       const existing = await getDoc(attendanceRef)
       if (existing.exists()) {
         throw new Error("Attendance already recorded for this session.")
@@ -99,6 +105,7 @@ export default function AttendanceScanPage() {
     } catch (err: any) {
       setErrorMessage(err.message || "Scanning failed.")
       setStatus('error')
+      // If error, the scanner is already cleared, user can retry with the button
     }
   }
 
