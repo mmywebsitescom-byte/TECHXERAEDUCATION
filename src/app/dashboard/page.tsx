@@ -6,10 +6,10 @@ import Navbar from '@/components/Navbar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
-import { GraduationCap, Award, BookOpen, Clock, TrendingUp, Loader2, Sparkles, AlertCircle, ShieldAlert, CreditCard, Copy, Check, Camera, LogOut } from 'lucide-react'
+import { GraduationCap, Award, BookOpen, Clock, TrendingUp, Loader2, Sparkles, AlertCircle, ShieldAlert, CreditCard, Copy, Check, Camera, LogOut, QrCode } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase, useAuth } from '@/firebase'
-import { doc, updateDoc, collection } from 'firebase/firestore'
+import { doc, updateDoc, collection, query, where } from 'firebase/firestore'
 import { updateProfile, signOut } from 'firebase/auth'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -53,6 +53,9 @@ export default function DashboardPage() {
 
   const studentRef = useMemoFirebase(() => (user && db ? doc(db, 'students', user.uid) : null), [user, db])
   const { data: profile, isLoading: isProfileLoading } = useDoc(studentRef)
+
+  const attendanceQuery = useMemoFirebase(() => (user && db ? query(collection(db, 'attendance'), where('studentUid', '==', user.uid)) : null), [user, db])
+  const { data: attendanceData } = useCollection(attendanceQuery)
 
   const resultsQuery = useMemoFirebase(() => (user && profile?.isApproved && db ? collection(db, 'students', user.uid, 'results') : null), [user, profile, db])
   const { data: results, isLoading: isResultsLoading } = useCollection(resultsQuery)
@@ -115,7 +118,6 @@ export default function DashboardPage() {
 
   if (!user) return null
 
-  // CASE: Student record was deleted or doesn't exist in Firestore
   if (!profile && !isProfileLoading) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
@@ -145,7 +147,6 @@ export default function DashboardPage() {
     )
   }
 
-  // CASE: Student record exists but is not yet approved
   if (profile && !profile.isApproved) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
@@ -170,6 +171,9 @@ export default function DashboardPage() {
       </div>
     )
   }
+
+  const attendancePercentage = attendanceData ? Math.min(100, (attendanceData.length / 50) * 100) : 0; // Assuming 50 classes for demo
+  const isBelowThreshold = attendancePercentage < 75;
 
   const chartData = results?.map(r => ({
     name: r.semester,
@@ -261,15 +265,13 @@ export default function DashboardPage() {
             </div>
           </div>
           
-          <div className="flex gap-8 w-full lg:w-auto">
-            <div className="flex-1 lg:flex-none bg-white p-6 md:p-8 rounded-[2.5rem] shadow-sm border border-border/50 text-center min-w-[140px]">
-              <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mb-2">Rank</p>
-              <p className="text-3xl md:text-4xl font-headline font-bold text-primary tracking-tighter">#04</p>
-            </div>
-            <div className="flex-1 lg:flex-none bg-primary text-white p-6 md:p-8 rounded-[2.5rem] shadow-xl shadow-primary/20 text-center min-w-[140px]">
-              <p className="text-[10px] text-white/70 uppercase font-bold tracking-widest mb-2">Results</p>
-              <p className="text-3xl md:text-4xl font-headline font-bold tracking-tighter">{results?.length || 0}</p>
-            </div>
+          <div className="flex gap-4 w-full lg:w-auto">
+            <Button 
+              onClick={() => router.push('/attendance/scan')}
+              className="h-16 px-8 bg-primary rounded-[2rem] font-bold shadow-xl shadow-primary/20 flex-1 lg:flex-none text-lg"
+            >
+              <QrCode className="mr-3" /> Mark Attendance
+            </Button>
           </div>
         </motion.div>
 
@@ -322,24 +324,37 @@ export default function DashboardPage() {
 
           <div className="space-y-12">
             <motion.div variants={itemVariant}>
-              <Card className="glass border-none rounded-[3rem] shadow-lg">
-                <CardHeader className="p-8 md:p-10 pb-0">
+              <Card className={`glass border-none rounded-[3rem] shadow-lg ${isBelowThreshold ? 'ring-2 ring-destructive' : ''}`}>
+                <CardHeader className="p-8 md:p-10 pb-4">
                   <CardTitle className="text-2xl md:text-3xl font-headline font-bold flex items-center gap-4">
-                    <Award className="text-secondary" size={32} /> Recent Grades
+                    <ShieldCheck className={isBelowThreshold ? 'text-destructive' : 'text-primary'} size={32} /> Attendance
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-8 md:p-10 space-y-10">
-                  {results?.slice(0, 3).map((result, i) => (
-                    <div key={i} className="space-y-4">
-                      <div className="flex justify-between items-end">
-                        <span className="text-base md:text-lg font-bold tracking-tight">{result.subject}</span>
-                        <span className="text-primary font-black text-xl md:text-2xl">{result.grade}</span>
-                      </div>
-                      <Progress value={result.marks} className="h-3 rounded-full bg-muted" />
+                <CardContent className="p-8 md:p-10 space-y-8">
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-end">
+                      <span className="text-base font-bold text-muted-foreground uppercase tracking-widest">Campus Presence</span>
+                      <span className={`font-black text-3xl ${isBelowThreshold ? 'text-destructive' : 'text-primary'}`}>{attendancePercentage.toFixed(1)}%</span>
                     </div>
-                  )) || (
-                    <div className="py-16 text-center opacity-50 font-bold uppercase text-sm tracking-widest">Awaiting records</div>
+                    <Progress value={attendancePercentage} className={`h-4 ${isBelowThreshold ? 'bg-destructive/10' : 'bg-muted'}`} />
+                  </div>
+                  
+                  {isBelowThreshold && (
+                    <div className="p-6 bg-destructive/10 rounded-[2rem] border border-destructive/20 flex gap-4">
+                      <AlertCircle className="text-destructive shrink-0" />
+                      <p className="text-sm font-bold leading-tight text-destructive">CRITICAL: Attendance below 75%. You are currently ineligible for final exams.</p>
+                    </div>
                   )}
+
+                  <div className="pt-4 space-y-3">
+                    <h4 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Recent Scan Log</h4>
+                    {attendanceData?.slice(0, 3).map((log, i) => (
+                      <div key={i} className="flex justify-between text-sm font-bold p-3 bg-muted/30 rounded-xl">
+                        <span>Session {log.sessionId}</span>
+                        <span className="text-primary">{format(new Date(log.timestamp), 'MMM d')}</span>
+                      </div>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
             </motion.div>
@@ -349,7 +364,7 @@ export default function DashboardPage() {
                 whileHover={{ scale: 1.05, y: -4 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => router.push('/resources')}
-                className="flex flex-col items-center justify-center p-8 md:p-10 bg-white text-foreground rounded-[2.5rem] shadow-sm hover:shadow-xl transition-all border border-border/50"
+                className="flex flex-col items-center justify-center p-8 md:p-10 bg-white dark:bg-card/40 text-foreground rounded-[2.5rem] shadow-sm hover:shadow-xl transition-all border border-border/50"
               >
                 <div className="p-4 md:p-5 bg-primary/5 rounded-2xl mb-5 text-primary">
                   <BookOpen size={36} />
@@ -360,7 +375,7 @@ export default function DashboardPage() {
                 whileHover={{ scale: 1.05, y: -4 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => router.push('/notices')}
-                className="flex flex-col items-center justify-center p-8 md:p-10 bg-secondary text-white rounded-[2.5rem] shadow-xl shadow-secondary/20 transition-all border-none"
+                className="flex flex-col items-center justify-center p-8 md:p-10 bg-primary text-white rounded-[2.5rem] shadow-xl shadow-primary/20 transition-all border-none"
               >
                 <div className="p-4 md:p-5 bg-white/20 rounded-2xl mb-5">
                   <Clock size={36} />

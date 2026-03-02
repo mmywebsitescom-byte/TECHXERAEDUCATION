@@ -2,7 +2,6 @@
 {
   "entities": {
     "Student": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Student",
       "type": "object",
       "description": "Represents a student enrolled in the TechXera Campus.",
@@ -14,93 +13,45 @@
         "email": { "type": "string", "format": "email" },
         "photoURL": { "type": "string", "format": "uri" },
         "enrollmentDate": { "type": "string", "format": "date-time" },
-        "dateOfBirth": { "type": "string", "format": "date" },
-        "currentSemester": { "type": "string" },
         "isApproved": { "type": "boolean" },
         "status": { "type": "string", "enum": ["pending", "approved", "rejected"] }
       },
-      "required": ["id", "studentId", "firstName", "lastName", "email", "enrollmentDate", "isApproved", "status"]
+      "required": ["id", "studentId", "firstName", "lastName", "email", "isApproved", "status"]
     },
-    "SupportInquiry": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "SupportInquiry",
-      "type": "object",
-      "description": "Represents a technical support inquiry sent by a student.",
-      "properties": {
-        "id": { "type": "string" },
-        "name": { "type": "string" },
-        "email": { "type": "string", "format": "email" },
-        "subject": { "type": "string" },
-        "message": { "type": "string" },
-        "timestamp": { "type": "string", "format": "date-time" },
-        "status": { "type": "string", "enum": ["pending", "resolved"] }
-      },
-      "required": ["id", "name", "email", "subject", "message", "timestamp", "status"]
-    },
-    "Exam": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Exam",
+    "AttendanceSession": {
+      "title": "AttendanceSession",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
-        "title": { "type": "string" },
-        "semester": { "type": "string" },
-        "examDate": { "type": "string", "format": "date" },
-        "status": { "type": "string", "enum": ["upcoming", "active", "completed"] },
-        "totalMarks": { "type": "number" }
-      },
-      "required": ["id", "title", "semester", "examDate", "status", "totalMarks"]
-    },
-    "Result": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Result",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "studentId": { "type": "string" },
-        "examId": { "type": "string" },
-        "subject": { "type": "string" },
-        "semester": { "type": "string" },
-        "marks": { "type": "number" },
-        "marksObtained": { "type": "number" },
-        "totalMarks": { "type": "number" },
-        "grade": { "type": "string" },
-        "examDate": { "type": "string", "format": "date-time" }
-      },
-      "required": ["id", "studentId", "subject", "semester", "marks", "marksObtained", "totalMarks", "grade", "examDate"]
-    },
-    "StudyMaterial": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "StudyMaterial",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "title": { "type": "string" },
-        "fileUrl": { "type": "string", "format": "uri" },
-        "thumbnailUrl": { "type": "string", "format": "uri" },
-        "subject": { "type": "string" },
-        "semester": { "type": "string" },
-        "materialType": { "type": "string" },
-        "uploadDate": { "type": "string", "format": "date-time" }
-      },
-      "required": ["id", "title", "fileUrl", "subject", "semester", "materialType", "uploadDate"]
-    },
-    "Notice": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Notice",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "title": { "type": "string" },
+        "className": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "startTime": { "type": "string" },
+        "endTime": { "type": "string" },
         "description": { "type": "string" },
-        "publishDate": { "type": "string", "format": "date-time" },
-        "isUrgent": { "type": "boolean" }
+        "dynamicToken": { "type": "string" },
+        "status": { "type": "string", "enum": ["upcoming", "active", "completed"] },
+        "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["id", "title", "description", "publishDate", "isUrgent"]
+      "required": ["id", "className", "date", "startTime", "endTime", "status"]
+    },
+    "AttendanceRecord": {
+      "title": "AttendanceRecord",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "sessionId": { "type": "string" },
+        "studentId": { "type": "string" },
+        "studentUid": { "type": "string" },
+        "studentName": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "tokenUsed": { "type": "string" },
+        "status": { "type": "string", "enum": ["present", "late"] }
+      },
+      "required": ["sessionId", "studentId", "studentUid", "timestamp"]
     }
   },
   "auth": {
-    "providers": ["password", "anonymous"]
+    "providers": ["password"]
   },
   "firestore": {
     "structure": [
@@ -109,24 +60,12 @@
         "definition": { "entityName": "Student" }
       },
       {
-        "path": "/students/{studentUid}/results/{resultId}",
-        "definition": { "entityName": "Result" }
+        "path": "/sessions/{sessionId}",
+        "definition": { "entityName": "AttendanceSession" }
       },
       {
-        "path": "/exams/{examId}",
-        "definition": { "entityName": "Exam" }
-      },
-      {
-        "path": "/studyMaterials/{materialId}",
-        "definition": { "entityName": "StudyMaterial" }
-      },
-      {
-        "path": "/notices/{noticeId}",
-        "definition": { "entityName": "Notice" }
-      },
-      {
-        "path": "/support_inquiries/{inquiryId}",
-        "definition": { "entityName": "SupportInquiry" }
+        "path": "/attendance/{attendanceId}",
+        "definition": { "entityName": "AttendanceRecord" }
       }
     ]
   }
