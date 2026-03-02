@@ -5,6 +5,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import Navbar from '@/components/Navbar'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 import { Loader2, Camera, CheckCircle2, AlertCircle, ShieldCheck, ArrowLeft, RefreshCw } from 'lucide-react'
 import { Html5QrcodeScanner } from 'html5-qrcode'
 import { useFirestore, useUser, useMemoFirebase, useDoc } from '@/firebase'
@@ -20,6 +21,7 @@ export default function AttendanceScanPage() {
   const [status, setStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState('')
   const [successData, setSuccessData] = useState<any>(null)
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null)
   
   const scannerRef = useRef<Html5QrcodeScanner | null>(null)
   const { user, isUserLoading } = useUser()
@@ -34,10 +36,34 @@ export default function AttendanceScanPage() {
     setMounted(true)
   }, [])
 
+  // Proactive camera permission check
   useEffect(() => {
-    if (!mounted || !scanning || status !== 'idle') return;
+    const getCameraPermission = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        setHasCameraPermission(true);
+        // Stop tracks so the stream is released for the scanner library
+        stream.getTracks().forEach(track => track.stop());
+      } catch (error) {
+        console.error('Error accessing camera:', error);
+        setHasCameraPermission(false);
+        toast({
+          variant: 'destructive',
+          title: 'Camera Access Denied',
+          description: 'Please enable camera permissions in your browser settings to use this app.',
+        });
+      }
+    };
 
-    // Initialize the scanner only when ready and idle
+    if (mounted) {
+      getCameraPermission();
+    }
+  }, [mounted, toast]);
+
+  useEffect(() => {
+    if (!mounted || !scanning || status !== 'idle' || hasCameraPermission !== true) return;
+
+    // Initialize the scanner only when ready, idle, and permission is granted
     const scanner = new Html5QrcodeScanner(
       "qr-reader",
       { fps: 10, qrbox: { width: 250, height: 250 } },
@@ -60,7 +86,7 @@ export default function AttendanceScanPage() {
         scannerRef.current = null;
       }
     }
-  }, [mounted, scanning, status])
+  }, [mounted, scanning, status, hasCameraPermission])
 
   const handleScan = async (data: string) => {
     if (status === 'processing' || !db) return
@@ -105,7 +131,6 @@ export default function AttendanceScanPage() {
     } catch (err: any) {
       setErrorMessage(err.message || "Scanning failed.")
       setStatus('error')
-      // If error, the scanner is already cleared, user can retry with the button
     }
   }
 
@@ -187,7 +212,17 @@ export default function AttendanceScanPage() {
                     <CardDescription className="text-lg">Align the QR code within the frame</CardDescription>
                   </CardHeader>
                   <CardContent className="p-10 space-y-8">
-                    <div id="qr-reader" className="overflow-hidden rounded-[2.5rem] border-4 border-primary/20 bg-black/5" />
+                    {hasCameraPermission === false && (
+                      <Alert variant="destructive" className="mb-6 rounded-2xl border-2">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>Camera Access Required</AlertTitle>
+                        <AlertDescription>
+                          Please enable camera permissions in your browser settings to use this feature.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                    
+                    <div id="qr-reader" className="overflow-hidden rounded-[2.5rem] border-4 border-primary/20 bg-black/5 min-h-[300px]" />
                     
                     <div className="p-6 bg-primary/5 rounded-[2rem] border border-primary/10 flex items-center gap-4 text-xs text-muted-foreground">
                       <ShieldCheck className="text-primary shrink-0" size={20} />
