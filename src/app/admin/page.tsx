@@ -57,7 +57,7 @@ export default function AdminPage() {
   const { toast } = useToast()
   const router = useRouter()
 
-  const isAuthorizedAdmin = user?.email === AUTHORIZED_ADMIN_EMAIL
+  const isAuthorizedAdmin = user?.email?.toLowerCase() === AUTHORIZED_ADMIN_EMAIL.toLowerCase()
 
   const settingsRef = useMemoFirebase(() => (db ? doc(db, 'settings', 'site-config') : null), [db])
   const { data: dbSettings } = useDoc(settingsRef)
@@ -100,7 +100,7 @@ export default function AdminPage() {
     if (mounted && !isUserLoading) {
       if (!user) {
         router.push('/admin/login')
-      } else if (user.email !== AUTHORIZED_ADMIN_EMAIL) {
+      } else if (user.email?.toLowerCase() !== AUTHORIZED_ADMIN_EMAIL.toLowerCase()) {
         toast({ variant: "destructive", title: "Access Denied" })
         router.push('/')
       }
@@ -112,12 +112,15 @@ export default function AdminPage() {
     router.push('/admin/login')
   }
 
-  const handleDelete = (coll: string, id: string, subColl?: string, subId?: string) => {
+  const handleDelete = async (coll: string, id: string, subColl?: string, subId?: string) => {
     if (!db || !isAuthorizedAdmin) return
-    const docRef = subColl && subId ? doc(db, 'students', id, subColl, subId) : doc(db, coll, id);
-    deleteDoc(docRef).then(() => {
+    try {
+      const docRef = subColl && subId ? doc(db, 'students', id, subColl, subId) : doc(db, coll, id);
+      await deleteDoc(docRef)
       toast({ title: "Record Removed" })
-    })
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Delete Failed", description: err.message })
+    }
   }
 
   const handleApproveStudent = (studentId: string, approve: boolean) => {
@@ -161,34 +164,55 @@ export default function AdminPage() {
     setNewExam({ title: '', semester: '', examDate: new Date().toISOString().split('T')[0], status: 'upcoming', totalMarks: 100 })
   }
 
-  const handleCreateNotice = (e: React.FormEvent) => {
+  const handleCreateNotice = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!db || !isAuthorizedAdmin) return
     setIsCreating(true)
-    const docRef = editingNoticeId ? doc(db, 'notices', editingNoticeId) : doc(collection(db, 'notices'))
-    setDoc(docRef, { ...newNotice, id: docRef.id, publishDate: new Date().toISOString() }, { merge: true })
-      .then(() => { toast({ title: "Success" }); setIsDialogOpen(false); resetDialogs(); })
-      .finally(() => setIsCreating(false))
+    try {
+      const docRef = editingNoticeId ? doc(db, 'notices', editingNoticeId) : doc(collection(db, 'notices'))
+      await setDoc(docRef, { ...newNotice, id: docRef.id, publishDate: new Date().toISOString() }, { merge: true })
+      toast({ title: "Notice Published" })
+      setIsDialogOpen(false)
+      resetDialogs()
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Action Failed", description: err.message })
+    } finally {
+      setIsCreating(false)
+    }
   }
 
-  const handleCreateMaterial = (e: React.FormEvent) => {
+  const handleCreateMaterial = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!db || !isAuthorizedAdmin) return
     setIsCreating(true)
-    const docRef = editingMaterialId ? doc(db, 'studyMaterials', editingMaterialId) : doc(collection(db, 'studyMaterials'))
-    setDoc(docRef, { ...newMaterial, id: docRef.id, uploadDate: new Date().toISOString() }, { merge: true })
-      .then(() => { toast({ title: "Success" }); setIsDialogOpen(false); resetDialogs(); })
-      .finally(() => setIsCreating(false))
+    try {
+      const docRef = editingMaterialId ? doc(db, 'studyMaterials', editingMaterialId) : doc(collection(db, 'studyMaterials'))
+      await setDoc(docRef, { ...newMaterial, id: docRef.id, uploadDate: new Date().toISOString() }, { merge: true })
+      toast({ title: "Material Saved" })
+      setIsDialogOpen(false)
+      resetDialogs()
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Action Failed", description: err.message })
+    } finally {
+      setIsCreating(false)
+    }
   }
 
-  const handleCreateExam = (e: React.FormEvent) => {
+  const handleCreateExam = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!db || !isAuthorizedAdmin) return
     setIsCreating(true)
-    const docRef = editingExamId ? doc(db, 'exams', editingExamId) : doc(collection(db, 'exams'))
-    setDoc(docRef, { ...newExam, id: docRef.id }, { merge: true })
-      .then(() => { toast({ title: "Success" }); setIsDialogOpen(false); resetDialogs(); })
-      .finally(() => setIsCreating(false))
+    try {
+      const docRef = editingExamId ? doc(db, 'exams', editingExamId) : doc(collection(db, 'exams'))
+      await setDoc(docRef, { ...newExam, id: docRef.id }, { merge: true })
+      toast({ title: "Exam Cycle Saved" })
+      setIsDialogOpen(false)
+      resetDialogs()
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Action Failed", description: err.message })
+    } finally {
+      setIsCreating(false)
+    }
   }
 
   const handleUpdateSiteConfig = (e: React.FormEvent) => {
@@ -200,20 +224,36 @@ export default function AdminPage() {
       .finally(() => setIsCreating(false))
   }
 
-  const handleSaveResult = (e: React.FormEvent) => {
+  const handleSaveResult = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!db || !isAuthorizedAdmin || !selectedStudentId || !selectedExamId) return
     setIsCreating(true)
-    const totalMarks = selectedExam?.totalMarks || 100
-    const percentage = Number(((newResult.marksObtained / totalMarks) * 100).toFixed(2))
-    const docRef = editingResultId ? doc(db, 'students', selectedStudentId, 'results', editingResultId) : doc(collection(db, 'students', selectedStudentId, 'results'))
-    setDoc(docRef, { ...newResult, id: docRef.id, studentId: selectedStudentId, examId: selectedExamId, examTitle: selectedExam?.title || 'General Assessment', marks: percentage, totalMarks, examDate: new Date(newResult.examDate).toISOString() }, { merge: true })
-      .then(() => { toast({ title: "Record Saved" }); setEditingResultId(null); })
-      .finally(() => setIsCreating(false))
+    try {
+      const totalMarks = selectedExam?.totalMarks || 100
+      const percentage = Number(((newResult.marksObtained / totalMarks) * 100).toFixed(2))
+      const docRef = editingResultId ? doc(db, 'students', selectedStudentId, 'results', editingResultId) : doc(collection(db, 'students', selectedStudentId, 'results'))
+      await setDoc(docRef, { 
+        ...newResult, 
+        id: docRef.id, 
+        studentId: selectedStudentId, 
+        examId: selectedExamId, 
+        examTitle: selectedExam?.title || 'General Assessment', 
+        marks: percentage, 
+        totalMarks, 
+        examDate: new Date(newResult.examDate).toISOString() 
+      }, { merge: true })
+      toast({ title: "Record Saved" })
+      setEditingResultId(null)
+      setNewResult({ ...newResult, subject: '', marksObtained: 0, grade: '' })
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Save Failed", description: err.message })
+    } finally {
+      setIsCreating(false)
+    }
   }
 
   if (!mounted || isUserLoading) return <div className="min-h-screen flex items-center justify-center bg-background"><Loader2 className="animate-spin text-primary" size={48} /></div>
-  if (!user || user.email !== AUTHORIZED_ADMIN_EMAIL) return null
+  if (!user || user.email?.toLowerCase() !== AUTHORIZED_ADMIN_EMAIL.toLowerCase()) return null
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -239,14 +279,18 @@ export default function AdminPage() {
               </DialogTrigger>
               <DialogContent className="sm:max-w-[550px] rounded-[2rem]">
                 <DialogHeader>
-                  <DialogTitle className="text-2xl font-headline font-bold">New Management Entry</DialogTitle>
+                  <DialogTitle className="text-2xl font-headline font-bold">
+                    {editingNoticeId || editingMaterialId || editingExamId ? 'Edit Entry' : 'New Management Entry'}
+                  </DialogTitle>
                 </DialogHeader>
                 {activeTab === 'notices' ? (
                   <form onSubmit={handleCreateNotice} className="space-y-6 pt-6">
                     <div className="space-y-2"><Label>Headline</Label><Input required value={newNotice.title} onChange={e => setNewNotice({ ...newNotice, title: e.target.value })} /></div>
                     <div className="space-y-2"><Label>Message Body</Label><Textarea required value={newNotice.description} onChange={e => setNewNotice({ ...newNotice, description: e.target.value })} className="min-h-[150px]" /></div>
                     <div className="flex items-center space-x-3 p-4 bg-muted/30 rounded-2xl"><Switch checked={newNotice.isUrgent} onCheckedChange={c => setNewNotice({ ...newNotice, isUrgent: c })} /><Label>Priority Announcement</Label></div>
-                    <Button type="submit" disabled={isCreating} className="w-full h-12 rounded-xl text-lg font-bold">Broadcast Notice</Button>
+                    <Button type="submit" disabled={isCreating} className="w-full h-12 rounded-xl text-lg font-bold">
+                      {editingNoticeId ? 'Update Notice' : 'Broadcast Notice'}
+                    </Button>
                   </form>
                 ) : activeTab === 'resources' ? (
                   <form onSubmit={handleCreateMaterial} className="space-y-6 pt-6">
@@ -255,9 +299,14 @@ export default function AdminPage() {
                       <div className="space-y-2"><Label>Subject</Label><Input required value={newMaterial.subject} onChange={e => setNewMaterial({ ...newMaterial, subject: e.target.value })} /></div>
                       <div className="space-y-2"><Label>Semester</Label><Input required value={newMaterial.semester} onChange={e => setNewMaterial({ ...newMaterial, semester: e.target.value })} /></div>
                     </div>
-                    <div className="space-y-2"><Label>Material Type</Label><Input required placeholder="Notes, PYQ..." value={newMaterial.materialType} onChange={e => setNewMaterial({ ...newMaterial, materialType: e.target.value })} /></div>
+                    <div className="space-y-2">
+                      <Label>Material Type / Section</Label>
+                      <Input required placeholder="Notes, PYQ, Syllabus..." value={newMaterial.materialType} onChange={e => setNewMaterial({ ...newMaterial, materialType: e.target.value })} />
+                    </div>
                     <div className="space-y-2"><Label>File URL</Label><Input required type="url" value={newMaterial.fileUrl} onChange={e => setNewMaterial({ ...newMaterial, fileUrl: e.target.value })} /></div>
-                    <Button type="submit" disabled={isCreating} className="w-full h-12 rounded-xl text-lg font-bold">Upload to Repository</Button>
+                    <Button type="submit" disabled={isCreating} className="w-full h-12 rounded-xl text-lg font-bold">
+                      {editingMaterialId ? 'Update Repository' : 'Upload to Repository'}
+                    </Button>
                   </form>
                 ) : activeTab === 'exams' ? (
                   <form onSubmit={handleCreateExam} className="space-y-6 pt-6">
@@ -270,7 +319,9 @@ export default function AdminPage() {
                       <div className="space-y-2"><Label>Status</Label><Select value={newExam.status} onValueChange={(val) => setNewExam({ ...newExam, status: val })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="upcoming">Upcoming</SelectItem><SelectItem value="active">Active</SelectItem><SelectItem value="completed">Completed</SelectItem></SelectContent></Select></div>
                       <div className="space-y-2"><Label>Total Marks</Label><Input required type="number" value={newExam.totalMarks} onChange={e => setNewExam({ ...newExam, totalMarks: Number(e.target.value) })} /></div>
                     </div>
-                    <Button type="submit" disabled={isCreating} className="w-full h-12 rounded-xl text-lg font-bold">Establish Cycle</Button>
+                    <Button type="submit" disabled={isCreating} className="w-full h-12 rounded-xl text-lg font-bold">
+                      {editingExamId ? 'Update Cycle' : 'Establish Cycle'}
+                    </Button>
                   </form>
                 ) : null}
               </DialogContent>
@@ -290,7 +341,7 @@ export default function AdminPage() {
             <TabsTrigger value="config" className="rounded-2xl py-4 px-8 data-[state=active]:bg-primary data-[state=active]:text-white font-bold"><SettingsIcon className="mr-2" size={20} /> Branding</TabsTrigger>
           </TabsList>
 
-          <Card className="shadow-2xl border-none rounded-[3.5rem] overflow-hidden bg-white/90 backdrop-blur-md">
+          <Card className="shadow-2xl border-none rounded-[3.5rem] overflow-hidden bg-white/90 backdrop-blur-md min-h-[400px]">
             <TabsContent value="results" className="p-0 m-0">
               <div className="p-10 border-b border-border/40 bg-muted/20">
                 <select className="h-14 w-full max-w-md rounded-2xl bg-background px-6 font-bold" value={selectedExamId || ''} onChange={e => setSelectedExamId(e.target.value)}>
@@ -299,7 +350,7 @@ export default function AdminPage() {
                 </select>
               </div>
               <Table>
-                <TableHeader><TableRow className="bg-muted/50"><TableHead className="px-10">Student</TableHead><TableHead>Roll No</TableHead><TableHead className="text-right px-10">Records</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow className="bg-muted/50"><TableHead className="px-10">Student</TableHead><TableHead>Roll No</TableHead><TableHead className="text-right px-10">Operations</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {selectedExamId ? students?.map(s => (
                     <TableRow key={s.id} className="hover:bg-primary/[0.02]">
@@ -307,7 +358,12 @@ export default function AdminPage() {
                       <TableCell className="font-bold text-primary">{s.studentId}</TableCell>
                       <TableCell className="text-right px-10"><Button onClick={() => { setSelectedStudentId(s.id); setIsManageResultsOpen(true); }} variant="outline" className="rounded-xl">Manage Grades</Button></TableCell>
                     </TableRow>
-                  )) : <TableRow><TableCell colSpan={3} className="text-center py-20 italic">Select an exam cycle above</TableCell></TableRow>}
+                  )) : (
+                    <TableRow><TableCell colSpan={3} className="text-center py-20 italic text-muted-foreground">Select an exam cycle above to manage grades</TableCell></TableRow>
+                  )}
+                  {selectedExamId && students?.length === 0 && (
+                    <TableRow><TableCell colSpan={3} className="text-center py-20 italic">No students found</TableCell></TableRow>
+                  )}
                 </TableBody>
               </Table>
             </TabsContent>
@@ -327,7 +383,9 @@ export default function AdminPage() {
                         <div className="text-xs text-muted-foreground">{iq.email}</div>
                       </TableCell>
                       <TableCell className="font-medium">{iq.subject}</TableCell>
-                      <TableCell className="text-xs">{iq.timestamp ? format(new Date(iq.timestamp), 'MMM d, h:mm a') : 'N/A'}</TableCell>
+                      <TableCell className="text-xs">
+                        {iq.timestamp ? format(new Date(iq.timestamp), 'MMM d, h:mm a') : 'N/A'}
+                      </TableCell>
                       <TableCell><Badge variant={iq.status === 'pending' ? 'destructive' : 'default'}>{iq.status}</Badge></TableCell>
                       <TableCell className="text-right px-10 space-x-2">
                         <Dialog>
@@ -344,7 +402,7 @@ export default function AdminPage() {
                       </TableCell>
                     </TableRow>
                   ))}
-                  {inquiries?.length === 0 && <TableRow><TableCell colSpan={5} className="text-center py-20 opacity-40 italic">No support inquiries found</TableCell></TableRow>}
+                  {(!inquiries || inquiries.length === 0) && <TableRow><TableCell colSpan={5} className="text-center py-20 opacity-40 italic">No support inquiries found</TableCell></TableRow>}
                 </TableBody>
               </Table>
             </TabsContent>
@@ -364,6 +422,7 @@ export default function AdminPage() {
                       </TableCell>
                     </TableRow>
                   ))}
+                  {(!students || students.length === 0) && <TableRow><TableCell colSpan={4} className="text-center py-20 italic opacity-40">No student records available</TableCell></TableRow>}
                 </TableBody>
               </Table>
             </TabsContent>
@@ -383,6 +442,7 @@ export default function AdminPage() {
                       </TableCell>
                     </TableRow>
                   ))}
+                  {(!exams || exams.length === 0) && <TableRow><TableCell colSpan={4} className="text-center py-20 italic opacity-40">No exam cycles defined</TableCell></TableRow>}
                 </TableBody>
               </Table>
             </TabsContent>
@@ -401,24 +461,27 @@ export default function AdminPage() {
                       </TableCell>
                     </TableRow>
                   ))}
+                  {(!notices || notices.length === 0) && <TableRow><TableCell colSpan={3} className="text-center py-20 italic opacity-40">No notices published</TableCell></TableRow>}
                 </TableBody>
               </Table>
             </TabsContent>
 
             <TabsContent value="resources" className="p-0 m-0">
               <Table>
-                <TableHeader><TableRow className="bg-muted/50"><TableHead className="px-10">Title</TableHead><TableHead>Subject</TableHead><TableHead className="text-right px-10">Operations</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow className="bg-muted/50"><TableHead className="px-10">Title</TableHead><TableHead>Subject</TableHead><TableHead>Type/Section</TableHead><TableHead className="text-right px-10">Operations</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {materials?.map(m => (
                     <TableRow key={m.id}>
                       <TableCell className="px-10 font-bold">{m.title}</TableCell>
                       <TableCell>{m.subject}</TableCell>
+                      <TableCell><Badge variant="outline">{m.materialType}</Badge></TableCell>
                       <TableCell className="text-right px-10 space-x-2">
                         <Button variant="ghost" size="icon" onClick={() => startEditMaterial(m)} className="text-primary"><Edit2 size={18} /></Button>
                         <Button variant="ghost" size="icon" onClick={() => handleDelete('studyMaterials', m.id)} className="text-destructive"><Trash2 size={18} /></Button>
                       </TableCell>
                     </TableRow>
                   ))}
+                  {(!materials || materials.length === 0) && <TableRow><TableCell colSpan={4} className="text-center py-20 italic opacity-40">Repository is empty</TableCell></TableRow>}
                 </TableBody>
               </Table>
             </TabsContent>
@@ -437,26 +500,46 @@ export default function AdminPage() {
         {/* Results Modal */}
         <Dialog open={isManageResultsOpen} onOpenChange={setIsManageResultsOpen}>
           <DialogContent className="sm:max-w-[800px] rounded-[3rem]">
-            <DialogHeader><DialogTitle className="text-2xl font-bold">Manage Grades for {selectedStudent?.firstName}</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle className="text-2xl font-bold">Manage Grades for {selectedStudent?.firstName} ({selectedExam?.title})</DialogTitle></DialogHeader>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 pt-6">
               <form onSubmit={handleSaveResult} className="space-y-6 p-6 bg-muted/20 rounded-[2rem]">
                 <div className="space-y-2"><Label>Subject</Label><Input required value={newResult.subject} onChange={e => setNewResult({ ...newResult, subject: e.target.value })} /></div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2"><Label>Marks</Label><Input type="number" value={newResult.marksObtained} onChange={e => setNewResult({...newResult, marksObtained: Number(e.target.value)})} /></div>
-                  <div className="space-y-2"><Label>Grade</Label><Input required value={newResult.grade} onChange={e => setNewResult({...newResult, grade: e.target.value})} /></div>
+                  <div className="space-y-2"><Label>Marks Obtained</Label><Input type="number" required value={newResult.marksObtained} onChange={e => setNewResult({...newResult, marksObtained: Number(e.target.value)})} /></div>
+                  <div className="space-y-2"><Label>Grade</Label><Input required placeholder="A+, B, O..." value={newResult.grade} onChange={e => setNewResult({...newResult, grade: e.target.value})} /></div>
                 </div>
-                <div className="space-y-2"><Label>Assessment Date</Label><Input type="date" value={newResult.examDate} onChange={e => setNewResult({ ...newResult, examDate: e.target.value })} /></div>
-                <Button type="submit" disabled={isCreating} className="w-full h-12 bg-primary font-bold rounded-xl">Save Result</Button>
+                <div className="space-y-2"><Label>Assessment Date</Label><Input type="date" required value={newResult.examDate} onChange={e => setNewResult({ ...newResult, examDate: e.target.value })} /></div>
+                <Button type="submit" disabled={isCreating} className="w-full h-12 bg-primary font-bold rounded-xl">
+                  {editingResultId ? 'Update Record' : 'Save Result'}
+                </Button>
               </form>
               <div className="space-y-4">
-                <h3 className="font-bold">Existing Records</h3>
-                <div className="max-h-[400px] overflow-y-auto space-y-3">
+                <h3 className="font-bold flex items-center justify-between">Existing Records <Badge variant="secondary">{selectedStudentExamResults.length}</Badge></h3>
+                <div className="max-h-[400px] overflow-y-auto space-y-3 pr-2">
                   {selectedStudentExamResults.map(res => (
-                    <div key={res.id} className="p-4 border rounded-2xl flex justify-between items-center bg-white shadow-sm">
-                      <div><p className="font-bold">{res.subject}</p><p className="text-xs">{res.grade} ({res.marks}%)</p></div>
-                      <div className="flex gap-2"><Button variant="ghost" size="icon" onClick={() => handleDelete('students', selectedStudentId!, 'results', res.id)} className="text-destructive"><Trash2 size={16} /></Button></div>
+                    <div key={res.id} className="p-4 border rounded-2xl flex justify-between items-center bg-white shadow-sm hover:shadow-md transition-shadow">
+                      <div>
+                        <p className="font-bold">{res.subject}</p>
+                        <p className="text-xs text-muted-foreground">{res.grade} ({res.marks}%)</p>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => {
+                          setEditingResultId(res.id);
+                          setNewResult({
+                            subject: res.subject,
+                            semester: res.semester || '',
+                            marksObtained: res.marksObtained || 0,
+                            grade: res.grade,
+                            examDate: res.examDate ? res.examDate.split('T')[0] : new Date().toISOString().split('T')[0]
+                          });
+                        }} className="text-primary"><Edit2 size={16} /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete('students', selectedStudentId!, 'results', res.id)} className="text-destructive"><Trash2 size={16} /></Button>
+                      </div>
                     </div>
                   ))}
+                  {selectedStudentExamResults.length === 0 && (
+                    <div className="py-20 text-center text-muted-foreground opacity-40 italic">No results recorded for this exam cycle</div>
+                  )}
                 </div>
               </div>
             </div>
