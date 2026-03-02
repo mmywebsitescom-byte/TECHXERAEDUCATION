@@ -17,7 +17,8 @@ import {
   CalendarDays, 
   LifeBuoy,
   Menu,
-  X
+  X,
+  CheckCircle2
 } from 'lucide-react'
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from '@/firebase'
 import { signOut } from 'firebase/auth'
@@ -94,6 +95,9 @@ const NavLinks = ({ className, onItemClick }: { className?: string; onItemClick?
     <Link href="/" onClick={onItemClick} className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-2 py-2">
       <Home size={14} /> Home
     </Link>
+    <Link href="/attendance" onClick={onItemClick} className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-2 py-2">
+      <CheckCircle2 size={14} /> Attendance
+    </Link>
     <Link href="/resources" onClick={onItemClick} className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-2 py-2">
       <BookOpen size={14} /> Resources
     </Link>
@@ -164,6 +168,9 @@ export default function Navbar() {
               <div className="flex flex-col gap-6 font-bold text-sm uppercase tracking-widest mt-10">
                 <Link href="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-4 p-4 rounded-2xl hover:bg-primary/10 transition-colors">
                   <Home size={20} className="text-primary" /> Home
+                </Link>
+                <Link href="/attendance" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-4 p-4 rounded-2xl hover:bg-primary/10 transition-colors">
+                  <CheckCircle2 size={20} className="text-primary" /> Attendance
                 </Link>
                 <Link href="/resources" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-4 p-4 rounded-2xl hover:bg-primary/10 transition-colors">
                   <BookOpen size={20} className="text-primary" /> Resources
