@@ -7,7 +7,7 @@ import TechBackground from '@/components/TechBackground'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { QrCode, ShieldCheck, AlertCircle, Clock, Calendar, CheckCircle2, Loader2, TrendingUp, User, Sparkles } from 'lucide-react'
+import { QrCode, ShieldCheck, AlertCircle, Clock, Calendar, CheckCircle2, Loader2, TrendingUp, User, Sparkles, BookOpen } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase'
 import { doc, collection, query, where } from 'firebase/firestore'
@@ -31,11 +31,15 @@ export default function AttendancePage() {
   const studentRef = useMemoFirebase(() => (user && db ? doc(db, 'students', user.uid) : null), [user, db])
   const { data: profile, isLoading: isProfileLoading } = useDoc(studentRef)
 
-  // Real-time attendance collection - Removed server-side orderBy to avoid index requirements
+  // Fetch all class sessions to determine total count
+  const sessionsQuery = useMemoFirebase(() => (db ? collection(db, 'sessions') : null), [db])
+  const { data: sessions, isLoading: isSessionsLoading } = useCollection(sessionsQuery)
+
+  // Real-time attendance collection for the student
   const attendanceQuery = useMemoFirebase(() => (user && db ? query(collection(db, 'attendance'), where('studentUid', '==', user.uid)) : null), [user, db])
   const { data: attendanceRaw, isLoading: isAttendanceLoading } = useCollection(attendanceQuery)
 
-  // Client-side sorting for maximum reliability without needing manual indexes
+  // Client-side sorting for maximum reliability
   const attendance = useMemo(() => {
     if (!attendanceRaw) return []
     return [...attendanceRaw].sort((a, b) => {
@@ -51,7 +55,7 @@ export default function AttendancePage() {
     }
   }, [user, isUserLoading, router, mounted])
 
-  if (!mounted || isUserLoading || isProfileLoading) {
+  if (!mounted || isUserLoading || isProfileLoading || isSessionsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="animate-spin text-primary" size={48} />
@@ -85,8 +89,10 @@ export default function AttendancePage() {
     )
   }
 
-  const attendancePercentage = attendance ? Math.min(100, (attendance.length / 50) * 100) : 0;
-  const isBelowThreshold = attendancePercentage < 75;
+  const totalSessions = sessions?.length || 0;
+  const attendedSessions = attendance?.length || 0;
+  const attendancePercentage = totalSessions > 0 ? Math.min(100, (attendedSessions / totalSessions) * 100) : 0;
+  const isBelowThreshold = attendancePercentage < 75 && totalSessions > 0;
 
   // Unique student identity token format recognized by Admin scanner
   const studentQrValue = JSON.stringify({
@@ -181,15 +187,20 @@ export default function AttendancePage() {
 
                 <div className="grid grid-cols-2 gap-4 pt-4">
                   <div className="p-6 bg-muted/30 rounded-3xl border border-white/40">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Verified</p>
-                    <p className="text-2xl font-black text-foreground">{attendance?.length || 0}</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Attended</p>
+                    <p className="text-2xl font-black text-foreground">{attendedSessions}</p>
                   </div>
                   <div className="p-6 bg-muted/30 rounded-3xl border border-white/40">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Status</p>
-                    <p className={`text-xs font-black uppercase ${isBelowThreshold ? 'text-destructive' : 'text-green-500'}`}>
-                      {isBelowThreshold ? 'At Risk' : 'Excellent'}
-                    </p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Total Classes</p>
+                    <p className="text-2xl font-black text-foreground">{totalSessions}</p>
                   </div>
+                </div>
+
+                <div className="p-6 bg-primary/5 rounded-3xl border border-primary/10 flex items-center justify-between">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Current Status</p>
+                  <p className={`text-xs font-black uppercase ${isBelowThreshold ? 'text-destructive' : 'text-green-500'}`}>
+                    {isBelowThreshold ? 'At Risk' : 'Excellent'}
+                  </p>
                 </div>
 
                 <div className="pt-6 border-t border-border/20">
