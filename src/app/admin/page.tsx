@@ -19,7 +19,7 @@ import {
   Plus, LifeBuoy, BookOpen, Camera, Trash2, 
   Loader2, CheckCircle2, AlertCircle, RefreshCw,
   Clock, Calendar as CalendarIcon, FileText, Edit,
-  ShieldCheck, Layout, ImageIcon, Globe, Send
+  ShieldCheck, Layout, ImageIcon, Globe, Send, XCircle
 } from 'lucide-react'
 import { useFirestore, useUser, useDoc, useMemoFirebase, useAuth, useCollection } from '@/firebase'
 import { collection, doc, setDoc, deleteDoc, query, orderBy, where, updateDoc, getDoc } from 'firebase/firestore'
@@ -230,6 +230,37 @@ export default function AdminPage() {
           path: docRef.path,
           operation: 'update',
           requestResourceData: { isApproved: true, status: 'approved' },
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+      })
+  }
+
+  const handleRejectStudent = async (studentId: string) => {
+    if (!db) return
+    const docRef = doc(db, 'students', studentId)
+    updateDoc(docRef, { isApproved: false, status: 'rejected' })
+      .then(() => toast({ title: "Approval Revoked" }))
+      .catch(async (err) => {
+        const permissionError = new FirestorePermissionError({
+          path: docRef.path,
+          operation: 'update',
+          requestResourceData: { isApproved: false, status: 'rejected' },
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+      })
+  }
+
+  const handleDeleteStudent = async (studentId: string) => {
+    if (!db) return
+    if (!confirm("Permanently delete this student record? This action cannot be undone.")) return
+    
+    const docRef = doc(db, 'students', studentId)
+    deleteDoc(docRef)
+      .then(() => toast({ title: "Record Deleted" }))
+      .catch(async (err) => {
+        const permissionError = new FirestorePermissionError({
+          path: docRef.path,
+          operation: 'delete',
         } satisfies SecurityRuleContext);
         errorEmitter.emit('permission-error', permissionError);
       })
@@ -670,34 +701,76 @@ export default function AdminPage() {
 
               {/* Students Tab */}
               <TabsContent value="students" className="mt-0 space-y-8">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-2xl font-headline font-bold">Student Registry</h3>
-                  <Badge variant="outline">{allStudents?.length || 0} Records</Badge>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {allStudents?.map(student => (
-                    <Card key={student.id} className="bg-background/50 rounded-3xl border-none shadow-sm p-6 space-y-4 border border-white/10">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center font-bold text-primary">
-                          {student.firstName[0]}{student.lastName[0]}
-                        </div>
-                        <div className="overflow-hidden">
-                          <p className="font-bold truncate">{student.firstName} {student.lastName}</p>
-                          <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">{student.studentId}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between pt-4 border-t border-border/10">
-                        <Badge variant={student.isApproved ? 'default' : 'secondary'} className={student.isApproved ? 'bg-green-500' : 'bg-orange-500'}>
-                          {student.status}
-                        </Badge>
-                        {!student.isApproved && (
-                           <Button size="sm" className="h-9 px-4 rounded-xl font-bold bg-primary" onClick={() => handleApproveStudent(student.id)}>
-                             Approve
-                           </Button>
-                        )}
-                      </div>
-                    </Card>
-                  ))}
+                <div className="border rounded-[2.5rem] overflow-hidden bg-background/30 shadow-inner">
+                  <Table>
+                    <TableHeader className="bg-muted/50 border-b">
+                      <TableRow className="border-none hover:bg-transparent">
+                        <TableHead className="h-16 px-10 font-bold text-muted-foreground uppercase text-[10px] tracking-widest">Student</TableHead>
+                        <TableHead className="h-16 font-bold text-muted-foreground uppercase text-[10px] tracking-widest">Roll No</TableHead>
+                        <TableHead className="h-16 font-bold text-muted-foreground uppercase text-[10px] tracking-widest text-center">Verification</TableHead>
+                        <TableHead className="h-16 px-10 font-bold text-muted-foreground uppercase text-[10px] tracking-widest text-right">Operations</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {allStudents && allStudents.length > 0 ? (
+                        allStudents.map(student => (
+                          <TableRow key={student.id} className="border-b border-border/10 hover:bg-primary/[0.02] transition-colors">
+                            <TableCell className="px-10 py-6">
+                              <p className="font-bold text-foreground">{student.firstName} {student.lastName}</p>
+                            </TableCell>
+                            <TableCell className="py-6">
+                              <p className="text-muted-foreground font-medium uppercase text-xs">{student.studentId}</p>
+                            </TableCell>
+                            <TableCell className="py-6 text-center">
+                              <Badge className="bg-primary hover:bg-primary/90 text-white rounded-full px-4 py-1 lowercase font-bold text-[10px]">
+                                {student.status || (student.isApproved ? 'approved' : 'pending')}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="px-10 text-right">
+                              <div className="flex justify-end gap-2">
+                                {!student.isApproved ? (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="h-10 w-10 text-green-500 hover:bg-green-50 rounded-xl"
+                                    onClick={() => handleApproveStudent(student.id)}
+                                  >
+                                    <CheckCircle size={18} />
+                                  </Button>
+                                ) : (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="h-10 w-10 text-orange-500 hover:bg-orange-50 rounded-xl"
+                                    onClick={() => handleRejectStudent(student.id)}
+                                  >
+                                    <XCircle size={18} />
+                                  </Button>
+                                )}
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="h-10 w-10 text-destructive hover:bg-destructive/5 rounded-xl"
+                                  onClick={() => handleDeleteStudent(student.id)}
+                                >
+                                  <Trash2 size={18} />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={4} className="h-80 text-center">
+                            <div className="flex flex-col items-center gap-4 opacity-40">
+                              <Users size={48} />
+                              <p className="text-muted-foreground italic font-medium">No registered students found.</p>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
                 </div>
               </TabsContent>
 
