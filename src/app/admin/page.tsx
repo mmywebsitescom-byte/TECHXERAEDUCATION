@@ -428,13 +428,19 @@ export default function AdminPage() {
     e.preventDefault()
     if (!db || !selectedStudentForGrade || !selectedExamCycle) return
 
+    const marksNum = parseInt(gradeForm.marks)
+    if (isNaN(marksNum)) {
+      toast({ variant: "destructive", title: "Invalid Data", description: "Score must be a valid number." })
+      return
+    }
+
     const exam = allExams?.find(ex => ex.id === selectedExamCycle)
     const payload = {
-      subject: gradeForm.subject,
-      marks: parseInt(gradeForm.marks),
-      grade: gradeForm.grade,
+      subject: gradeForm.subject || exam?.title || 'Examination',
+      marks: marksNum,
+      grade: gradeForm.grade || calculateGrade(marksNum),
       examId: selectedExamCycle,
-      examTitle: exam?.title || 'Unknown Exam',
+      examTitle: exam?.title || 'Assessment',
       semester: exam?.semester || selectedStudentForGrade.currentSemester || 'Semester 1',
       examDate: exam?.examDate || new Date().toISOString(),
       timestamp: new Date().toISOString()
@@ -442,12 +448,8 @@ export default function AdminPage() {
 
     const docRef = doc(db, 'students', selectedStudentForGrade.id, 'results', selectedExamCycle)
     
+    // Non-blocking update pattern
     setDoc(docRef, payload, { merge: true })
-      .then(() => {
-        toast({ title: "Grade Updated", description: `Academic record saved for ${selectedStudentForGrade.firstName}.` })
-        setIsGradeDialogOpen(false)
-        setGradeForm({ subject: '', marks: '', grade: '' })
-      })
       .catch(async (error) => {
         const permissionError = new FirestorePermissionError({
           path: docRef.path,
@@ -455,7 +457,15 @@ export default function AdminPage() {
           requestResourceData: payload,
         } satisfies SecurityRuleContext);
         errorEmitter.emit('permission-error', permissionError);
-      })
+      });
+
+    // Optimistic completion
+    toast({ 
+      title: "Result Archived", 
+      description: `Academic record saved for ${selectedStudentForGrade.firstName} ${selectedStudentForGrade.lastName}.` 
+    })
+    setIsGradeDialogOpen(false)
+    setGradeForm({ subject: '', marks: '', grade: '' })
   }
 
   const handleGlobalCreate = () => {
@@ -1245,8 +1255,8 @@ export default function AdminPage() {
                   value={gradeForm.marks} 
                   onChange={e => {
                     const val = e.target.value;
-                    const marks = parseInt(val);
-                    const grade = isNaN(marks) ? '' : calculateGrade(marks);
+                    const marksVal = parseInt(val);
+                    const grade = isNaN(marksVal) ? '' : calculateGrade(marksVal);
                     setGradeForm({...gradeForm, marks: val, grade: grade});
                   }}
                   className="h-12 rounded-xl" 
