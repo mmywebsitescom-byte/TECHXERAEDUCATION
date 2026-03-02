@@ -34,7 +34,8 @@ function LoginForm() {
   const searchParams = useSearchParams()
   const { toast } = useToast()
 
-  const redirectTo = searchParams.get('redirect') || '/dashboard'
+  // Updated default redirect to home page "/"
+  const redirectTo = searchParams.get('redirect') || '/'
 
   // Dynamic branding fetch
   const settingsRef = useMemoFirebase(() => (db ? doc(db, 'settings', 'site-config') : null), [db])
