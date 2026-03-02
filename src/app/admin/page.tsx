@@ -61,6 +61,18 @@ export default function AdminPage() {
     heroDescription: ''
   })
 
+  // Material Management State
+  const [isMaterialDialogOpen, setIsMaterialDialogOpen] = useState(false)
+  const [editingMaterial, setEditingMaterial] = useState<any | null>(null)
+  const [materialForm, setMaterialForm] = useState({
+    title: '',
+    subject: '',
+    semester: 'Semester 1',
+    materialType: 'Notes',
+    fileUrl: '',
+    thumbnailUrl: ''
+  })
+
   const { user, isUserLoading } = useUser()
   const auth = useAuth()
   const db = useFirestore()
@@ -230,6 +242,55 @@ export default function AdminPage() {
     }
   }
 
+  const handleEditMaterial = (material: any) => {
+    setEditingMaterial(material)
+    setMaterialForm({
+      title: material.title,
+      subject: material.subject,
+      semester: material.semester || 'Semester 1',
+      materialType: material.materialType || 'Notes',
+      fileUrl: material.fileUrl,
+      thumbnailUrl: material.thumbnailUrl || ''
+    })
+    setIsMaterialDialogOpen(true)
+  }
+
+  const handleSaveMaterial = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!db) return
+
+    const id = editingMaterial?.id || Math.random().toString(36).substring(2, 9)
+    const payload = {
+      ...materialForm,
+      id,
+      uploadDate: editingMaterial?.uploadDate || new Date().toISOString()
+    }
+
+    const docRef = doc(db, 'studyMaterials', id)
+    setDoc(docRef, payload, { merge: true })
+      .then(() => {
+        toast({ title: editingMaterial ? "Material Updated" : "Material Added" })
+        setIsMaterialDialogOpen(false)
+        setEditingMaterial(null)
+        setMaterialForm({
+          title: '',
+          subject: '',
+          semester: 'Semester 1',
+          materialType: 'Notes',
+          fileUrl: '',
+          thumbnailUrl: ''
+        })
+      })
+      .catch(async (error) => {
+        const permissionError = new FirestorePermissionError({
+          path: docRef.path,
+          operation: editingMaterial ? 'update' : 'create',
+          requestResourceData: payload,
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+      })
+  }
+
   // Scanner Logic
   useEffect(() => {
     let scanner: Html5QrcodeScanner | null = null;
@@ -330,10 +391,18 @@ export default function AdminPage() {
             </Button>
           </Link>
           <Button 
-            onClick={() => setIsCreateDialogOpen(true)}
+            onClick={() => {
+              if (activeTab === 'repository') {
+                setEditingMaterial(null)
+                setMaterialForm({ title: '', subject: '', semester: 'Semester 1', materialType: 'Notes', fileUrl: '', thumbnailUrl: '' })
+                setIsMaterialDialogOpen(true)
+              } else {
+                setIsCreateDialogOpen(true)
+              }
+            }}
             className="h-14 px-8 rounded-2xl font-bold bg-primary text-white shadow-xl shadow-primary/20 hover:bg-primary/90 flex-1 md:flex-none"
           >
-            <Plus className="mr-2" size={20} /> Create New
+            <Plus className="mr-2" size={20} /> {activeTab === 'repository' ? 'New Material' : 'Create New'}
           </Button>
           <Button onClick={handleLogout} variant="ghost" className="h-14 px-6 rounded-2xl font-bold text-destructive hover:bg-destructive/10">
             <LogOut className="mr-2" size={20} /> Logout
@@ -638,7 +707,12 @@ export default function AdminPage() {
                             </TableCell>
                             <TableCell className="px-10 text-right">
                               <div className="flex justify-end gap-2">
-                                <Button variant="ghost" size="icon" className="h-10 w-10 text-primary hover:bg-primary/5 rounded-xl">
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="h-10 w-10 text-primary hover:bg-primary/5 rounded-xl"
+                                  onClick={() => handleEditMaterial(material)}
+                                >
                                   <Edit size={18} />
                                 </Button>
                                 <Button 
@@ -771,6 +845,79 @@ export default function AdminPage() {
             </div>
             <DialogFooter>
               <Button type="submit" className="w-full h-12 rounded-xl font-bold text-lg">Initialize Session</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Material Management Dialog */}
+      <Dialog open={isMaterialDialogOpen} onOpenChange={setIsMaterialDialogOpen}>
+        <DialogContent className="rounded-[2.5rem] p-10 sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-headline font-bold">
+              {editingMaterial ? 'Update Repository Item' : 'New Study Material'}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSaveMaterial} className="space-y-6 pt-4">
+            <div className="space-y-2">
+              <Label>Title</Label>
+              <Input 
+                required 
+                placeholder="e.g. Intro to Neural Networks" 
+                value={materialForm.title} 
+                onChange={e => setMaterialForm({...materialForm, title: e.target.value})} 
+                className="h-12 rounded-xl" 
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Subject</Label>
+                <Input 
+                  required 
+                  placeholder="e.g. Artificial Intelligence" 
+                  value={materialForm.subject} 
+                  onChange={e => setMaterialForm({...materialForm, subject: e.target.value})} 
+                  className="h-12 rounded-xl" 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Type</Label>
+                <Select value={materialForm.materialType} onValueChange={val => setMaterialForm({...materialForm, materialType: val})}>
+                  <SelectTrigger className="h-12 rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    <SelectItem value="Notes">Notes</SelectItem>
+                    <SelectItem value="Assignment">Assignment</SelectItem>
+                    <SelectItem value="Syllabus">Syllabus</SelectItem>
+                    <SelectItem value="Question Bank">Question Bank</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>File URL</Label>
+              <Input 
+                required 
+                placeholder="https://drive.google.com/..." 
+                value={materialForm.fileUrl} 
+                onChange={e => setMaterialForm({...materialForm, fileUrl: e.target.value})} 
+                className="h-12 rounded-xl" 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Thumbnail URL (Optional)</Label>
+              <Input 
+                placeholder="https://..." 
+                value={materialForm.thumbnailUrl} 
+                onChange={e => setMaterialForm({...materialForm, thumbnailUrl: e.target.value})} 
+                className="h-12 rounded-xl" 
+              />
+            </div>
+            <DialogFooter>
+              <Button type="submit" className="w-full h-12 rounded-xl font-bold text-lg">
+                {editingMaterial ? 'Update Material' : 'Publish Material'}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>
