@@ -10,8 +10,8 @@ export default function TechBackground() {
       <div className="absolute inset-0 tech-grid opacity-[0.6]"></div>
       
       {/* Dynamic Ambient Orbs */}
-      <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-primary/5 rounded-full blur-[160px] animate-float opacity-40"></div>
-      <div className="absolute bottom-[-10%] right-[-5%] w-[50%] h-[50%] bg-secondary/10 rounded-full blur-[140px] animate-float opacity-30" style={{ animationDelay: '2s' }}></div>
+      <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-primary/10 rounded-full blur-[160px] animate-float opacity-30"></div>
+      <div className="absolute bottom-[-10%] right-[-5%] w-[50%] h-[50%] bg-secondary/15 rounded-full blur-[140px] animate-float opacity-20" style={{ animationDelay: '2s' }}></div>
       
       {/* Floating Tech Icons - Smaller and Highlighted */}
       <motion.div 
@@ -41,7 +41,7 @@ export default function TechBackground() {
       <motion.div 
         animate={{ scale: [1, 1.1, 1], opacity: [0.1, 0.2, 0.1] }}
         transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-[20%] right-[35%] text-primary"
+        className="absolute top-[20%] right-[35%] text-accent"
       >
         <Chip size={32} />
       </motion.div>
@@ -49,7 +49,7 @@ export default function TechBackground() {
       <motion.div 
         animate={{ rotate: [0, 360] }}
         transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
-        className="absolute bottom-[10%] right-[10%] text-primary opacity-[0.15]"
+        className="absolute bottom-[10%] right-[10%] text-primary opacity-[0.1]"
       >
         <Globe size={80} />
       </motion.div>
