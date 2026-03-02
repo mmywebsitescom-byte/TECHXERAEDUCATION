@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -17,7 +18,7 @@ import {
   Plus, LifeBuoy, BookOpen, Camera, Trash2, 
   Loader2, CheckCircle2, AlertCircle, RefreshCw,
   Clock, Calendar as CalendarIcon, FileText, Edit,
-  ShieldCheck, Layout
+  ShieldCheck, Layout, ImageIcon, Globe, Send
 } from 'lucide-react'
 import { useFirestore, useUser, useDoc, useMemoFirebase, useAuth, useCollection } from '@/firebase'
 import { collection, doc, setDoc, deleteDoc, query, orderBy, where, updateDoc, getDoc } from 'firebase/firestore'
@@ -52,6 +53,14 @@ export default function AdminPage() {
     description: ''
   })
 
+  // Branding Form State
+  const [brandingForm, setBrandingForm] = useState({
+    siteName: '',
+    logoUrl: '',
+    faviconUrl: '',
+    heroDescription: ''
+  })
+
   const { user, isUserLoading } = useUser()
   const auth = useAuth()
   const db = useFirestore()
@@ -80,6 +89,17 @@ export default function AdminPage() {
   const settingsRef = useMemoFirebase(() => (db ? doc(db, 'settings', 'site-config') : null), [db])
   const { data: dbSettings } = useDoc(settingsRef)
 
+  useEffect(() => {
+    if (dbSettings) {
+      setBrandingForm({
+        siteName: dbSettings.siteName || '',
+        logoUrl: dbSettings.logoUrl || '',
+        faviconUrl: dbSettings.faviconUrl || '',
+        heroDescription: dbSettings.heroDescription || ''
+      })
+    }
+  }, [dbSettings])
+
   const sessionsQuery = useMemoFirebase(() => (db && isAuthorizedAdmin ? query(collection(db, 'sessions'), orderBy('createdAt', 'desc')) : null), [db, isAuthorizedAdmin])
   const { data: sessions, isLoading: sessionsLoading } = useCollection(sessionsQuery)
 
@@ -104,6 +124,23 @@ export default function AdminPage() {
   const handleLogout = async () => {
     await signOut(auth);
     router.push('/');
+  }
+
+  // Branding Handler
+  const handleUpdateBranding = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!db) return
+    const docRef = doc(db, 'settings', 'site-config')
+    setDoc(docRef, brandingForm, { merge: true })
+      .then(() => toast({ title: "Branding Updated", description: "Campus identity settings have been synchronized." }))
+      .catch(async (error) => {
+        const permissionError = new FirestorePermissionError({
+          path: docRef.path,
+          operation: 'update',
+          requestResourceData: brandingForm,
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+      });
   }
 
   // Attendance Handlers
@@ -582,24 +619,60 @@ export default function AdminPage() {
               </TabsContent>
 
               <TabsContent value="branding" className="mt-0">
-                <div className="max-w-xl space-y-8">
-                  <h3 className="text-2xl font-headline font-bold">Campus Configuration</h3>
+                <form onSubmit={handleUpdateBranding} className="max-w-4xl space-y-10">
                   <div className="space-y-6">
-                    <div className="space-y-2">
-                      <Label>Campus Site Name</Label>
-                      <Input value={dbSettings?.siteName || 'TechXera Campus'} readOnly className="bg-muted h-12 rounded-xl" />
+                    <div className="space-y-3">
+                      <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Portal Name</Label>
+                      <Input 
+                        value={brandingForm.siteName} 
+                        onChange={e => setBrandingForm({...brandingForm, siteName: e.target.value})}
+                        placeholder="e.g. TechXera"
+                        className="h-14 rounded-2xl bg-background/50 border-none ring-1 ring-border focus-visible:ring-primary text-lg font-bold px-6 shadow-sm" 
+                      />
                     </div>
-                    <div className="space-y-2">
-                      <Label>Hero Title</Label>
-                      <Input value={dbSettings?.heroTitle || ''} readOnly className="bg-muted h-12 rounded-xl" />
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div className="space-y-3">
+                        <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                          <ImageIcon size={14} /> Website Logo URL
+                        </Label>
+                        <Input 
+                          value={brandingForm.logoUrl} 
+                          onChange={e => setBrandingForm({...brandingForm, logoUrl: e.target.value})}
+                          placeholder="https://i.postimg.cc/..."
+                          className="h-14 rounded-2xl bg-background/50 border-none ring-1 ring-border focus-visible:ring-primary text-sm font-medium px-6 shadow-sm" 
+                        />
+                        <p className="text-[10px] text-muted-foreground/60 font-medium ml-2">Logo displayed in Navbar and Dashboard</p>
+                      </div>
+                      <div className="space-y-3">
+                        <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                          <Globe size={14} /> Tab Icon (Favicon) URL
+                        </Label>
+                        <Input 
+                          value={brandingForm.faviconUrl} 
+                          onChange={e => setBrandingForm({...brandingForm, faviconUrl: e.target.value})}
+                          placeholder="https://i.postimg.cc/..."
+                          className="h-14 rounded-2xl bg-background/50 border-none ring-1 ring-border focus-visible:ring-primary text-sm font-medium px-6 shadow-sm" 
+                        />
+                        <p className="text-[10px] text-muted-foreground/60 font-medium ml-2">Icon displayed in the browser tab</p>
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label>Primary Logo URL</Label>
-                      <Input value={dbSettings?.logoUrl || ''} readOnly className="bg-muted h-12 rounded-xl" />
+
+                    <div className="space-y-3">
+                      <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Hero Description</Label>
+                      <Textarea 
+                        value={brandingForm.heroDescription} 
+                        onChange={e => setBrandingForm({...brandingForm, heroDescription: e.target.value})}
+                        placeholder="A high-performance student portal engineered for TechXera students."
+                        className="min-h-[180px] rounded-3xl bg-background/50 border-none ring-1 ring-border focus-visible:ring-primary p-6 text-sm leading-relaxed shadow-sm" 
+                      />
                     </div>
-                    <p className="text-xs text-muted-foreground italic">Root configuration is restricted to direct database updates for security.</p>
                   </div>
-                </div>
+
+                  <Button type="submit" className="h-14 px-12 bg-primary text-white hover:bg-primary/90 rounded-2xl text-lg font-bold shadow-xl shadow-primary/20 transition-all hover:scale-105 active:scale-95">
+                    Update Branding <Send className="ml-3" size={18} />
+                  </Button>
+                </form>
               </TabsContent>
 
             </CardContent>
