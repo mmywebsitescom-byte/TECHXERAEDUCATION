@@ -4,47 +4,47 @@
 
 @layer base {
   :root {
-    /* Color Hunt Palette: #84B179 #A2CB8B #C7EAB1 #E8F5BD */
-    --background: 73 72% 85%; /* #E8F5BD - Lightest Cream/Green */
-    --foreground: 108 30% 15%; /* Deep Sage for text */
+    /* Color Hunt Palette: #0B2D72 #0992C2 #0AC4E0 #F6E7BC */
+    --background: 45 77% 85%; /* #F6E7BC - Warm Cream Background */
+    --foreground: 220 82% 12%; /* Deep Navy for text */
     --card: 0 0% 100%;
-    --card-foreground: 108 30% 15%;
+    --card-foreground: 220 82% 12%;
     --popover: 0 0% 100%;
-    --popover-foreground: 108 30% 15%;
-    --primary: 108 27% 58%; /* #84B179 - Sage Green */
-    --primary-foreground: 73 72% 95%;
-    --secondary: 98 38% 67%; /* #A2CB8B - Light Green */
-    --secondary-foreground: 108 30% 15%;
-    --muted: 96 61% 81%; /* #C7EAB1 - Pale Green */
-    --muted-foreground: 108 20% 40%;
-    --accent: 96 61% 81%;
-    --accent-foreground: 108 30% 15%;
+    --popover-foreground: 220 82% 12%;
+    --primary: 220 82% 25%; /* #0B2D72 - Deep Navy Blue */
+    --primary-foreground: 45 77% 96%;
+    --secondary: 195 91% 40%; /* #0992C2 - Cyan/Teal */
+    --secondary-foreground: 45 77% 96%;
+    --muted: 45 20% 75%;
+    --muted-foreground: 220 30% 30%;
+    --accent: 188 91% 46%; /* #0AC4E0 - Light Cyan */
+    --accent-foreground: 220 82% 12%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 108 20% 75%;
-    --input: 108 20% 75%;
-    --ring: 108 27% 58%;
+    --border: 220 30% 80%;
+    --input: 220 30% 80%;
+    --ring: 220 82% 25%;
     --radius: 1.5rem;
   }
 
   .dark {
-    --background: 108 30% 5%;
-    --foreground: 73 72% 85%;
-    --card: 108 30% 8%;
-    --card-foreground: 73 72% 85%;
-    --popover: 108 30% 8%;
-    --popover-foreground: 73 72% 85%;
-    --primary: 98 38% 67%;
-    --primary-foreground: 108 30% 5%;
-    --secondary: 108 27% 58%;
-    --secondary-foreground: 73 72% 85%;
-    --muted: 108 20% 15%;
-    --muted-foreground: 108 10% 70%;
-    --accent: 108 20% 15%;
-    --accent-foreground: 73 72% 85%;
-    --border: 108 20% 20%;
-    --input: 108 20% 20%;
-    --ring: 98 38% 67%;
+    --background: 220 82% 5%;
+    --foreground: 45 77% 85%;
+    --card: 220 82% 8%;
+    --card-foreground: 45 77% 85%;
+    --popover: 220 82% 8%;
+    --popover-foreground: 45 77% 85%;
+    --primary: 188 91% 46%;
+    --primary-foreground: 220 82% 5%;
+    --secondary: 220 82% 25%;
+    --secondary-foreground: 45 77% 85%;
+    --muted: 220 30% 15%;
+    --muted-foreground: 220 10% 70%;
+    --accent: 195 91% 40%;
+    --accent-foreground: 45 77% 85%;
+    --border: 220 30% 20%;
+    --input: 220 30% 20%;
+    --ring: 188 91% 46%;
   }
 }
 
@@ -65,8 +65,8 @@
     @apply bg-white/60 backdrop-blur-xl border border-white/40 shadow-xl;
   }
   .tech-grid {
-    background-image: linear-gradient(to right, rgba(132, 177, 121, 0.1) 1px, transparent 1px),
-                      linear-gradient(to bottom, rgba(132, 177, 121, 0.1) 1px, transparent 1px);
+    background-image: linear-gradient(to right, rgba(11, 45, 114, 0.05) 1px, transparent 1px),
+                      linear-gradient(to bottom, rgba(11, 45, 114, 0.05) 1px, transparent 1px);
     background-size: 60px 60px;
   }
 }

@@ -13,15 +13,15 @@ import { cn } from '@/lib/utils'
 const AUTHORIZED_ADMIN_EMAIL = 'rraghabbarik@gmail.com'
 
 export const TechXeraLogo = ({ className, customUrl }: { className?: string; customUrl?: string }) => (
-  <div className={cn("relative flex items-center justify-center bg-black rounded-full overflow-hidden shadow-2xl ring-1 ring-white/10", className)}>
+  <div className={cn("relative flex items-center justify-center bg-primary rounded-full overflow-hidden shadow-2xl ring-1 ring-white/10", className)}>
     {customUrl ? (
       <img src={customUrl} alt="Logo" className="w-full h-full object-cover" />
     ) : (
       <svg viewBox="0 0 100 100" className="w-full h-full p-1" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="cyan-glow" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#00f2fe" />
-            <stop offset="100%" stopColor="#4facfe" />
+            <stop offset="0%" stopColor="#0AC4E0" />
+            <stop offset="100%" stopColor="#0992C2" />
           </linearGradient>
         </defs>
         
@@ -39,7 +39,7 @@ export const TechXeraLogo = ({ className, customUrl }: { className?: string; cus
         <path d="M85 40 Q88 50 85 60" stroke="white" strokeWidth="0.5" opacity="0.4" />
         
         <rect x="25" y="32" width="50" height="34" rx="3" stroke="white" strokeWidth="3" />
-        <rect x="28" y="35" width="44" height="28" rx="1.5" fill="#0a0a0a" />
+        <rect x="28" y="35" width="44" height="28" rx="1.5" fill="rgba(0,0,0,0.2)" />
         
         <path d="M46 66 L43 74 H57 L54 66 Z" fill="white" />
         <rect x="36" y="74" width="28" height="2" rx="1" fill="white" />
@@ -98,7 +98,7 @@ export default function Navbar() {
   return (
     <nav className={cn(
       "fixed top-0 z-50 w-full px-6 py-4 transition-all duration-300",
-      scrolled ? "bg-white/70 backdrop-blur-xl border-b border-white/20 py-3 shadow-sm" : "bg-transparent"
+      scrolled ? "bg-white/80 backdrop-blur-xl border-b border-primary/10 py-3 shadow-md" : "bg-transparent"
     )}>
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <Link href="/" className="flex items-center gap-4 group">
@@ -106,11 +106,11 @@ export default function Navbar() {
             className="w-12 h-12 group-hover:scale-110 transition-transform duration-500" 
             customUrl={customLogoUrl} 
           />
-          <span className="font-headline text-2xl font-bold tracking-tighter text-foreground uppercase">
+          <span className="font-headline text-2xl font-bold tracking-tighter text-primary uppercase">
             {siteName.includes(' ') ? (
               <>
                 {siteName.split(' ')[0]}
-                <span className="text-primary">{siteName.split(' ').slice(1).join(' ')}</span>
+                <span className="text-secondary">{siteName.split(' ').slice(1).join(' ')}</span>
               </>
             ) : siteName}
           </span>
