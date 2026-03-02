@@ -6,8 +6,7 @@ import { useFirestore, useDoc, useMemoFirebase } from '@/firebase'
 import { doc } from 'firebase/firestore'
 
 /**
- * DynamicFavicon - Synchronizes the browser tab icon with the logo URL defined in site settings.
- * It removes existing static icons to ensure the custom logo is prioritized.
+ * DynamicFavicon - Synchronizes the browser tab icon with the favicon URL defined in site settings.
  */
 export default function DynamicFavicon() {
   const db = useFirestore()
@@ -15,7 +14,10 @@ export default function DynamicFavicon() {
   const { data: settings } = useDoc(settingsRef)
 
   useEffect(() => {
-    if (settings?.logoUrl) {
+    // Priority: faviconUrl, fallback to logoUrl, fallback to nothing
+    const iconUrl = settings?.faviconUrl || settings?.logoUrl;
+
+    if (iconUrl) {
       const updateFavicon = (url: string) => {
         // Remove all existing icon links to prevent conflicts
         const existingIcons = document.querySelectorAll("link[rel*='icon']");
@@ -32,16 +34,16 @@ export default function DynamicFavicon() {
         shortcutLink.rel = 'shortcut icon';
         shortcutLink.href = url;
 
-        document.getElementsByTagName('head')[0].appendChild(link);
-        document.getElementsByTagName('head')[0].appendChild(shortcutLink);
-        
-        // Force refresh for certain browsers by appending a timestamp if needed
-        // but usually just replacing the elements is enough.
+        const head = document.getElementsByTagName('head')[0];
+        if (head) {
+          head.appendChild(link);
+          head.appendChild(shortcutLink);
+        }
       };
 
-      updateFavicon(settings.logoUrl);
+      updateFavicon(iconUrl);
     }
-  }, [settings?.logoUrl])
+  }, [settings?.faviconUrl, settings?.logoUrl])
 
   return null
 }

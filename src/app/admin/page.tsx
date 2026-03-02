@@ -15,7 +15,7 @@ import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Plus, Shield, List, GraduationCap, Megaphone, Loader2, UserCheck, Trash2, Users, CheckCircle, XCircle, Search, ClipboardList, CreditCard, Edit2, ArrowLeft, Target, Award, Settings as SettingsIcon, Image as ImageIcon, Globe, LogOut, Home, Lock, FileText, Download, Calendar, LifeBuoy, MessageSquare } from 'lucide-react'
-import { useFirestore, useUser, useDoc, useMemoFirebase, useCollection, errorEmitter, FirestorePermissionError, useAuth } from '@/firebase'
+import { useFirestore, useUser, useDoc, useMemoFirebase, useCollection, useAuth } from '@/firebase'
 import { doc, setDoc, collection, deleteDoc, query, orderBy, updateDoc } from 'firebase/firestore'
 import { signOut } from 'firebase/auth'
 import { useToast } from '@/hooks/use-toast'
@@ -49,7 +49,12 @@ export default function AdminPage() {
   const [newExam, setNewExam] = useState({ title: '', semester: '', examDate: new Date().toISOString().split('T')[0], status: 'upcoming', totalMarks: 100 })
   
   // Site Config State
-  const [siteConfig, setSiteConfig] = useState({ siteName: 'TechXera', logoUrl: '', heroDescription: 'A high-performance student portal engineered for TechXera students.' })
+  const [siteConfig, setSiteConfig] = useState({ 
+    siteName: 'TechXera', 
+    logoUrl: '', 
+    faviconUrl: '',
+    heroDescription: 'A high-performance student portal engineered for TechXera students.' 
+  })
 
   const { user, isUserLoading } = useUser()
   const auth = useAuth()
@@ -67,6 +72,7 @@ export default function AdminPage() {
       setSiteConfig({
         siteName: dbSettings.siteName || 'TechXera',
         logoUrl: dbSettings.logoUrl || '',
+        faviconUrl: dbSettings.faviconUrl || '',
         heroDescription: dbSettings.heroDescription || 'A high-performance student portal engineered for TechXera students.'
       })
     }
@@ -273,7 +279,7 @@ export default function AdminPage() {
             <Link href="/"><Button variant="outline" className="h-14 px-6 rounded-2xl font-bold border-2"><Home className="mr-2" size={20} /> Portal Home</Button></Link>
             <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) resetDialogs(); setIsDialogOpen(open); }}>
               <DialogTrigger asChild>
-                <Button disabled={['results', 'config', 'students', 'support', 'support'].includes(activeTab)} className="flex-1 lg:flex-none h-14 px-8 bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 text-white rounded-2xl font-bold">
+                <Button disabled={['results', 'config', 'students', 'support'].includes(activeTab)} className="flex-1 lg:flex-none h-14 px-8 bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 text-white rounded-2xl font-bold">
                   <Plus className="mr-2" size={24} /> Create New
                 </Button>
               </DialogTrigger>
@@ -361,9 +367,6 @@ export default function AdminPage() {
                   )) : (
                     <TableRow><TableCell colSpan={3} className="text-center py-20 italic text-muted-foreground">Select an exam cycle above to manage grades</TableCell></TableRow>
                   )}
-                  {selectedExamId && students?.length === 0 && (
-                    <TableRow><TableCell colSpan={3} className="text-center py-20 italic">No students found</TableCell></TableRow>
-                  )}
                 </TableBody>
               </Table>
             </TabsContent>
@@ -383,9 +386,7 @@ export default function AdminPage() {
                         <div className="text-xs text-muted-foreground">{iq.email}</div>
                       </TableCell>
                       <TableCell className="font-medium">{iq.subject}</TableCell>
-                      <TableCell className="text-xs">
-                        {iq.timestamp ? format(new Date(iq.timestamp), 'MMM d, h:mm a') : 'N/A'}
-                      </TableCell>
+                      <TableCell className="text-xs">{iq.timestamp ? format(new Date(iq.timestamp), 'MMM d, h:mm a') : 'N/A'}</TableCell>
                       <TableCell><Badge variant={iq.status === 'pending' ? 'destructive' : 'default'}>{iq.status}</Badge></TableCell>
                       <TableCell className="text-right px-10 space-x-2">
                         <Dialog>
@@ -402,7 +403,6 @@ export default function AdminPage() {
                       </TableCell>
                     </TableRow>
                   ))}
-                  {(!inquiries || inquiries.length === 0) && <TableRow><TableCell colSpan={5} className="text-center py-20 opacity-40 italic">No support inquiries found</TableCell></TableRow>}
                 </TableBody>
               </Table>
             </TabsContent>
@@ -422,7 +422,6 @@ export default function AdminPage() {
                       </TableCell>
                     </TableRow>
                   ))}
-                  {(!students || students.length === 0) && <TableRow><TableCell colSpan={4} className="text-center py-20 italic opacity-40">No student records available</TableCell></TableRow>}
                 </TableBody>
               </Table>
             </TabsContent>
@@ -442,7 +441,6 @@ export default function AdminPage() {
                       </TableCell>
                     </TableRow>
                   ))}
-                  {(!exams || exams.length === 0) && <TableRow><TableCell colSpan={4} className="text-center py-20 italic opacity-40">No exam cycles defined</TableCell></TableRow>}
                 </TableBody>
               </Table>
             </TabsContent>
@@ -461,7 +459,6 @@ export default function AdminPage() {
                       </TableCell>
                     </TableRow>
                   ))}
-                  {(!notices || notices.length === 0) && <TableRow><TableCell colSpan={3} className="text-center py-20 italic opacity-40">No notices published</TableCell></TableRow>}
                 </TableBody>
               </Table>
             </TabsContent>
@@ -481,7 +478,6 @@ export default function AdminPage() {
                       </TableCell>
                     </TableRow>
                   ))}
-                  {(!materials || materials.length === 0) && <TableRow><TableCell colSpan={4} className="text-center py-20 italic opacity-40">Repository is empty</TableCell></TableRow>}
                 </TableBody>
               </Table>
             </TabsContent>
@@ -489,7 +485,20 @@ export default function AdminPage() {
             <TabsContent value="config" className="p-10">
               <form onSubmit={handleUpdateSiteConfig} className="max-w-2xl space-y-8">
                 <div className="space-y-2"><Label>Portal Name</Label><Input value={siteConfig.siteName} onChange={e => setSiteConfig({...siteConfig, siteName: e.target.value})} className="h-14 rounded-2xl" /></div>
-                <div className="space-y-2"><Label>Logo URL</Label><Input value={siteConfig.logoUrl} onChange={e => setSiteConfig({...siteConfig, logoUrl: e.target.value})} className="h-14 rounded-2xl" /></div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2"><ImageIcon size={16} /> Website Logo URL</Label>
+                    <Input value={siteConfig.logoUrl} onChange={e => setSiteConfig({...siteConfig, logoUrl: e.target.value})} className="h-14 rounded-2xl" placeholder="https://..." />
+                    <p className="text-[10px] text-muted-foreground">Logo displayed in Navbar and Dashboard</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2"><Globe size={16} /> Tab Icon (Favicon) URL</Label>
+                    <Input value={siteConfig.faviconUrl} onChange={e => setSiteConfig({...siteConfig, faviconUrl: e.target.value})} className="h-14 rounded-2xl" placeholder="https://..." />
+                    <p className="text-[10px] text-muted-foreground">Icon displayed in the browser tab</p>
+                  </div>
+                </div>
+
                 <div className="space-y-2"><Label>Hero Description</Label><Textarea value={siteConfig.heroDescription} onChange={e => setSiteConfig({...siteConfig, heroDescription: e.target.value})} className="min-h-[120px] rounded-2xl" /></div>
                 <Button type="submit" disabled={isCreating} className="h-14 px-10 rounded-2xl font-bold">Update Branding</Button>
               </form>
@@ -537,9 +546,6 @@ export default function AdminPage() {
                       </div>
                     </div>
                   ))}
-                  {selectedStudentExamResults.length === 0 && (
-                    <div className="py-20 text-center text-muted-foreground opacity-40 italic">No results recorded for this exam cycle</div>
-                  )}
                 </div>
               </div>
             </div>
