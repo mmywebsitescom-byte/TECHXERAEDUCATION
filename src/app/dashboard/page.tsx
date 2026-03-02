@@ -54,22 +54,8 @@ export default function DashboardPage() {
   const studentRef = useMemoFirebase(() => (user && db ? doc(db, 'students', user.uid) : null), [user, db])
   const { data: profile, isLoading: isProfileLoading } = useDoc(studentRef)
 
-  // Use a simple query without orderBy to avoid index requirement
-  const attendanceQuery = useMemoFirebase(() => (user && db ? query(collection(db, 'attendance'), where('studentUid', '==', user.uid)) : null), [user, db])
-  const { data: attendanceData } = useCollection(attendanceQuery)
-
   const resultsQuery = useMemoFirebase(() => (user && profile?.isApproved && db ? collection(db, 'students', user.uid, 'results') : null), [user, profile, db])
   const { data: results, isLoading: isResultsLoading } = useCollection(resultsQuery)
-
-  // Sort attendance logs client-side
-  const sortedAttendance = useMemo(() => {
-    if (!attendanceData) return [];
-    return [...attendanceData].sort((a, b) => {
-      const dateA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
-      const dateB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
-      return dateB - dateA;
-    });
-  }, [attendanceData]);
 
   useEffect(() => {
     if (mounted && !isUserLoading && !user) {
@@ -183,9 +169,6 @@ export default function DashboardPage() {
     )
   }
 
-  const attendancePercentage = attendanceData ? Math.min(100, (attendanceData.length / 50) * 100) : 0; 
-  const isBelowThreshold = attendancePercentage < 75;
-
   const chartData = results?.map(r => ({
     name: r.semester,
     score: r.marks,
@@ -275,15 +258,6 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
-          
-          <div className="flex gap-4 w-full lg:w-auto">
-            <Button 
-              onClick={() => router.push('/attendance/scan')}
-              className="h-16 px-8 bg-primary rounded-[2rem] font-bold shadow-xl shadow-primary/20 flex-1 lg:flex-none text-lg"
-            >
-              <QrCode className="mr-3" /> Mark Attendance
-            </Button>
-          </div>
         </motion.div>
 
         <motion.div 
@@ -334,43 +308,7 @@ export default function DashboardPage() {
           </motion.div>
 
           <div className="space-y-12">
-            <motion.div variants={itemVariant}>
-              <Card className={`glass border-none rounded-[3rem] shadow-lg ${isBelowThreshold ? 'ring-2 ring-destructive' : ''}`}>
-                <CardHeader className="p-8 md:p-10 pb-4">
-                  <CardTitle className="text-2xl md:text-3xl font-headline font-bold flex items-center gap-4">
-                    <ShieldCheck className={isBelowThreshold ? 'text-destructive' : 'text-primary'} size={32} /> Attendance
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-8 md:p-10 space-y-8">
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-end">
-                      <span className="text-base font-bold text-muted-foreground uppercase tracking-widest">Campus Presence</span>
-                      <span className={`font-black text-3xl ${isBelowThreshold ? 'text-destructive' : 'text-primary'}`}>{attendancePercentage.toFixed(1)}%</span>
-                    </div>
-                    <Progress value={attendancePercentage} className={`h-4 ${isBelowThreshold ? 'bg-destructive/10' : 'bg-muted'}`} />
-                  </div>
-                  
-                  {isBelowThreshold && (
-                    <div className="p-6 bg-destructive/10 rounded-[2rem] border border-destructive/20 flex gap-4">
-                      <AlertCircle className="text-destructive shrink-0" />
-                      <p className="text-sm font-bold leading-tight text-destructive">CRITICAL: Attendance below 75%. You are currently ineligible for final exams.</p>
-                    </div>
-                  )}
-
-                  <div className="pt-4 space-y-3">
-                    <h4 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Recent Scan Log</h4>
-                    {sortedAttendance?.slice(0, 3).map((log, i) => (
-                      <div key={i} className="flex justify-between text-sm font-bold p-3 bg-muted/30 rounded-xl">
-                        <span>Session {log.sessionId}</span>
-                        <span className="text-primary">{log.timestamp ? format(new Date(log.timestamp), 'MMM d') : 'N/A'}</span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            <div className="grid grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 gap-8">
               <motion.button 
                 whileHover={{ scale: 1.05, y: -4 }}
                 whileTap={{ scale: 0.95 }}
