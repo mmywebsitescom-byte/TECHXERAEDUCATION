@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useRef } from 'react'
@@ -482,7 +483,7 @@ export default function AdminPage() {
     }
   }
 
-  // Scanner Logic
+  // Scanner Logic - Now works with unique student-side IDs
   useEffect(() => {
     let scanner: Html5QrcodeScanner | null = null;
     
@@ -507,7 +508,7 @@ export default function AdminPage() {
             
             const existing = await getDoc(attendanceRef)
             if (existing.exists()) {
-              toast({ title: "Already Logged", description: `${studentData.name} is present.` })
+              toast({ title: "Already Logged", description: `${studentData.name} is marked present.` })
               return
             }
 
@@ -523,7 +524,7 @@ export default function AdminPage() {
 
             setDoc(attendanceRef, payload)
               .then(() => {
-                toast({ title: "Check-in Confirmed", description: `Verified ${studentData.name}` })
+                toast({ title: "Verified", description: `Attendance recorded for ${studentData.name}` })
               })
               .catch(async (error) => {
                 const permissionError = new FirestorePermissionError({
@@ -1044,7 +1045,9 @@ export default function AdminPage() {
         <DialogContent className="sm:max-w-md rounded-[3rem] p-10 overflow-hidden">
           <DialogHeader className="text-center">
             <DialogTitle className="text-2xl font-headline font-bold mb-2">Scanner: {activeSession?.className}</DialogTitle>
-            <p className="text-muted-foreground font-medium">Position student identity QR within the frame</p>
+            <DialogDescription className="text-muted-foreground font-medium text-center">
+              Position student identity QR within the frame
+            </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col items-center gap-8 py-6">
             <div id="admin-attendance-scan-reader" className="w-full rounded-[2.5rem] overflow-hidden border-4 border-primary/20 bg-muted/20 min-h-[300px]" />
@@ -1228,7 +1231,7 @@ export default function AdminPage() {
         <DialogContent className="rounded-[2.5rem] p-10 sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-2xl font-headline font-bold">Enter Academic Score</DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-muted-foreground font-medium">
               Record the evaluation for {selectedStudentForGrade?.firstName} {selectedStudentForGrade?.lastName}.
             </DialogDescription>
           </DialogHeader>
