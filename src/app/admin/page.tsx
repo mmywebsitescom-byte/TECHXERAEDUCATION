@@ -36,6 +36,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Html5QrcodeScanner } from 'html5-qrcode'
 import { errorEmitter } from '@/firebase/error-emitter'
 import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors'
+import { cn } from '@/lib/utils'
 
 const AUTHORIZED_ADMIN_EMAIL = 'rraghabbarik@gmail.com'
 
@@ -889,7 +890,7 @@ export default function AdminPage() {
                     <Card key={inquiry.id} className="bg-background/50 rounded-xl md:rounded-2xl border-none p-4 md:p-6 flex flex-col md:flex-row justify-between gap-4 md:gap-6 border border-white/10">
                       <div className="space-y-2">
                         <div className="flex items-center gap-3">
-                          <Badge className={inquiry.status === 'pending' ? 'bg-orange-500' : 'bg-green-500'} text-[9px]>{inquiry.status}</Badge>
+                          <Badge className={cn(inquiry.status === 'pending' ? 'bg-orange-500' : 'bg-green-500', "text-[9px]")}>{inquiry.status}</Badge>
                           <h4 className="font-bold text-base md:text-lg truncate max-w-[200px] md:max-w-none">{inquiry.subject}</h4>
                         </div>
                         <p className="text-xs md:text-sm text-muted-foreground line-clamp-2">{inquiry.message}</p>
