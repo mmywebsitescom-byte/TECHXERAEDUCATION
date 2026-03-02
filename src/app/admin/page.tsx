@@ -36,8 +36,11 @@ export default function AdminPage() {
   const [selectedExamId, setSelectedExamId] = useState<string | null>(null)
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
   
-  // Results states
+  // Editing IDs
   const [editingResultId, setEditingResultId] = useState<string | null>(null)
+  const [editingNoticeId, setEditingNoticeId] = useState<string | null>(null)
+  const [editingMaterialId, setEditingMaterialId] = useState<string | null>(null)
+  const [editingExamId, setEditingExamId] = useState<string | null>(null)
 
   // Form States
   const [newNotice, setNewNotice] = useState({ title: '', description: '', isUrgent: false })
@@ -168,22 +171,64 @@ export default function AdminPage() {
     })
   }
 
+  // --- EDIT PREFILL HANDLERS ---
+  const startEditNotice = (notice: any) => {
+    setEditingNoticeId(notice.id)
+    setNewNotice({ title: notice.title, description: notice.description, isUrgent: notice.isUrgent })
+    setIsDialogOpen(true)
+  }
+
+  const startEditMaterial = (material: any) => {
+    setEditingMaterialId(material.id)
+    setNewMaterial({
+      title: material.title,
+      description: material.description || '',
+      subject: material.subject,
+      semester: material.semester,
+      fileUrl: material.fileUrl,
+      materialType: material.materialType
+    })
+    setIsDialogOpen(true)
+  }
+
+  const startEditExam = (exam: any) => {
+    setEditingExamId(exam.id)
+    setNewExam({
+      title: exam.title,
+      semester: exam.semester,
+      examDate: exam.examDate ? exam.examDate.split('T')[0] : new Date().toISOString().split('T')[0],
+      status: exam.status,
+      totalMarks: exam.totalMarks || 100
+    })
+    setIsDialogOpen(true)
+  }
+
+  const resetDialogs = () => {
+    setEditingNoticeId(null)
+    setEditingMaterialId(null)
+    setEditingExamId(null)
+    setNewNotice({ title: '', description: '', isUrgent: false })
+    setNewMaterial({ title: '', description: '', subject: '', semester: '', fileUrl: '', materialType: 'Notes' })
+    setNewExam({ title: '', semester: '', examDate: new Date().toISOString().split('T')[0], status: 'upcoming', totalMarks: 100 })
+  }
+
+  // --- SAVE HANDLERS ---
   const handleCreateNotice = (e: React.FormEvent) => {
     e.preventDefault()
     if (!db || !isAuthorizedAdmin) return
     setIsCreating(true)
 
-    const docRef = doc(collection(db, 'notices'))
+    const docRef = editingNoticeId ? doc(db, 'notices', editingNoticeId) : doc(collection(db, 'notices'))
     const data = {
       ...newNotice,
       id: docRef.id,
-      publishDate: new Date().toISOString()
+      publishDate: editingNoticeId ? notices?.find(n => n.id === editingNoticeId)?.publishDate : new Date().toISOString()
     }
 
-    setDoc(docRef, data)
+    setDoc(docRef, data, { merge: true })
       .then(() => {
-        toast({ title: "Notice Published" })
-        setNewNotice({ title: '', description: '', isUrgent: false })
+        toast({ title: editingNoticeId ? "Notice Updated" : "Notice Published" })
+        resetDialogs()
         setIsDialogOpen(false)
       })
       .finally(() => setIsCreating(false))
@@ -194,17 +239,17 @@ export default function AdminPage() {
     if (!db || !isAuthorizedAdmin) return
     setIsCreating(true)
 
-    const docRef = doc(collection(db, 'studyMaterials'))
+    const docRef = editingMaterialId ? doc(db, 'studyMaterials', editingMaterialId) : doc(collection(db, 'studyMaterials'))
     const data = {
       ...newMaterial,
       id: docRef.id,
-      uploadDate: new Date().toISOString()
+      uploadDate: editingMaterialId ? materials?.find(m => m.id === editingMaterialId)?.uploadDate : new Date().toISOString()
     }
 
-    setDoc(docRef, data)
+    setDoc(docRef, data, { merge: true })
       .then(() => {
-        toast({ title: "Resource Uploaded" })
-        setNewMaterial({ title: '', description: '', subject: '', semester: '', fileUrl: '', materialType: 'Notes' })
+        toast({ title: editingMaterialId ? "Resource Updated" : "Resource Uploaded" })
+        resetDialogs()
         setIsDialogOpen(false)
       })
       .finally(() => setIsCreating(false))
@@ -215,16 +260,16 @@ export default function AdminPage() {
     if (!db || !isAuthorizedAdmin) return
     setIsCreating(true)
 
-    const docRef = doc(collection(db, 'exams'))
+    const docRef = editingExamId ? doc(db, 'exams', editingExamId) : doc(collection(db, 'exams'))
     const data = {
       ...newExam,
       id: docRef.id,
     }
 
-    setDoc(docRef, data)
+    setDoc(docRef, data, { merge: true })
       .then(() => {
-        toast({ title: "Exam Created" })
-        setNewExam({ title: '', semester: '', examDate: new Date().toISOString().split('T')[0], status: 'upcoming', totalMarks: 100 })
+        toast({ title: editingExamId ? "Exam Updated" : "Exam Created" })
+        resetDialogs()
         setIsDialogOpen(false)
       })
       .finally(() => setIsCreating(false))
@@ -328,7 +373,7 @@ export default function AdminPage() {
               </Button>
             </Link>
             
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) resetDialogs(); setIsDialogOpen(open); }}>
               <DialogTrigger asChild>
                 <Button 
                   disabled={activeTab === 'results' || activeTab === 'config' || activeTab === 'students'} 
@@ -340,9 +385,9 @@ export default function AdminPage() {
               <DialogContent className="sm:max-w-[550px] rounded-[2rem]">
                 <DialogHeader>
                   <DialogTitle className="text-2xl font-headline font-bold">
-                    {activeTab === 'notices' ? 'Publish Announcement' : 
-                     activeTab === 'resources' ? 'Upload Resource' : 
-                     activeTab === 'exams' ? 'Schedule Exam' : 'New Entry'}
+                    {activeTab === 'notices' ? (editingNoticeId ? 'Edit Announcement' : 'Publish Announcement') : 
+                     activeTab === 'resources' ? (editingMaterialId ? 'Edit Resource' : 'Upload Resource') : 
+                     activeTab === 'exams' ? (editingExamId ? 'Modify Exam Cycle' : 'Schedule Exam') : 'New Entry'}
                   </DialogTitle>
                 </DialogHeader>
                 
@@ -351,7 +396,10 @@ export default function AdminPage() {
                     <div className="space-y-2"><Label>Headline</Label><Input required value={newNotice.title} onChange={e => setNewNotice({ ...newNotice, title: e.target.value })} /></div>
                     <div className="space-y-2"><Label>Message Body</Label><Textarea required value={newNotice.description} onChange={e => setNewNotice({ ...newNotice, description: e.target.value })} className="min-h-[150px]" /></div>
                     <div className="flex items-center space-x-3 p-4 bg-muted/30 rounded-2xl"><Switch checked={newNotice.isUrgent} onCheckedChange={c => setNewNotice({ ...newNotice, isUrgent: c })} /><Label>Priority Announcement</Label></div>
-                    <Button type="submit" disabled={isCreating} className="w-full h-12 rounded-xl text-lg font-bold">Broadcast Notice</Button>
+                    <Button type="submit" disabled={isCreating} className="w-full h-12 rounded-xl text-lg font-bold">
+                      {isCreating ? <Loader2 className="animate-spin mr-2" /> : null}
+                      {editingNoticeId ? 'Update Notice' : 'Broadcast Notice'}
+                    </Button>
                   </form>
                 ) : activeTab === 'resources' ? (
                   <form onSubmit={handleCreateMaterial} className="space-y-6 pt-6">
@@ -362,7 +410,10 @@ export default function AdminPage() {
                     </div>
                     <div className="space-y-2"><Label>Resource Description</Label><Textarea placeholder="Briefly describe the content..." value={newMaterial.description} onChange={e => setNewMaterial({ ...newMaterial, description: e.target.value })} className="min-h-[100px]" /></div>
                     <div className="space-y-2"><Label>Source / File URL</Label><Input required type="url" placeholder="https://..." value={newMaterial.fileUrl} onChange={e => setNewMaterial({ ...newMaterial, fileUrl: e.target.value })} /></div>
-                    <Button type="submit" disabled={isCreating} className="w-full h-12 rounded-xl text-lg font-bold">Commit to Repository</Button>
+                    <Button type="submit" disabled={isCreating} className="w-full h-12 rounded-xl text-lg font-bold">
+                      {isCreating ? <Loader2 className="animate-spin mr-2" /> : null}
+                      {editingMaterialId ? 'Update Repository' : 'Commit to Repository'}
+                    </Button>
                   </form>
                 ) : activeTab === 'exams' ? (
                   <form onSubmit={handleCreateExam} className="space-y-6 pt-6">
@@ -388,7 +439,10 @@ export default function AdminPage() {
                         <Input required type="number" min="1" value={newExam.totalMarks} onChange={e => setNewExam({ ...newExam, totalMarks: Number(e.target.value) })} />
                       </div>
                     </div>
-                    <Button type="submit" disabled={isCreating} className="w-full h-12 rounded-xl text-lg font-bold">Establish Exam Cycle</Button>
+                    <Button type="submit" disabled={isCreating} className="w-full h-12 rounded-xl text-lg font-bold">
+                      {isCreating ? <Loader2 className="animate-spin mr-2" /> : null}
+                      {editingExamId ? 'Update Cycle' : 'Establish Exam Cycle'}
+                    </Button>
                   </form>
                 ) : null}
               </DialogContent>
@@ -556,7 +610,10 @@ export default function AdminPage() {
                               {exam.status}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-right px-10">
+                          <TableCell className="text-right px-10 space-x-2">
+                            <Button variant="ghost" size="icon" onClick={() => startEditExam(exam)} className="text-primary">
+                              <Edit2 size={22} />
+                            </Button>
                             <Button variant="ghost" size="icon" onClick={() => handleDelete('exams', exam.id)} className="text-destructive">
                               <Trash2 size={22} />
                             </Button>
@@ -575,7 +632,10 @@ export default function AdminPage() {
                           <TableCell className="text-muted-foreground">
                             {notice.publishDate ? format(new Date(notice.publishDate), 'MMM d, yyyy') : 'N/A'}
                           </TableCell>
-                          <TableCell className="text-right px-10">
+                          <TableCell className="text-right px-10 space-x-2">
+                            <Button variant="ghost" size="icon" onClick={() => startEditNotice(notice)} className="text-primary">
+                              <Edit2 size={22} />
+                            </Button>
                             <Button variant="ghost" size="icon" onClick={() => handleDelete('notices', notice.id)} className="text-destructive">
                               <Trash2 size={22} />
                             </Button>
@@ -592,8 +652,11 @@ export default function AdminPage() {
                             <Badge variant="outline">{material.materialType}</Badge>
                           </TableCell>
                           <TableCell className="text-right px-10 space-x-2">
+                            <Button variant="ghost" size="icon" onClick={() => startEditMaterial(material)} className="text-primary">
+                              <Edit2 size={20} />
+                            </Button>
                             <a href={material.fileUrl} target="_blank" rel="noopener noreferrer">
-                              <Button variant="ghost" size="icon" className="text-primary">
+                              <Button variant="ghost" size="icon" className="text-muted-foreground">
                                 <Download size={20} />
                               </Button>
                             </a>
