@@ -483,18 +483,19 @@ export default function AdminPage() {
     }
   }
 
-  // Scanner Logic - Integrated Scan-to-Log Workflow with Permission Check
+  // Scanner Logic - Integrated Real-Time Synchronization with Permission Flow
   useEffect(() => {
     let scanner: Html5QrcodeScanner | null = null;
     
     if (isScannerOpen && selectedSessionId && db) {
       const initScanner = async () => {
         try {
-          // Request camera permission explicitly
+          // Explicitly request camera permission to trigger browser prompt
           const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-          stream.getTracks().forEach(track => track.stop()); // Release the stream immediately after permission
+          stream.getTracks().forEach(track => track.stop()); // Release immediately after verification
           setHasCameraPermission(true);
 
+          // Short delay to allow Dialog animation to complete before DOM manipulation
           const timer = setTimeout(() => {
             const element = document.getElementById("admin-attendance-scan-reader");
             if (!element) return;
@@ -510,16 +511,17 @@ export default function AdminPage() {
                 const studentData = JSON.parse(decodedText)
                 if (studentData.type !== 'techxera-student-id') return
 
+                // Unique record key: studentUID_sessionID
                 const recordId = `${studentData.uid}_${selectedSessionId}`
                 const attendanceRef = doc(db, 'attendance', recordId)
                 
                 const existing = await getDoc(attendanceRef)
                 if (existing.exists()) {
-                  toast({ title: "Already Logged", description: `${studentData.name} is marked present.` })
+                  toast({ title: "Already Logged", description: `${studentData.name} has already been verified for this session.` })
                   return
                 }
 
-                // Fetch session token
+                // Verify session token for security
                 const sessionDoc = await getDoc(doc(db, 'sessions', selectedSessionId));
                 const dynamicToken = sessionDoc.exists() ? sessionDoc.data().dynamicToken : '';
 
@@ -534,9 +536,10 @@ export default function AdminPage() {
                   tokenUsed: dynamicToken
                 };
 
+                // Commit to Firestore - results in immediate real-time sync for both Admin and Student listeners
                 setDoc(attendanceRef, payload)
                   .then(() => {
-                    toast({ title: "Verified", description: `Attendance recorded for ${studentData.name}` })
+                    toast({ title: "Presence Verified", description: `Student: ${studentData.name} marked as present.` })
                   })
                   .catch(async (error) => {
                     const permissionError = new FirestorePermissionError({
@@ -548,20 +551,22 @@ export default function AdminPage() {
                   });
 
               } catch (err) {
-                console.warn("Scan processing error:", err)
+                console.warn("QR parsing or processing failed:", err)
               }
             }
 
-            scanner.render(onScanSuccess, (err) => {})
+            scanner.render(onScanSuccess, (err) => {
+              // Noise during idle is expected
+            })
             scannerRef.current = scanner
-          }, 500);
+          }, 600);
         } catch (err) {
-          console.error("Camera permission denied:", err);
+          console.error("Camera access denied by administrator:", err);
           setHasCameraPermission(false);
           toast({
             variant: "destructive",
-            title: "Camera Denied",
-            description: "Please allow camera access to scan student identity codes."
+            title: "Access Denied",
+            description: "Camera permission is required to scan student identity codes."
           });
         }
       }
@@ -570,7 +575,7 @@ export default function AdminPage() {
 
       return () => {
         if (scannerRef.current) {
-          scannerRef.current.clear().catch(e => console.warn(e))
+          scannerRef.current.clear().catch(e => console.warn("Scanner cleanup warning:", e))
           scannerRef.current = null
         }
       }
