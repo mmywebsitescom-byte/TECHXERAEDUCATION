@@ -17,7 +17,7 @@ import { Progress } from '@/components/ui/progress'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Plus, Shield, List, GraduationCap, Megaphone, Loader2, UserCheck, Trash2, Users, CheckCircle, XCircle, Search, ClipboardList, CreditCard, Edit2, ArrowLeft, Target, Award, Settings as SettingsIcon, Image as ImageIcon, Globe, LogOut, Home, Lock, FileText, Download, Calendar, LifeBuoy, MessageSquare, Camera, ShieldCheck, Clock } from 'lucide-react'
 import { useFirestore, useUser, useDoc, useMemoFirebase, useCollection, useAuth } from '@/firebase'
-import { doc, setDoc, collection, deleteDoc, query, orderBy, updateDoc, getDoc } from 'firebase/firestore'
+import { doc, setDoc, collection, deleteDoc, query, orderBy, updateDoc, getDoc, where } from 'firebase/firestore'
 import { signOut } from 'firebase/auth'
 import { useToast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
@@ -212,6 +212,29 @@ export default function AdminPage() {
     }
   }
 
+  const handleMarkResolved = async (id: string) => {
+    if (!db || !isAuthorizedAdmin) return
+    try {
+      await updateDoc(doc(db, 'support_inquiries', id), { status: 'resolved' })
+      toast({ title: "Inquiry Resolved" })
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Update Failed", description: err.message })
+    }
+  }
+
+  const handleApproveStudent = async (uid: string, approved: boolean) => {
+    if (!db || !isAuthorizedAdmin) return
+    try {
+      await updateDoc(doc(db, 'students', uid), { 
+        isApproved: approved,
+        status: approved ? 'approved' : 'rejected'
+      })
+      toast({ title: approved ? "Student Approved" : "Student Restricted" })
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Update Failed", description: err.message })
+    }
+  }
+
   const handleCreateSession = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!db) return
@@ -241,6 +264,7 @@ export default function AdminPage() {
   }
 
   const resetDialogs = () => {
+    setEditingResultId(null)
     setEditingNoticeId(null)
     setEditingMaterialId(null)
     setEditingExamId(null)
@@ -593,8 +617,6 @@ export default function AdminPage() {
                 </TableBody>
               </Table>
             </TabsContent>
-            
-            {/* Other tabs omitted for brevity, logic remains same as per existing content */}
           </Card>
         </Tabs>
 
