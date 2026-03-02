@@ -324,9 +324,10 @@ export default function AdminPage() {
       <main className="max-w-7xl mx-auto p-6 md:p-10 pt-12 pb-20">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8 mb-16">
           <div className="flex items-center gap-6">
-            <div className="p-5 bg-primary text-white rounded-[2rem] shadow-2xl shadow-primary/20 shrink-0">
-              <Shield size={36} />
-            </div>
+            <TechXeraLogo 
+              className="w-20 h-20 shadow-2xl shadow-primary/20 shrink-0" 
+              customUrl={siteConfig.logoUrl}
+            />
             <div className="space-y-1">
               <h1 className="text-4xl md:text-5xl font-headline font-bold tracking-tighter leading-tight">Admin Central</h1>
               <p className="text-muted-foreground font-medium text-sm md:text-base">Identity: <span className="text-primary font-bold">{user.email}</span></p>
@@ -462,7 +463,7 @@ export default function AdminPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Custom Logo URL (Overrides SVG)</Label>
+                      <Label className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Custom Logo URL</Label>
                       <div className="flex gap-4">
                         <div className="flex-1">
                           <Input 
