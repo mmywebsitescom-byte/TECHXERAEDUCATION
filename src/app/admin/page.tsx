@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
 import { 
   Shield, GraduationCap, Users, CheckCircle, 
   Search, ClipboardList, Settings as SettingsIcon, 
@@ -71,6 +72,23 @@ export default function AdminPage() {
     materialType: 'Notes',
     fileUrl: '',
     thumbnailUrl: ''
+  })
+
+  // Notice Management State
+  const [isNoticeDialogOpen, setIsNoticeDialogOpen] = useState(false)
+  const [noticeForm, setNoticeForm] = useState({
+    title: '',
+    description: '',
+    isUrgent: false
+  })
+
+  // Exam Management State
+  const [isExamDialogOpen, setIsExamDialogOpen] = useState(false)
+  const [examForm, setExamForm] = useState({
+    title: '',
+    semester: 'Semester 1',
+    examDate: format(new Date(), 'yyyy-MM-dd'),
+    status: 'upcoming' as 'upcoming' | 'active' | 'completed'
   })
 
   const { user, isUserLoading } = useUser()
@@ -291,6 +309,72 @@ export default function AdminPage() {
       })
   }
 
+  const handleCreateNotice = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!db) return
+    const id = Math.random().toString(36).substring(2, 9)
+    const payload = {
+      ...noticeForm,
+      id,
+      publishDate: new Date().toISOString()
+    }
+    const docRef = doc(db, 'notices', id)
+    setDoc(docRef, payload)
+      .then(() => {
+        toast({ title: "Notice Published" })
+        setIsNoticeDialogOpen(false)
+        setNoticeForm({ title: '', description: '', isUrgent: false })
+      })
+      .catch(async (error) => {
+        const permissionError = new FirestorePermissionError({
+          path: docRef.path,
+          operation: 'create',
+          requestResourceData: payload,
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+      })
+  }
+
+  const handleCreateExam = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!db) return
+    const id = Math.random().toString(36).substring(2, 9)
+    const payload = {
+      ...examForm,
+      id,
+      createdAt: new Date().toISOString()
+    }
+    const docRef = doc(db, 'exams', id)
+    setDoc(docRef, payload)
+      .then(() => {
+        toast({ title: "Exam Scheduled" })
+        setIsExamDialogOpen(false)
+        setExamForm({ title: '', semester: 'Semester 1', examDate: format(new Date(), 'yyyy-MM-dd'), status: 'upcoming' })
+      })
+      .catch(async (error) => {
+        const permissionError = new FirestorePermissionError({
+          path: docRef.path,
+          operation: 'create',
+          requestResourceData: payload,
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+      })
+  }
+
+  const handleGlobalCreate = () => {
+    if (activeTab === 'repository') {
+      setEditingMaterial(null)
+      setMaterialForm({ title: '', subject: '', semester: 'Semester 1', materialType: 'Notes', fileUrl: '', thumbnailUrl: '' })
+      setIsMaterialDialogOpen(true)
+    } else if (activeTab === 'notices') {
+      setIsNoticeDialogOpen(true)
+    } else if (activeTab === 'exams') {
+      setIsExamDialogOpen(true)
+    } else if (activeTab === 'attendance') {
+      setIsCreateDialogOpen(true)
+    }
+  }
+
   // Scanner Logic
   useEffect(() => {
     let scanner: Html5QrcodeScanner | null = null;
@@ -367,6 +451,8 @@ export default function AdminPage() {
   if (!mounted || isUserLoading) return <div className="min-h-screen flex items-center justify-center bg-background"><Shield className="animate-pulse text-primary" size={64} /></div>
   if (!user || !isAuthorizedAdmin) return null;
 
+  const showGlobalCreate = ['repository', 'notices', 'exams', 'attendance'].includes(activeTab);
+
   return (
     <div className="min-h-screen bg-background relative overflow-hidden flex flex-col">
       <TechBackground />
@@ -390,20 +476,17 @@ export default function AdminPage() {
               <Home className="mr-2" size={20} /> Portal Home
             </Button>
           </Link>
-          <Button 
-            onClick={() => {
-              if (activeTab === 'repository') {
-                setEditingMaterial(null)
-                setMaterialForm({ title: '', subject: '', semester: 'Semester 1', materialType: 'Notes', fileUrl: '', thumbnailUrl: '' })
-                setIsMaterialDialogOpen(true)
-              } else {
-                setIsCreateDialogOpen(true)
-              }
-            }}
-            className="h-14 px-8 rounded-2xl font-bold bg-primary text-white shadow-xl shadow-primary/20 hover:bg-primary/90 flex-1 md:flex-none"
-          >
-            <Plus className="mr-2" size={20} /> {activeTab === 'repository' ? 'New Material' : 'Create New'}
-          </Button>
+          {showGlobalCreate && (
+            <Button 
+              onClick={handleGlobalCreate}
+              className="h-14 px-8 rounded-2xl font-bold bg-primary text-white shadow-xl shadow-primary/20 hover:bg-primary/90 flex-1 md:flex-none"
+            >
+              <Plus className="mr-2" size={20} /> 
+              {activeTab === 'repository' ? 'New Material' : 
+               activeTab === 'notices' ? 'New Notice' : 
+               activeTab === 'exams' ? 'New Exam' : 'New Session'}
+            </Button>
+          )}
           <Button onClick={handleLogout} variant="ghost" className="h-14 px-6 rounded-2xl font-bold text-destructive hover:bg-destructive/10">
             <LogOut className="mr-2" size={20} /> Logout
           </Button>
@@ -642,7 +725,6 @@ export default function AdminPage() {
               <TabsContent value="exams" className="mt-0 space-y-8">
                 <div className="flex justify-between items-center">
                   <h3 className="text-2xl font-headline font-bold">Academic Calendar</h3>
-                  <Button size="sm" className="rounded-xl"><Plus className="mr-2" size={16} /> New Exam</Button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {allExams?.map(exam => (
@@ -663,7 +745,6 @@ export default function AdminPage() {
               <TabsContent value="notices" className="mt-0 space-y-8">
                 <div className="flex justify-between items-center">
                   <h3 className="text-2xl font-headline font-bold">Official Bulletins</h3>
-                  <Button size="sm" className="rounded-xl"><Plus className="mr-2" size={16} /> New Notice</Button>
                 </div>
                 <div className="grid gap-4">
                   {allNotices?.map(notice => (
@@ -679,6 +760,7 @@ export default function AdminPage() {
                 </div>
               </TabsContent>
 
+              {/* Repository Tab */}
               <TabsContent value="repository" className="mt-0 space-y-8">
                 <div className="border rounded-[2.5rem] overflow-hidden bg-background/30 shadow-inner">
                   <Table>
@@ -824,7 +906,7 @@ export default function AdminPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Create Session Dialog */}
+      {/* Create Session Dialog (Attendance) */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent className="rounded-[2.5rem] p-10">
           <DialogHeader><DialogTitle className="text-2xl font-headline font-bold">Initialize Class</DialogTitle></DialogHeader>
@@ -918,6 +1000,71 @@ export default function AdminPage() {
               <Button type="submit" className="w-full h-12 rounded-xl font-bold text-lg">
                 {editingMaterial ? 'Update Material' : 'Publish Material'}
               </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Notice Creation Dialog */}
+      <Dialog open={isNoticeDialogOpen} onOpenChange={setIsNoticeDialogOpen}>
+        <DialogContent className="rounded-[2.5rem] p-10 sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-headline font-bold">Publish New Notice</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleCreateNotice} className="space-y-6 pt-4">
+            <div className="space-y-2">
+              <Label>Notice Title</Label>
+              <Input required placeholder="e.g. End Semester Schedule" value={noticeForm.title} onChange={e => setNoticeForm({...noticeForm, title: e.target.value})} className="h-12 rounded-xl" />
+            </div>
+            <div className="space-y-2">
+              <Label>Message Content</Label>
+              <Textarea required placeholder="Provide details about the announcement..." value={noticeForm.description} onChange={e => setNoticeForm({...noticeForm, description: e.target.value})} className="min-h-[120px] rounded-xl" />
+            </div>
+            <div className="flex items-center justify-between p-4 bg-muted/20 rounded-2xl">
+              <div className="space-y-0.5">
+                <Label className="text-sm font-bold">Urgent Priority</Label>
+                <p className="text-xs text-muted-foreground">Highlight this notice as high-priority.</p>
+              </div>
+              <Switch checked={noticeForm.isUrgent} onCheckedChange={val => setNoticeForm({...noticeForm, isUrgent: val})} />
+            </div>
+            <DialogFooter>
+              <Button type="submit" className="w-full h-12 rounded-xl font-bold text-lg">Publish Bulletin</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Exam Creation Dialog */}
+      <Dialog open={isExamDialogOpen} onOpenChange={setIsExamDialogOpen}>
+        <DialogContent className="rounded-[2.5rem] p-10 sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-headline font-bold">Schedule Examination</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleCreateExam} className="space-y-6 pt-4">
+            <div className="space-y-2">
+              <Label>Exam Title</Label>
+              <Input required placeholder="e.g. Mid-Term Assessment" value={examForm.title} onChange={e => setExamForm({...examForm, title: e.target.value})} className="h-12 rounded-xl" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Semester</Label>
+                <Select value={examForm.semester} onValueChange={val => setExamForm({...examForm, semester: val})}>
+                  <SelectTrigger className="h-12 rounded-xl"><SelectValue /></SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    <SelectItem value="Semester 1">Semester 1</SelectItem>
+                    <SelectItem value="Semester 2">Semester 2</SelectItem>
+                    <SelectItem value="Semester 3">Semester 3</SelectItem>
+                    <SelectItem value="Semester 4">Semester 4</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Start Date</Label>
+                <Input type="date" required value={examForm.examDate} onChange={e => setExamForm({...examForm, examDate: e.target.value})} className="h-12 rounded-xl" />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="submit" className="w-full h-12 rounded-xl font-bold text-lg">Create Schedule</Button>
             </DialogFooter>
           </form>
         </DialogContent>
