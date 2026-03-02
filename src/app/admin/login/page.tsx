@@ -8,20 +8,21 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Label } from '@/components/ui/label'
 import TechBackground from '@/components/TechBackground'
 import { TechXeraLogo } from '@/components/Navbar'
-import { Lock, User, ArrowRight, Loader2, Info, Home } from 'lucide-react'
+import { Lock, User, ArrowRight, Loader2, Info, Home, ShieldAlert } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase'
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth'
+import { signInWithEmailAndPassword } from 'firebase/auth'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import { doc } from 'firebase/firestore'
+
+const AUTHORIZED_ADMIN_EMAIL = 'rraghabbarik@gmail.com'
 
 function AdminLoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [isSignUp, setIsSignUp] = useState(false)
   
   const auth = useAuth()
   const db = useFirestore()
@@ -29,40 +30,48 @@ function AdminLoginForm() {
   const router = useRouter()
   const { toast } = useToast()
 
-  // Dynamic branding fetch
   const settingsRef = useMemoFirebase(() => (db ? doc(db, 'settings', 'site-config') : null), [db])
   const { data: settings } = useDoc(settingsRef)
 
   useEffect(() => {
     if (!isUserLoading && user) {
-      router.push('/admin')
+      if (user.email === AUTHORIZED_ADMIN_EMAIL) {
+        router.push('/admin')
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Permission Denied",
+          description: "This portal is reserved for the primary administrator.",
+        })
+      }
     }
-  }, [user, isUserLoading, router])
+  }, [user, isUserLoading, router, toast])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isLoading) return;
 
+    if (email.toLowerCase() !== AUTHORIZED_ADMIN_EMAIL) {
+      toast({
+        variant: "destructive",
+        title: "Restricted Access",
+        description: "Only the root administrator email is permitted.",
+      })
+      return;
+    }
+
     setIsLoading(true)
     try {
-      if (isSignUp) {
-        await createUserWithEmailAndPassword(auth, email, password)
-        toast({
-          title: "Admin Account Created",
-          description: "Redirecting to management console. Please grant admin roles next.",
-        })
-      } else {
-        await signInWithEmailAndPassword(auth, email, password)
-        toast({
-          title: "Admin Access Granted",
-          description: "Redirecting to management console.",
-        })
-      }
+      await signInWithEmailAndPassword(auth, email, password)
+      toast({
+        title: "Admin Access Granted",
+        description: "Redirecting to root console.",
+      })
       router.push('/admin')
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: isSignUp ? "Admin Sign Up Failed" : "Authentication Failed",
+        title: "Authentication Failed",
         description: error.message || "Invalid credentials.",
       })
     } finally {
@@ -90,23 +99,19 @@ function AdminLoginForm() {
               customUrl={settings?.logoUrl}
             />
           </motion.div>
-          <CardTitle className="text-3xl font-headline font-bold">
-            {isSignUp ? "Admin Registration" : "Admin Console"}
-          </CardTitle>
-          <CardDescription>
-            {isSignUp ? "Register a new campus administrator" : "Management portal for campus administrators"}
-          </CardDescription>
+          <CardTitle className="text-3xl font-headline font-bold">Admin Console</CardTitle>
+          <CardDescription>Management portal for the root campus administrator</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-6 pt-8">
             <div className="space-y-2">
-              <Label htmlFor="email">Admin ID (Email)</Label>
+              <Label htmlFor="email">Root Admin Email</Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                 <Input 
                   id="email" 
                   type="email"
-                  placeholder="admin@techxera.edu" 
+                  placeholder="rraghabbarik@gmail.com" 
                   className="pl-10 h-12 bg-background/50" 
                   required 
                   value={email}
@@ -130,9 +135,9 @@ function AdminLoginForm() {
               </div>
             </div>
 
-            <div className="p-4 bg-muted/50 rounded-xl flex gap-3 text-xs text-muted-foreground border border-border/50">
-              <Info className="shrink-0 text-primary" size={16} />
-              <p>Admin access is restricted to authorized personnel. You can register with your official campus email.</p>
+            <div className="p-4 bg-primary/10 rounded-xl flex gap-3 text-xs text-primary border border-primary/20">
+              <ShieldAlert className="shrink-0" size={16} />
+              <p>This console is strictly limited to <strong>{AUTHORIZED_ADMIN_EMAIL}</strong>. All other login attempts will be rejected.</p>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4 pb-8">
@@ -143,19 +148,12 @@ function AdminLoginForm() {
                 className="w-full h-12 text-lg font-bold shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90"
               >
                 {isLoading ? <Loader2 className="animate-spin mr-2" /> : null}
-                {isLoading ? "Verifying..." : (isSignUp ? "Register Admin" : "Enter Portal")} 
+                {isLoading ? "Verifying..." : "Enter Portal"} 
                 <ArrowRight className="ml-2" size={18} />
               </Button>
             </motion.div>
             
             <div className="text-center text-sm text-muted-foreground space-y-2">
-              <button 
-                type="button"
-                onClick={() => setIsSignUp(!isSignUp)}
-                className="text-primary font-medium hover:underline block w-full"
-              >
-                {isSignUp ? "Already registered? Login" : "New Admin? Register Account"}
-              </button>
               <div className="pt-2">
                 Are you a student? <Link href="/login" className="text-primary font-medium hover:underline">Student Login</Link>
               </div>
@@ -182,9 +180,7 @@ export default function AdminLoginPage() {
   if (!mounted) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }}>
-          <TechXeraLogo className="w-16 h-16 opacity-50" />
-        </motion.div>
+        <TechXeraLogo className="w-16 h-16 opacity-50" />
       </div>
     )
   }
