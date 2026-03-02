@@ -14,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Shield, List, GraduationCap, Megaphone, Loader2, UserCheck, Trash2, Users, CheckCircle, XCircle, Search, ClipboardList, CreditCard, Edit2, ArrowLeft, Target, Award, Settings as SettingsIcon, Image as ImageIcon, Globe, LogOut, Home, Lock, FileText, Download, Calendar } from 'lucide-react'
+import { Plus, Shield, List, GraduationCap, Megaphone, Loader2, UserCheck, Trash2, Users, CheckCircle, XCircle, Search, ClipboardList, CreditCard, Edit2, ArrowLeft, Target, Award, Settings as SettingsIcon, Image as ImageIcon, Globe, LogOut, Home, Lock, FileText, Download, Calendar, LifeBuoy, MessageSquare } from 'lucide-react'
 import { useFirestore, useUser, useDoc, useMemoFirebase, useCollection, errorEmitter, FirestorePermissionError, useAuth } from '@/firebase'
 import { doc, setDoc, collection, deleteDoc, query, orderBy, updateDoc } from 'firebase/firestore'
 import { signOut } from 'firebase/auth'
@@ -57,10 +57,8 @@ export default function AdminPage() {
   const { toast } = useToast()
   const router = useRouter()
 
-  // Verify if the current user is the authorized admin
   const isAuthorizedAdmin = user?.email === AUTHORIZED_ADMIN_EMAIL
 
-  // Settings fetch
   const settingsRef = useMemoFirebase(() => (db ? doc(db, 'settings', 'site-config') : null), [db])
   const { data: dbSettings } = useDoc(settingsRef)
 
@@ -74,21 +72,21 @@ export default function AdminPage() {
     }
   }, [dbSettings])
 
-  // Fetch collections - only if authorized
   const noticesQuery = useMemoFirebase(() => (db && isAuthorizedAdmin) ? query(collection(db, 'notices'), orderBy('publishDate', 'desc')) : null, [db, isAuthorizedAdmin])
   const materialsQuery = useMemoFirebase(() => (db && isAuthorizedAdmin) ? query(collection(db, 'studyMaterials'), orderBy('uploadDate', 'desc')) : null, [db, isAuthorizedAdmin])
   const studentsQuery = useMemoFirebase(() => (db && isAuthorizedAdmin) ? collection(db, 'students') : null, [db, isAuthorizedAdmin])
   const examsQuery = useMemoFirebase(() => (db && isAuthorizedAdmin) ? query(collection(db, 'exams'), orderBy('examDate', 'desc')) : null, [db, isAuthorizedAdmin])
+  const inquiriesQuery = useMemoFirebase(() => (db && isAuthorizedAdmin) ? query(collection(db, 'support_inquiries'), orderBy('timestamp', 'desc')) : null, [db, isAuthorizedAdmin])
   
   const { data: notices } = useCollection(noticesQuery)
   const { data: materials } = useCollection(materialsQuery)
   const { data: students } = useCollection(studentsQuery)
   const { data: exams } = useCollection(examsQuery)
+  const { data: inquiries } = useCollection(inquiriesQuery)
 
   const selectedStudent = students?.find(s => s.id === selectedStudentId)
   const selectedExam = exams?.find(e => e.id === selectedExamId)
 
-  // Results for specific student+exam context
   const resultsQuery = useMemoFirebase(() => (db && selectedStudentId && isAuthorizedAdmin) ? query(collection(db, 'students', selectedStudentId, 'results'), orderBy('examDate', 'desc')) : null, [db, selectedStudentId, isAuthorizedAdmin])
   const { data: allStudentResults } = useCollection(resultsQuery)
   
@@ -103,11 +101,7 @@ export default function AdminPage() {
       if (!user) {
         router.push('/admin/login')
       } else if (user.email !== AUTHORIZED_ADMIN_EMAIL) {
-        toast({
-          variant: "destructive",
-          title: "Access Denied",
-          description: "This portal is restricted to the primary administrator."
-        })
+        toast({ variant: "destructive", title: "Access Denied" })
         router.push('/')
       }
     }
@@ -118,60 +112,28 @@ export default function AdminPage() {
     router.push('/admin/login')
   }
 
-  const calculateGrade = (percentage: number) => {
-    if (percentage >= 90) return 'O'
-    if (percentage >= 80) return 'A+'
-    if (percentage >= 70) return 'A'
-    if (percentage >= 60) return 'B+'
-    if (percentage >= 50) return 'B'
-    if (percentage >= 40) return 'C'
-    return 'F'
-  }
-
-  const handleMarksChange = (val: number) => {
-    if (!selectedExam) return
-    const total = selectedExam.totalMarks || 100
-    const percentage = (val / total) * 100
-    const grade = calculateGrade(percentage)
-    
-    setNewResult(prev => ({ 
-      ...prev, 
-      marksObtained: val,
-      grade: grade
-    }))
-  }
-
   const handleDelete = (coll: string, id: string, subColl?: string, subId?: string) => {
     if (!db || !isAuthorizedAdmin) return
     const docRef = subColl && subId ? doc(db, 'students', id, subColl, subId) : doc(db, coll, id);
-    deleteDoc(docRef)
-      .then(() => {
-        toast({ title: "Deleted", description: "The record has been removed." })
-      })
-      .catch(async () => {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: docRef.path, operation: 'delete' }));
-      })
+    deleteDoc(docRef).then(() => {
+      toast({ title: "Record Removed" })
+    })
   }
 
   const handleApproveStudent = (studentId: string, approve: boolean) => {
     if (!db || !isAuthorizedAdmin) return
     const studentRef = doc(db, 'students', studentId)
-    updateDoc(studentRef, {
-      isApproved: approve,
-      status: approve ? 'approved' : 'rejected'
-    })
-    .then(() => {
-      toast({
-        title: approve ? "Student Approved" : "Student Rejected",
-        description: `Account has been ${approve ? 'activated' : 'deactivated'}.`
-      })
-    })
-    .catch(async () => {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({ path: studentRef.path, operation: 'update' }));
-    })
+    updateDoc(studentRef, { isApproved: approve, status: approve ? 'approved' : 'rejected' })
+      .then(() => toast({ title: approve ? "Student Approved" : "Student Rejected" }))
   }
 
-  // --- EDIT PREFILL HANDLERS ---
+  const handleMarkResolved = (inquiryId: string) => {
+    if (!db || !isAuthorizedAdmin) return
+    const inquiryRef = doc(db, 'support_inquiries', inquiryId)
+    updateDoc(inquiryRef, { status: 'resolved' })
+      .then(() => toast({ title: "Marked as Resolved" }))
+  }
+
   const startEditNotice = (notice: any) => {
     setEditingNoticeId(notice.id)
     setNewNotice({ title: notice.title, description: notice.description, isUrgent: notice.isUrgent })
@@ -180,26 +142,13 @@ export default function AdminPage() {
 
   const startEditMaterial = (material: any) => {
     setEditingMaterialId(material.id)
-    setNewMaterial({
-      title: material.title,
-      description: material.description || '',
-      subject: material.subject,
-      semester: material.semester,
-      fileUrl: material.fileUrl,
-      materialType: material.materialType || 'Notes'
-    })
+    setNewMaterial({ title: material.title, description: material.description || '', subject: material.subject, semester: material.semester, fileUrl: material.fileUrl, materialType: material.materialType || 'Notes' })
     setIsDialogOpen(true)
   }
 
   const startEditExam = (exam: any) => {
     setEditingExamId(exam.id)
-    setNewExam({
-      title: exam.title,
-      semester: exam.semester,
-      examDate: exam.examDate ? exam.examDate.split('T')[0] : new Date().toISOString().split('T')[0],
-      status: exam.status,
-      totalMarks: exam.totalMarks || 100
-    })
+    setNewExam({ title: exam.title, semester: exam.semester, examDate: exam.examDate ? exam.examDate.split('T')[0] : new Date().toISOString().split('T')[0], status: exam.status, totalMarks: exam.totalMarks || 100 })
     setIsDialogOpen(true)
   }
 
@@ -212,25 +161,13 @@ export default function AdminPage() {
     setNewExam({ title: '', semester: '', examDate: new Date().toISOString().split('T')[0], status: 'upcoming', totalMarks: 100 })
   }
 
-  // --- SAVE HANDLERS ---
   const handleCreateNotice = (e: React.FormEvent) => {
     e.preventDefault()
     if (!db || !isAuthorizedAdmin) return
     setIsCreating(true)
-
     const docRef = editingNoticeId ? doc(db, 'notices', editingNoticeId) : doc(collection(db, 'notices'))
-    const data = {
-      ...newNotice,
-      id: docRef.id,
-      publishDate: editingNoticeId ? notices?.find(n => n.id === editingNoticeId)?.publishDate : new Date().toISOString()
-    }
-
-    setDoc(docRef, data, { merge: true })
-      .then(() => {
-        toast({ title: editingNoticeId ? "Notice Updated" : "Notice Published" })
-        resetDialogs()
-        setIsDialogOpen(false)
-      })
+    setDoc(docRef, { ...newNotice, id: docRef.id, publishDate: new Date().toISOString() }, { merge: true })
+      .then(() => { toast({ title: "Success" }); setIsDialogOpen(false); resetDialogs(); })
       .finally(() => setIsCreating(false))
   }
 
@@ -238,20 +175,9 @@ export default function AdminPage() {
     e.preventDefault()
     if (!db || !isAuthorizedAdmin) return
     setIsCreating(true)
-
     const docRef = editingMaterialId ? doc(db, 'studyMaterials', editingMaterialId) : doc(collection(db, 'studyMaterials'))
-    const data = {
-      ...newMaterial,
-      id: docRef.id,
-      uploadDate: editingMaterialId ? materials?.find(m => m.id === editingMaterialId)?.uploadDate : new Date().toISOString()
-    }
-
-    setDoc(docRef, data, { merge: true })
-      .then(() => {
-        toast({ title: editingMaterialId ? "Resource Updated" : "Resource Uploaded" })
-        resetDialogs()
-        setIsDialogOpen(false)
-      })
+    setDoc(docRef, { ...newMaterial, id: docRef.id, uploadDate: new Date().toISOString() }, { merge: true })
+      .then(() => { toast({ title: "Success" }); setIsDialogOpen(false); resetDialogs(); })
       .finally(() => setIsCreating(false))
   }
 
@@ -259,19 +185,9 @@ export default function AdminPage() {
     e.preventDefault()
     if (!db || !isAuthorizedAdmin) return
     setIsCreating(true)
-
     const docRef = editingExamId ? doc(db, 'exams', editingExamId) : doc(collection(db, 'exams'))
-    const data = {
-      ...newExam,
-      id: docRef.id,
-    }
-
-    setDoc(docRef, data, { merge: true })
-      .then(() => {
-        toast({ title: editingExamId ? "Exam Updated" : "Exam Created" })
-        resetDialogs()
-        setIsDialogOpen(false)
-      })
+    setDoc(docRef, { ...newExam, id: docRef.id }, { merge: true })
+      .then(() => { toast({ title: "Success" }); setIsDialogOpen(false); resetDialogs(); })
       .finally(() => setIsCreating(false))
   }
 
@@ -279,74 +195,24 @@ export default function AdminPage() {
     e.preventDefault()
     if (!db || !isAuthorizedAdmin) return
     setIsCreating(true)
-
-    const docRef = doc(db, 'settings', 'site-config')
-    setDoc(docRef, siteConfig, { merge: true })
-      .then(() => {
-        toast({ title: "Configuration Saved", description: "Website branding updated successfully." })
-      })
+    setDoc(doc(db, 'settings', 'site-config'), siteConfig, { merge: true })
+      .then(() => toast({ title: "Branding Updated" }))
       .finally(() => setIsCreating(false))
-  }
-
-  const handleEditResult = (res: any) => {
-    setEditingResultId(res.id)
-    setNewResult({
-      subject: res.subject,
-      semester: res.semester,
-      marksObtained: res.marksObtained || 0,
-      grade: res.grade,
-      examDate: res.examDate ? res.examDate.split('T')[0] : new Date().toISOString().split('T')[0]
-    })
   }
 
   const handleSaveResult = (e: React.FormEvent) => {
     e.preventDefault()
     if (!db || !isAuthorizedAdmin || !selectedStudentId || !selectedExamId) return
     setIsCreating(true)
-
-    const selectedExam = exams?.find(ex => ex.id === selectedExamId)
     const totalMarks = selectedExam?.totalMarks || 100
     const percentage = Number(((newResult.marksObtained / totalMarks) * 100).toFixed(2))
-
-    const docRef = editingResultId 
-      ? doc(db, 'students', selectedStudentId, 'results', editingResultId)
-      : doc(collection(db, 'students', selectedStudentId, 'results'))
-    
-    const data = {
-      ...newResult,
-      id: docRef.id,
-      studentId: selectedStudentId,
-      examId: selectedExamId,
-      examTitle: selectedExam?.title || 'General Assessment',
-      marks: percentage,
-      totalMarks: totalMarks,
-      examDate: new Date(newResult.examDate).toISOString()
-    }
-
-    setDoc(docRef, data, { merge: true })
-      .then(() => {
-        toast({ title: editingResultId ? "Result Updated" : "Result Recorded" })
-        setNewResult({ subject: '', semester: '', marksObtained: 0, grade: '', examDate: new Date().toISOString().split('T')[0] })
-        setEditingResultId(null)
-      })
+    const docRef = editingResultId ? doc(db, 'students', selectedStudentId, 'results', editingResultId) : doc(collection(db, 'students', selectedStudentId, 'results'))
+    setDoc(docRef, { ...newResult, id: docRef.id, studentId: selectedStudentId, examId: selectedExamId, examTitle: selectedExam?.title || 'General Assessment', marks: percentage, totalMarks, examDate: new Date(newResult.examDate).toISOString() }, { merge: true })
+      .then(() => { toast({ title: "Record Saved" }); setEditingResultId(null); })
       .finally(() => setIsCreating(false))
   }
 
-  const handleOpenManageResults = (studentId: string) => {
-    setSelectedStudentId(studentId)
-    setIsManageResultsOpen(true)
-    setEditingResultId(null)
-    setNewResult({ subject: '', semester: '', marksObtained: 0, grade: '', examDate: new Date().toISOString().split('T')[0] })
-  }
-
-  if (!mounted || isUserLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="animate-spin text-primary" size={48} />
-      </div>
-    )
-  }
-
+  if (!mounted || isUserLoading) return <div className="min-h-screen flex items-center justify-center bg-background"><Loader2 className="animate-spin text-primary" size={48} /></div>
   if (!user || user.email !== AUTHORIZED_ADMIN_EMAIL) return null
 
   return (
@@ -354,389 +220,243 @@ export default function AdminPage() {
       <main className="max-w-7xl mx-auto p-6 md:p-10 pt-12 pb-20">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8 mb-16">
           <div className="flex items-center gap-6">
-            <TechXeraLogo 
-              className="w-20 h-20 shadow-2xl shadow-primary/20 shrink-0" 
-              customUrl={siteConfig.logoUrl}
-            />
+            <TechXeraLogo className="w-20 h-20 shadow-2xl shadow-primary/20 shrink-0" customUrl={siteConfig.logoUrl} />
             <div className="space-y-1">
               <h1 className="text-4xl md:text-5xl font-headline font-bold tracking-tighter leading-tight">Admin Central</h1>
               <div className="flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full w-fit">
                 <Shield size={14} className="text-primary" />
-                <p className="text-primary font-bold text-xs">ROOT ADMINISTRATOR: {user.email}</p>
+                <p className="text-primary font-bold text-xs">ROOT: {user.email}</p>
               </div>
             </div>
           </div>
           <div className="flex flex-wrap gap-4 w-full lg:w-auto">
-            <Link href="/">
-              <Button variant="outline" className="h-14 px-6 rounded-2xl font-bold border-2">
-                <Home className="mr-2" size={20} /> Portal Home
-              </Button>
-            </Link>
-            
+            <Link href="/"><Button variant="outline" className="h-14 px-6 rounded-2xl font-bold border-2"><Home className="mr-2" size={20} /> Portal Home</Button></Link>
             <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) resetDialogs(); setIsDialogOpen(open); }}>
               <DialogTrigger asChild>
-                <Button 
-                  disabled={activeTab === 'results' || activeTab === 'config' || activeTab === 'students'} 
-                  className="flex-1 lg:flex-none h-14 px-8 bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 text-white rounded-2xl font-bold"
-                >
+                <Button disabled={['results', 'config', 'students', 'support'].includes(activeTab)} className="flex-1 lg:flex-none h-14 px-8 bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 text-white rounded-2xl font-bold">
                   <Plus className="mr-2" size={24} /> Create New
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[550px] rounded-[2rem]">
                 <DialogHeader>
-                  <DialogTitle className="text-2xl font-headline font-bold">
-                    {activeTab === 'notices' ? (editingNoticeId ? 'Edit Announcement' : 'Publish Announcement') : 
-                     activeTab === 'resources' ? (editingMaterialId ? 'Edit Resource' : 'Upload Resource') : 
-                     activeTab === 'exams' ? (editingExamId ? 'Modify Exam Cycle' : 'Schedule Exam') : 'New Entry'}
-                  </DialogTitle>
+                  <DialogTitle className="text-2xl font-headline font-bold">New Management Entry</DialogTitle>
                 </DialogHeader>
-                
                 {activeTab === 'notices' ? (
                   <form onSubmit={handleCreateNotice} className="space-y-6 pt-6">
                     <div className="space-y-2"><Label>Headline</Label><Input required value={newNotice.title} onChange={e => setNewNotice({ ...newNotice, title: e.target.value })} /></div>
                     <div className="space-y-2"><Label>Message Body</Label><Textarea required value={newNotice.description} onChange={e => setNewNotice({ ...newNotice, description: e.target.value })} className="min-h-[150px]" /></div>
                     <div className="flex items-center space-x-3 p-4 bg-muted/30 rounded-2xl"><Switch checked={newNotice.isUrgent} onCheckedChange={c => setNewNotice({ ...newNotice, isUrgent: c })} /><Label>Priority Announcement</Label></div>
-                    <Button type="submit" disabled={isCreating} className="w-full h-12 rounded-xl text-lg font-bold">
-                      {isCreating ? <Loader2 className="animate-spin mr-2" /> : null}
-                      {editingNoticeId ? 'Update Notice' : 'Broadcast Notice'}
-                    </Button>
+                    <Button type="submit" disabled={isCreating} className="w-full h-12 rounded-xl text-lg font-bold">Broadcast Notice</Button>
                   </form>
                 ) : activeTab === 'resources' ? (
                   <form onSubmit={handleCreateMaterial} className="space-y-6 pt-6">
-                    <div className="space-y-2"><Label>Resource Title</Label><Input required value={newMaterial.title} onChange={e => setNewMaterial({ ...newMaterial, title: e.target.value })} /></div>
+                    <div className="space-y-2"><Label>Title</Label><Input required value={newMaterial.title} onChange={e => setNewMaterial({ ...newMaterial, title: e.target.value })} /></div>
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2"><Label>Academic Subject</Label><Input required value={newMaterial.subject} onChange={e => setNewMaterial({ ...newMaterial, subject: e.target.value })} /></div>
-                      <div className="space-y-2"><Label>Term / Semester</Label><Input required value={newMaterial.semester} onChange={e => setNewMaterial({ ...newMaterial, semester: e.target.value })} /></div>
+                      <div className="space-y-2"><Label>Subject</Label><Input required value={newMaterial.subject} onChange={e => setNewMaterial({ ...newMaterial, subject: e.target.value })} /></div>
+                      <div className="space-y-2"><Label>Semester</Label><Input required value={newMaterial.semester} onChange={e => setNewMaterial({ ...newMaterial, semester: e.target.value })} /></div>
                     </div>
-                    <div className="space-y-2">
-                      <Label>Material Type / Section</Label>
-                      <Input required placeholder="e.g. Notes, PYQ, Syllabus" value={newMaterial.materialType} onChange={e => setNewMaterial({ ...newMaterial, materialType: e.target.value })} />
-                    </div>
-                    <div className="space-y-2"><Label>Resource Description</Label><Textarea placeholder="Briefly describe the content..." value={newMaterial.description} onChange={e => setNewMaterial({ ...newMaterial, description: e.target.value })} className="min-h-[100px]" /></div>
-                    <div className="space-y-2"><Label>Source / File URL</Label><Input required type="url" placeholder="https://..." value={newMaterial.fileUrl} onChange={e => setNewMaterial({ ...newMaterial, fileUrl: e.target.value })} /></div>
-                    <Button type="submit" disabled={isCreating} className="w-full h-12 rounded-xl text-lg font-bold">
-                      {isCreating ? <Loader2 className="animate-spin mr-2" /> : null}
-                      {editingMaterialId ? 'Update Repository' : 'Commit to Repository'}
-                    </Button>
+                    <div className="space-y-2"><Label>Material Type</Label><Input required placeholder="Notes, PYQ..." value={newMaterial.materialType} onChange={e => setNewMaterial({ ...newMaterial, materialType: e.target.value })} /></div>
+                    <div className="space-y-2"><Label>File URL</Label><Input required type="url" value={newMaterial.fileUrl} onChange={e => setNewMaterial({ ...newMaterial, fileUrl: e.target.value })} /></div>
+                    <Button type="submit" disabled={isCreating} className="w-full h-12 rounded-xl text-lg font-bold">Upload to Repository</Button>
                   </form>
                 ) : activeTab === 'exams' ? (
                   <form onSubmit={handleCreateExam} className="space-y-6 pt-6">
-                    <div className="space-y-2"><Label>Official Session Title</Label><Input required placeholder="e.g., Autumn Term Finals 2025" value={newExam.title} onChange={e => setNewExam({ ...newExam, title: e.target.value })} /></div>
+                    <div className="space-y-2"><Label>Exam Title</Label><Input required value={newExam.title} onChange={e => setNewExam({ ...newExam, title: e.target.value })} /></div>
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2"><Label>Target Semester</Label><Input required value={newExam.semester} onChange={e => setNewExam({ ...newExam, semester: e.target.value })} /></div>
-                      <div className="space-y-2"><Label>Inauguration Date</Label><Input required type="date" value={newExam.examDate} onChange={e => setNewExam({ ...newExam, examDate: e.target.value })} /></div>
+                      <div className="space-y-2"><Label>Semester</Label><Input required value={newExam.semester} onChange={e => setNewExam({ ...newExam, semester: e.target.value })} /></div>
+                      <div className="space-y-2"><Label>Date</Label><Input required type="date" value={newExam.examDate} onChange={e => setNewExam({ ...newExam, examDate: e.target.value })} /></div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Session Status</Label>
-                        <Select value={newExam.status} onValueChange={(val) => setNewExam({ ...newExam, status: val })}>
-                          <SelectTrigger className="h-12"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="upcoming">Upcoming</SelectItem>
-                            <SelectItem value="active">Active</SelectItem>
-                            <SelectItem value="completed">Completed</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Total Possible Marks</Label>
-                        <Input required type="number" min="1" value={newExam.totalMarks} onChange={e => setNewExam({ ...newExam, totalMarks: Number(e.target.value) })} />
-                      </div>
+                      <div className="space-y-2"><Label>Status</Label><Select value={newExam.status} onValueChange={(val) => setNewExam({ ...newExam, status: val })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="upcoming">Upcoming</SelectItem><SelectItem value="active">Active</SelectItem><SelectItem value="completed">Completed</SelectItem></SelectContent></Select></div>
+                      <div className="space-y-2"><Label>Total Marks</Label><Input required type="number" value={newExam.totalMarks} onChange={e => setNewExam({ ...newExam, totalMarks: Number(e.target.value) })} /></div>
                     </div>
-                    <Button type="submit" disabled={isCreating} className="w-full h-12 rounded-xl text-lg font-bold">
-                      {isCreating ? <Loader2 className="animate-spin mr-2" /> : null}
-                      {editingExamId ? 'Update Cycle' : 'Establish Exam Cycle'}
-                    </Button>
+                    <Button type="submit" disabled={isCreating} className="w-full h-12 rounded-xl text-lg font-bold">Establish Cycle</Button>
                   </form>
                 ) : null}
               </DialogContent>
             </Dialog>
-
-            <Button onClick={handleLogout} variant="ghost" className="h-14 px-6 text-destructive hover:bg-destructive/10 rounded-2xl font-bold">
-              <LogOut className="mr-2" size={20} /> Logout
-            </Button>
+            <Button onClick={handleLogout} variant="ghost" className="h-14 px-6 text-destructive hover:bg-destructive/10 rounded-2xl font-bold"><LogOut className="mr-2" size={20} /> Logout</Button>
           </div>
         </div>
 
         <Tabs defaultValue="results" className="space-y-12" onValueChange={setActiveTab}>
           <TabsList className="bg-white p-2 rounded-[2rem] shadow-xl border border-border/40 h-auto flex flex-wrap w-full md:w-fit gap-2">
-            <TabsTrigger value="results" className="rounded-2xl py-4 px-8 data-[state=active]:bg-primary data-[state=active]:text-white font-bold"><GraduationCap className="mr-2" size={20} /> Results Hub</TabsTrigger>
+            <TabsTrigger value="results" className="rounded-2xl py-4 px-8 data-[state=active]:bg-primary data-[state=active]:text-white font-bold"><GraduationCap className="mr-2" size={20} /> Results</TabsTrigger>
             <TabsTrigger value="students" className="rounded-2xl py-4 px-8 data-[state=active]:bg-primary data-[state=active]:text-white font-bold"><Users className="mr-2" size={20} /> Students</TabsTrigger>
+            <TabsTrigger value="support" className="rounded-2xl py-4 px-8 data-[state=active]:bg-primary data-[state=active]:text-white font-bold"><LifeBuoy className="mr-2" size={20} /> Support Hub</TabsTrigger>
             <TabsTrigger value="exams" className="rounded-2xl py-4 px-8 data-[state=active]:bg-primary data-[state=active]:text-white font-bold"><ClipboardList className="mr-2" size={20} /> Exams</TabsTrigger>
             <TabsTrigger value="notices" className="rounded-2xl py-4 px-8 data-[state=active]:bg-primary data-[state=active]:text-white font-bold"><Megaphone className="mr-2" size={20} /> Notices</TabsTrigger>
             <TabsTrigger value="resources" className="rounded-2xl py-4 px-8 data-[state=active]:bg-primary data-[state=active]:text-white font-bold"><List className="mr-2" size={20} /> Repository</TabsTrigger>
-            <TabsTrigger value="config" className="rounded-2xl py-4 px-8 data-[state=active]:bg-primary data-[state=active]:text-white font-bold"><SettingsIcon className="mr-2" size={20} /> Site Config</TabsTrigger>
+            <TabsTrigger value="config" className="rounded-2xl py-4 px-8 data-[state=active]:bg-primary data-[state=active]:text-white font-bold"><SettingsIcon className="mr-2" size={20} /> Branding</TabsTrigger>
           </TabsList>
 
-          <Card className="shadow-[0_40px_100px_-20px_rgba(0,0,0,0.1)] border-none rounded-[3.5rem] overflow-hidden bg-white/90 backdrop-blur-md border border-white">
-            <TabsContent value="config" className="p-0 m-0">
+          <Card className="shadow-2xl border-none rounded-[3.5rem] overflow-hidden bg-white/90 backdrop-blur-md">
+            <TabsContent value="results" className="p-0 m-0">
               <div className="p-10 border-b border-border/40 bg-muted/20">
-                <div className="flex items-center gap-4">
-                  <div className="p-4 bg-primary/10 text-primary rounded-2xl"><Globe size={24} /></div>
-                  <div>
-                    <h2 className="text-2xl font-headline font-bold">Branding & Configuration</h2>
-                    <p className="text-sm text-muted-foreground">Manage global identity.</p>
-                  </div>
-                </div>
+                <select className="h-14 w-full max-w-md rounded-2xl bg-background px-6 font-bold" value={selectedExamId || ''} onChange={e => setSelectedExamId(e.target.value)}>
+                  <option value="">-- Select Exam Cycle --</option>
+                  {exams?.map(e => <option key={e.id} value={e.id}>{e.title}</option>)}
+                </select>
               </div>
-              <CardContent className="p-10 max-w-2xl">
-                <form onSubmit={handleUpdateSiteConfig} className="space-y-8">
-                  <div className="space-y-2">
-                    <Label className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Portal Brand Name</Label>
-                    <Input value={siteConfig.siteName} onChange={e => setSiteConfig({...siteConfig, siteName: e.target.value})} className="h-14 rounded-2xl bg-background/50 text-lg font-bold" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Custom Logo URL</Label>
-                    <Input type="url" value={siteConfig.logoUrl} onChange={e => setSiteConfig({...siteConfig, logoUrl: e.target.value})} className="h-14 rounded-2xl bg-background/50" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Hero Section Narrative</Label>
-                    <Textarea value={siteConfig.heroDescription} onChange={e => setSiteConfig({...siteConfig, heroDescription: e.target.value})} className="min-h-[120px] rounded-2xl bg-background/50" />
-                  </div>
-                  <Button type="submit" disabled={isCreating} className="h-14 px-10 bg-primary text-white rounded-2xl font-bold shadow-xl shadow-primary/20">
-                    {isCreating ? <Loader2 className="animate-spin mr-2" /> : <SettingsIcon className="mr-2" />} Deploy Updates
-                  </Button>
-                </form>
-              </CardContent>
+              <Table>
+                <TableHeader><TableRow className="bg-muted/50"><TableHead className="px-10">Student</TableHead><TableHead>Roll No</TableHead><TableHead className="text-right px-10">Records</TableHead></TableRow></TableHeader>
+                <TableBody>
+                  {selectedExamId ? students?.map(s => (
+                    <TableRow key={s.id} className="hover:bg-primary/[0.02]">
+                      <TableCell className="px-10 font-bold text-lg">{s.firstName} {s.lastName}</TableCell>
+                      <TableCell className="font-bold text-primary">{s.studentId}</TableCell>
+                      <TableCell className="text-right px-10"><Button onClick={() => { setSelectedStudentId(s.id); setIsManageResultsOpen(true); }} variant="outline" className="rounded-xl">Manage Grades</Button></TableCell>
+                    </TableRow>
+                  )) : <TableRow><TableCell colSpan={3} className="text-center py-20 italic">Select an exam cycle above</TableCell></TableRow>}
+                </TableBody>
+              </Table>
             </TabsContent>
 
-            {activeTab !== 'config' && (
-              <>
-                {activeTab === 'results' && (
-                  <div className="p-10 border-b border-border/40 bg-muted/20">
-                    <div className="flex flex-col md:flex-row gap-8 items-end">
-                      <div className="flex-1 space-y-4">
-                        <Label className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Select Exam Cycle</Label>
-                        <select 
-                          className="flex h-14 w-full rounded-3xl border-2 border-primary/10 bg-background px-6 py-2 text-lg font-bold" 
-                          value={selectedExamId || ''} 
-                          onChange={(e) => setSelectedExamId(e.target.value)}
-                        >
-                          <option value="">-- Choose Exam Session --</option>
-                          {exams?.map(exam => (<option key={exam.id} value={exam.id}>{exam.title}</option>))}
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                )}
+            <TabsContent value="support" className="p-0 m-0">
+              <div className="p-10 border-b bg-muted/20 flex items-center gap-4">
+                <div className="p-4 bg-primary/10 text-primary rounded-2xl"><MessageSquare size={24} /></div>
+                <div><h2 className="text-2xl font-bold font-headline">Inquiry Management</h2><p className="text-sm text-muted-foreground">Address student support tickets</p></div>
+              </div>
+              <Table>
+                <TableHeader><TableRow className="bg-muted/50"><TableHead className="px-10">Sender</TableHead><TableHead>Subject</TableHead><TableHead>Date</TableHead><TableHead>Status</TableHead><TableHead className="text-right px-10">Operations</TableHead></TableRow></TableHeader>
+                <TableBody>
+                  {inquiries?.map(iq => (
+                    <TableRow key={iq.id} className="hover:bg-primary/[0.02]">
+                      <TableCell className="px-10">
+                        <div className="font-bold">{iq.name}</div>
+                        <div className="text-xs text-muted-foreground">{iq.email}</div>
+                      </TableCell>
+                      <TableCell className="font-medium">{iq.subject}</TableCell>
+                      <TableCell className="text-xs">{iq.timestamp ? format(new Date(iq.timestamp), 'MMM d, h:mm a') : 'N/A'}</TableCell>
+                      <TableCell><Badge variant={iq.status === 'pending' ? 'destructive' : 'default'}>{iq.status}</Badge></TableCell>
+                      <TableCell className="text-right px-10 space-x-2">
+                        <Dialog>
+                          <DialogTrigger asChild><Button variant="ghost" size="icon" className="text-primary"><Search size={18} /></Button></DialogTrigger>
+                          <DialogContent className="rounded-3xl">
+                            <DialogHeader><DialogTitle className="font-headline font-bold">Inquiry Details</DialogTitle></DialogHeader>
+                            <div className="space-y-4 pt-4">
+                              <div className="p-4 bg-muted/30 rounded-2xl"><p className="text-sm italic">"{iq.message}"</p></div>
+                              <div className="flex gap-4"><Button onClick={() => handleMarkResolved(iq.id)} disabled={iq.status === 'resolved'} className="flex-1 rounded-xl">Resolve Inquiry</Button></div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete('support_inquiries', iq.id)} className="text-destructive"><Trash2 size={18} /></Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {inquiries?.length === 0 && <TableRow><TableCell colSpan={5} className="text-center py-20 opacity-40 italic">No support inquiries found</TableCell></TableRow>}
+                </TableBody>
+              </Table>
+            </TabsContent>
 
-                <CardContent className="p-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-muted/50 border-none h-16">
-                        {activeTab === 'students' ? (
-                          <>
-                            <TableHead className="px-10">Name</TableHead>
-                            <TableHead>Email</TableHead>
-                            <TableHead>Roll Number</TableHead>
-                            <TableHead>Verification</TableHead>
-                            <TableHead className="text-right px-10">Operations</TableHead>
-                          </>
-                        ) : activeTab === 'results' ? (
-                          <>
-                            <TableHead className="px-10">Student Name</TableHead>
-                            <TableHead>Roll Number</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead className="text-right px-10">Records</TableHead>
-                          </>
-                        ) : activeTab === 'exams' ? (
-                          <>
-                            <TableHead className="px-10">Title</TableHead>
-                            <TableHead>Term</TableHead>
-                            <TableHead>Max Marks</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead className="text-right px-10">Operations</TableHead>
-                          </>
-                        ) : activeTab === 'notices' ? (
-                          <>
-                            <TableHead className="px-10">Headline</TableHead>
-                            <TableHead>Priority</TableHead>
-                            <TableHead>Published Date</TableHead>
-                            <TableHead className="text-right px-10">Operations</TableHead>
-                          </>
-                        ) : (
-                          <>
-                            <TableHead className="px-10">Resource Title</TableHead>
-                            <TableHead>Subject</TableHead>
-                            <TableHead>Semester</TableHead>
-                            <TableHead>Type</TableHead>
-                            <TableHead className="text-right px-10">Operations</TableHead>
-                          </>
-                        )}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {activeTab === 'students' && students?.map((student) => (
-                        <TableRow key={student.id} className="border-b border-border/40 hover:bg-primary/[0.02]">
-                          <TableCell className="px-10 font-bold text-lg">{student.firstName} {student.lastName}</TableCell>
-                          <TableCell className="text-muted-foreground">{student.email}</TableCell>
-                          <TableCell><span className="font-black text-primary tracking-tighter">{student.studentId}</span></TableCell>
-                          <TableCell><Badge variant={student.isApproved ? "default" : "outline"}>{student.status}</Badge></TableCell>
-                          <TableCell className="text-right px-10 space-x-2">
-                            {!student.isApproved ? (
-                              <Button variant="ghost" size="icon" onClick={() => handleApproveStudent(student.id, true)} className="text-green-600"><CheckCircle size={22} /></Button>
-                            ) : (
-                              <Button variant="ghost" size="icon" onClick={() => handleApproveStudent(student.id, false)} className="text-orange-600"><XCircle size={22} /></Button>
-                            )}
-                            <Button variant="ghost" size="icon" onClick={() => handleDelete('students', student.id)} className="text-destructive"><Trash2 size={22} /></Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+            <TabsContent value="students" className="p-0 m-0">
+              <Table>
+                <TableHeader><TableRow className="bg-muted/50"><TableHead className="px-10">Student</TableHead><TableHead>Roll No</TableHead><TableHead>Verification</TableHead><TableHead className="text-right px-10">Operations</TableHead></TableRow></TableHeader>
+                <TableBody>
+                  {students?.map(s => (
+                    <TableRow key={s.id}>
+                      <TableCell className="px-10 font-bold">{s.firstName} {s.lastName}</TableCell>
+                      <TableCell>{s.studentId}</TableCell>
+                      <TableCell><Badge variant={s.isApproved ? 'default' : 'outline'}>{s.status}</Badge></TableCell>
+                      <TableCell className="text-right px-10 space-x-2">
+                        {s.isApproved ? <Button size="icon" variant="ghost" onClick={() => handleApproveStudent(s.id, false)}><XCircle className="text-orange-500" /></Button> : <Button size="icon" variant="ghost" onClick={() => handleApproveStudent(s.id, true)}><CheckCircle className="text-green-500" /></Button>}
+                        <Button size="icon" variant="ghost" onClick={() => handleDelete('students', s.id)} className="text-destructive"><Trash2 /></Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TabsContent>
+            
+            <TabsContent value="exams" className="p-0 m-0">
+               <Table>
+                <TableHeader><TableRow className="bg-muted/50"><TableHead className="px-10">Title</TableHead><TableHead>Date</TableHead><TableHead>Status</TableHead><TableHead className="text-right px-10">Operations</TableHead></TableRow></TableHeader>
+                <TableBody>
+                  {exams?.map(ex => (
+                    <TableRow key={ex.id}>
+                      <TableCell className="px-10 font-bold">{ex.title}</TableCell>
+                      <TableCell>{ex.examDate}</TableCell>
+                      <TableCell><Badge>{ex.status}</Badge></TableCell>
+                      <TableCell className="text-right px-10 space-x-2">
+                        <Button variant="ghost" size="icon" onClick={() => startEditExam(ex)} className="text-primary"><Edit2 size={18} /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete('exams', ex.id)} className="text-destructive"><Trash2 size={18} /></Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TabsContent>
 
-                      {activeTab === 'results' && selectedExamId && students?.map((student) => (
-                        <TableRow key={student.id} className="border-b border-border/40 hover:bg-primary/[0.02]">
-                          <TableCell className="px-10 font-bold text-lg">{student.firstName} {student.lastName}</TableCell>
-                          <TableCell className="font-black text-primary tracking-tighter">{student.studentId}</TableCell>
-                          <TableCell>
-                            <Badge variant={student.isApproved ? "default" : "outline"}>
-                              {student.isApproved ? "Approved" : "Pending Approval"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right px-10">
-                            <Button onClick={() => handleOpenManageResults(student.id)} variant="outline" className="rounded-xl font-bold">
-                              <Edit2 size={16} className="mr-2" /> Manage Grades
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+            <TabsContent value="notices" className="p-0 m-0">
+              <Table>
+                <TableHeader><TableRow className="bg-muted/50"><TableHead className="px-10">Headline</TableHead><TableHead>Priority</TableHead><TableHead className="text-right px-10">Operations</TableHead></TableRow></TableHeader>
+                <TableBody>
+                  {notices?.map(n => (
+                    <TableRow key={n.id}>
+                      <TableCell className="px-10 font-bold">{n.title}</TableCell>
+                      <TableCell><Badge variant={n.isUrgent ? 'destructive' : 'secondary'}>{n.isUrgent ? 'Urgent' : 'Normal'}</Badge></TableCell>
+                      <TableCell className="text-right px-10 space-x-2">
+                        <Button variant="ghost" size="icon" onClick={() => startEditNotice(n)} className="text-primary"><Edit2 size={18} /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete('notices', n.id)} className="text-destructive"><Trash2 size={18} /></Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TabsContent>
 
-                      {activeTab === 'results' && !selectedExamId && (
-                        <TableRow><TableCell colSpan={4} className="text-center py-32 italic opacity-40">Choose an exam cycle above to begin managing results</TableCell></TableRow>
-                      )}
+            <TabsContent value="resources" className="p-0 m-0">
+              <Table>
+                <TableHeader><TableRow className="bg-muted/50"><TableHead className="px-10">Title</TableHead><TableHead>Subject</TableHead><TableHead className="text-right px-10">Operations</TableHead></TableRow></TableHeader>
+                <TableBody>
+                  {materials?.map(m => (
+                    <TableRow key={m.id}>
+                      <TableCell className="px-10 font-bold">{m.title}</TableCell>
+                      <TableCell>{m.subject}</TableCell>
+                      <TableCell className="text-right px-10 space-x-2">
+                        <Button variant="ghost" size="icon" onClick={() => startEditMaterial(m)} className="text-primary"><Edit2 size={18} /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete('studyMaterials', m.id)} className="text-destructive"><Trash2 size={18} /></Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TabsContent>
 
-                      {activeTab === 'exams' && exams?.map((exam) => (
-                        <TableRow key={exam.id} className="border-b border-border/40 hover:bg-primary/[0.02]">
-                          <TableCell className="px-10 font-bold text-lg">{exam.title}</TableCell>
-                          <TableCell className="text-muted-foreground">{exam.semester}</TableCell>
-                          <TableCell className="font-bold">{exam.totalMarks}</TableCell>
-                          <TableCell>
-                            <Badge variant={exam.status === 'active' ? 'default' : exam.status === 'upcoming' ? 'secondary' : 'outline'}>
-                              {exam.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right px-10 space-x-2">
-                            <Button variant="ghost" size="icon" onClick={() => startEditExam(exam)} className="text-primary">
-                              <Edit2 size={22} />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => handleDelete('exams', exam.id)} className="text-destructive">
-                              <Trash2 size={22} />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-
-                      {activeTab === 'notices' && notices?.map((notice) => (
-                        <TableRow key={notice.id} className="border-b border-border/40 hover:bg-primary/[0.02]">
-                          <TableCell className="px-10 font-bold text-lg">{notice.title}</TableCell>
-                          <TableCell>
-                            <Badge variant={notice.isUrgent ? 'destructive' : 'secondary'}>
-                              {notice.isUrgent ? 'Urgent' : 'Normal'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {notice.publishDate ? format(new Date(notice.publishDate), 'MMM d, yyyy') : 'N/A'}
-                          </TableCell>
-                          <TableCell className="text-right px-10 space-x-2">
-                            <Button variant="ghost" size="icon" onClick={() => startEditNotice(notice)} className="text-primary">
-                              <Edit2 size={22} />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => handleDelete('notices', notice.id)} className="text-destructive">
-                              <Trash2 size={22} />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-
-                      {activeTab === 'resources' && materials?.map((material) => (
-                        <TableRow key={material.id} className="border-b border-border/40 hover:bg-primary/[0.02]">
-                          <TableCell className="px-10 font-bold text-lg">{material.title}</TableCell>
-                          <TableCell>{material.subject}</TableCell>
-                          <TableCell>{material.semester}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{material.materialType}</Badge>
-                          </TableCell>
-                          <TableCell className="text-right px-10 space-x-2">
-                            <Button variant="ghost" size="icon" onClick={() => startEditMaterial(material)} className="text-primary">
-                              <Edit2 size={20} />
-                            </Button>
-                            <a href={material.fileUrl} target="_blank" rel="noopener noreferrer">
-                              <Button variant="ghost" size="icon" className="text-muted-foreground">
-                                <Download size={20} />
-                              </Button>
-                            </a>
-                            <Button variant="ghost" size="icon" onClick={() => handleDelete('studyMaterials', material.id)} className="text-destructive">
-                              <Trash2 size={20} />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </>
-            )}
+            <TabsContent value="config" className="p-10">
+              <form onSubmit={handleUpdateSiteConfig} className="max-w-2xl space-y-8">
+                <div className="space-y-2"><Label>Portal Name</Label><Input value={siteConfig.siteName} onChange={e => setSiteConfig({...siteConfig, siteName: e.target.value})} className="h-14 rounded-2xl" /></div>
+                <div className="space-y-2"><Label>Logo URL</Label><Input value={siteConfig.logoUrl} onChange={e => setSiteConfig({...siteConfig, logoUrl: e.target.value})} className="h-14 rounded-2xl" /></div>
+                <div className="space-y-2"><Label>Hero Description</Label><Textarea value={siteConfig.heroDescription} onChange={e => setSiteConfig({...siteConfig, heroDescription: e.target.value})} className="min-h-[120px] rounded-2xl" /></div>
+                <Button type="submit" disabled={isCreating} className="h-14 px-10 rounded-2xl font-bold">Update Branding</Button>
+              </form>
+            </TabsContent>
           </Card>
         </Tabs>
 
-        {/* Manage Results Dialog */}
+        {/* Results Modal */}
         <Dialog open={isManageResultsOpen} onOpenChange={setIsManageResultsOpen}>
           <DialogContent className="sm:max-w-[800px] rounded-[3rem]">
-            <DialogHeader>
-              <DialogTitle className="text-2xl font-headline font-bold">Manage Grades</DialogTitle>
-              <DialogDescription>
-                Recording results for {selectedStudent?.firstName} {selectedStudent?.lastName} in {selectedExam?.title}.
-              </DialogDescription>
-            </DialogHeader>
+            <DialogHeader><DialogTitle className="text-2xl font-bold">Manage Grades for {selectedStudent?.firstName}</DialogTitle></DialogHeader>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 pt-6">
               <form onSubmit={handleSaveResult} className="space-y-6 p-6 bg-muted/20 rounded-[2rem]">
-                <div className="space-y-2">
-                  <Label>Subject Name</Label>
-                  <Input required value={newResult.subject} onChange={e => setNewResult({ ...newResult, subject: e.target.value })} />
-                </div>
+                <div className="space-y-2"><Label>Subject</Label><Input required value={newResult.subject} onChange={e => setNewResult({ ...newResult, subject: e.target.value })} /></div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Marks Obtained</Label>
-                    <Input type="number" value={newResult.marksObtained} onChange={e => handleMarksChange(Number(e.target.value))} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Grade</Label>
-                    <div className="h-10 flex items-center px-4 bg-primary text-white rounded-md font-bold">{newResult.grade || 'N/A'}</div>
-                  </div>
+                  <div className="space-y-2"><Label>Marks</Label><Input type="number" value={newResult.marksObtained} onChange={e => setNewResult({...newResult, marksObtained: Number(e.target.value)})} /></div>
+                  <div className="space-y-2"><Label>Grade</Label><Input required value={newResult.grade} onChange={e => setNewResult({...newResult, grade: e.target.value})} /></div>
                 </div>
-                <div className="space-y-2">
-                  <Label>Assessment Date</Label>
-                  <Input type="date" value={newResult.examDate} onChange={e => setNewResult({ ...newResult, examDate: e.target.value })} />
-                </div>
-                <Button type="submit" disabled={isCreating} className="w-full h-12 bg-primary font-bold rounded-xl shadow-lg">
-                  {isCreating ? <Loader2 className="animate-spin mr-2" /> : null}
-                  {editingResultId ? "Update Record" : "Save Result"}
-                </Button>
+                <div className="space-y-2"><Label>Assessment Date</Label><Input type="date" value={newResult.examDate} onChange={e => setNewResult({ ...newResult, examDate: e.target.value })} /></div>
+                <Button type="submit" disabled={isCreating} className="w-full h-12 bg-primary font-bold rounded-xl">Save Result</Button>
               </form>
               <div className="space-y-4">
-                <h3 className="font-bold text-lg flex items-center gap-2">
-                  <ClipboardList size={20} className="text-primary" /> Existing Records
-                </h3>
-                <div className="max-h-[400px] overflow-y-auto space-y-3 pr-2">
-                  {selectedStudentExamResults.length > 0 ? selectedStudentExamResults.map(res => (
-                    <div key={res.id} className="p-4 border rounded-2xl flex justify-between items-center bg-white shadow-sm hover:shadow-md transition-shadow">
-                      <div>
-                        <p className="font-bold">{res.subject}</p>
-                        <p className="text-xs text-muted-foreground">{res.marks}% • Grade: {res.grade}</p>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => handleEditResult(res)} className="text-primary">
-                          <Edit2 size={16} />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete('students', selectedStudentId!, 'results', res.id)} className="text-destructive">
-                          <Trash2 size={16} />
-                        </Button>
-                      </div>
+                <h3 className="font-bold">Existing Records</h3>
+                <div className="max-h-[400px] overflow-y-auto space-y-3">
+                  {selectedStudentExamResults.map(res => (
+                    <div key={res.id} className="p-4 border rounded-2xl flex justify-between items-center bg-white shadow-sm">
+                      <div><p className="font-bold">{res.subject}</p><p className="text-xs">{res.grade} ({res.marks}%)</p></div>
+                      <div className="flex gap-2"><Button variant="ghost" size="icon" onClick={() => handleDelete('students', selectedStudentId!, 'results', res.id)} className="text-destructive"><Trash2 size={16} /></Button></div>
                     </div>
-                  )) : (
-                    <div className="text-center py-20 bg-muted/10 rounded-2xl border-2 border-dashed">
-                      <p className="text-sm text-muted-foreground italic">No grades recorded yet.</p>
-                    </div>
-                  )}
+                  ))}
                 </div>
               </div>
             </div>

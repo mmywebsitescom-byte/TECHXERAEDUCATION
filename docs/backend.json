@@ -5,383 +5,127 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Student",
       "type": "object",
-      "description": "Represents a student enrolled in the TechXera Campus, containing personal and academic information necessary for their profile and dashboard.",
+      "description": "Represents a student enrolled in the TechXera Campus.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Student entity (Firebase UID)."
-        },
-        "studentId": {
-          "type": "string",
-          "description": "The unique identification number or student ID used by the student for login purposes."
-        },
-        "firstName": {
-          "type": "string",
-          "description": "The first name of the student."
-        },
-        "lastName": {
-          "type": "string",
-          "description": "The last name of the student."
-        },
-        "email": {
-          "type": "string",
-          "format": "email",
-          "description": "The email address of the student."
-        },
-        "photoURL": {
-          "type": "string",
-          "format": "uri",
-          "description": "The URL of the student's profile picture."
-        },
-        "enrollmentDate": {
-          "type": "string",
-          "format": "date-time",
-          "description": "The date and time when the student was officially enrolled."
-        },
-        "dateOfBirth": {
-          "type": "string",
-          "format": "date",
-          "description": "The student's date of birth."
-        },
-        "currentSemester": {
-          "type": "string",
-          "description": "The current academic semester the student is enrolled in."
-        },
-        "isApproved": {
-          "type": "boolean",
-          "description": "Flag indicating if the student account has been approved by an administrator."
-        },
-        "status": {
-          "type": "string",
-          "enum": [
-            "pending",
-            "approved",
-            "rejected"
-          ],
-          "description": "The current status of the student account."
-        }
+        "id": { "type": "string" },
+        "studentId": { "type": "string" },
+        "firstName": { "type": "string" },
+        "lastName": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "photoURL": { "type": "string", "format": "uri" },
+        "enrollmentDate": { "type": "string", "format": "date-time" },
+        "dateOfBirth": { "type": "string", "format": "date" },
+        "currentSemester": { "type": "string" },
+        "isApproved": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] }
       },
-      "required": [
-        "id",
-        "studentId",
-        "firstName",
-        "lastName",
-        "email",
-        "enrollmentDate",
-        "isApproved",
-        "status"
-      ]
+      "required": ["id", "studentId", "firstName", "lastName", "email", "enrollmentDate", "isApproved", "status"]
+    },
+    "SupportInquiry": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SupportInquiry",
+      "type": "object",
+      "description": "Represents a technical support inquiry sent by a student.",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "subject": { "type": "string" },
+        "message": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["pending", "resolved"] }
+      },
+      "required": ["id", "name", "email", "subject", "message", "timestamp", "status"]
     },
     "Exam": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Exam",
       "type": "object",
-      "description": "Represents an examination session or cycle within the campus.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Exam entity."
-        },
-        "title": {
-          "type": "string",
-          "description": "The title of the examination (e.g., Final Semester Exam 2025)."
-        },
-        "semester": {
-          "type": "string",
-          "description": "The academic semester this exam belongs to."
-        },
-        "examDate": {
-          "type": "string",
-          "format": "date",
-          "description": "The date when the exam cycle starts."
-        },
-        "status": {
-          "type": "string",
-          "enum": [
-            "upcoming",
-            "active",
-            "completed"
-          ],
-          "description": "The current status of the exam session."
-        },
-        "totalMarks": {
-          "type": "number",
-          "description": "The maximum possible marks for subjects in this exam cycle."
-        }
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "semester": { "type": "string" },
+        "examDate": { "type": "string", "format": "date" },
+        "status": { "type": "string", "enum": ["upcoming", "active", "completed"] },
+        "totalMarks": { "type": "number" }
       },
-      "required": [
-        "id",
-        "title",
-        "semester",
-        "examDate",
-        "status",
-        "totalMarks"
-      ]
+      "required": ["id", "title", "semester", "examDate", "status", "totalMarks"]
     },
     "Result": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Result",
       "type": "object",
-      "description": "Stores academic results for a specific student, including marks, grades, and associated details for a subject or examination.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Result entity."
-        },
-        "studentId": {
-          "type": "string",
-          "description": "Reference to the Student entity this result belongs to."
-        },
-        "examId": {
-          "type": "string",
-          "description": "Reference to the Exam entity this result is associated with."
-        },
-        "subject": {
-          "type": "string",
-          "description": "The academic subject for which this result is recorded."
-        },
-        "semester": {
-          "type": "string",
-          "description": "The academic semester in which this result was obtained."
-        },
-        "marks": {
-          "type": "number",
-          "description": "The percentage achieved by the student in the subject."
-        },
-        "marksObtained": {
-          "type": "number",
-          "description": "The actual marks scored by the student."
-        },
-        "totalMarks": {
-          "type": "number",
-          "description": "The total marks possible for this subject assessment."
-        },
-        "grade": {
-          "type": "string",
-          "description": "The letter grade or equivalent awarded for the subject."
-        },
-        "examDate": {
-          "type": "string",
-          "format": "date-time",
-          "description": "The date and time when the examination or assessment was conducted."
-        },
-        "performanceNotes": {
-          "type": "string",
-          "description": "Optional administrative notes or comments regarding the student's performance."
-        }
+        "id": { "type": "string" },
+        "studentId": { "type": "string" },
+        "examId": { "type": "string" },
+        "subject": { "type": "string" },
+        "semester": { "type": "string" },
+        "marks": { "type": "number" },
+        "marksObtained": { "type": "number" },
+        "totalMarks": { "type": "number" },
+        "grade": { "type": "string" },
+        "examDate": { "type": "string", "format": "date-time" }
       },
-      "required": [
-        "id",
-        "studentId",
-        "subject",
-        "semester",
-        "marks",
-        "marksObtained",
-        "totalMarks",
-        "grade",
-        "examDate"
-      ]
+      "required": ["id", "studentId", "subject", "semester", "marks", "marksObtained", "totalMarks", "grade", "examDate"]
     },
     "StudyMaterial": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "StudyMaterial",
       "type": "object",
-      "description": "Represents educational resources such as previous questions, notes, or other study aids that students can access and download.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the StudyMaterial entity."
-        },
-        "title": {
-          "type": "string",
-          "description": "The title or name of the study material."
-        },
-        "description": {
-          "type": "string",
-          "description": "A brief description of the study material's content or purpose."
-        },
-        "fileUrl": {
-          "type": "string",
-          "format": "uri",
-          "description": "The URL or URI pointing to the downloadable file for the study material."
-        },
-        "subject": {
-          "type": "string",
-          "description": "The academic subject category to which the study material belongs."
-        },
-        "semester": {
-          "type": "string",
-          "description": "The academic semester for which the study material is primarily relevant."
-        },
-        "materialType": {
-          "type": "string",
-          "description": "The type of the study material."
-        },
-        "uploadDate": {
-          "type": "string",
-          "format": "date-time",
-          "description": "The date and time when the study material was uploaded to the system."
-        }
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "fileUrl": { "type": "string", "format": "uri" },
+        "subject": { "type": "string" },
+        "semester": { "type": "string" },
+        "materialType": { "type": "string" },
+        "uploadDate": { "type": "string", "format": "date-time" }
       },
-      "required": [
-        "id",
-        "title",
-        "fileUrl",
-        "subject",
-        "semester",
-        "materialType",
-        "uploadDate"
-      ]
+      "required": ["id", "title", "fileUrl", "subject", "semester", "materialType", "uploadDate"]
     },
     "Notice": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Notice",
       "type": "object",
-      "description": "Represents an important announcement or notice displayed on the dynamic notice board for students.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Notice entity."
-        },
-        "title": {
-          "type": "string",
-          "description": "The concise title of the notice."
-        },
-        "description": {
-          "type": "string",
-          "description": "The full content or detailed message of the notice."
-        },
-        "publishDate": {
-          "type": "string",
-          "format": "date-time",
-          "description": "The date and time when the notice was officially published."
-        },
-        "isUrgent": {
-          "type": "boolean",
-          "description": "A flag indicating whether the notice is urgent and requires visual highlighting."
-        },
-        "expiryDate": {
-          "type": "string",
-          "format": "date-time",
-          "description": "The date and time after which the notice is no longer considered active or should be removed."
-        }
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "publishDate": { "type": "string", "format": "date-time" },
+        "isUrgent": { "type": "boolean" }
       },
-      "required": [
-        "id",
-        "title",
-        "description",
-        "publishDate",
-        "isUrgent"
-      ]
+      "required": ["id", "title", "description", "publishDate", "isUrgent"]
     }
   },
   "auth": {
-    "providers": [
-      "password",
-      "anonymous"
-    ]
+    "providers": ["password", "anonymous"]
   },
   "firestore": {
     "structure": [
       {
         "path": "/students/{studentUid}",
-        "definition": {
-          "entityName": "Student",
-          "schema": {
-            "$ref": "#/backend/entities/Student"
-          },
-          "description": "Stores individual student profiles. The document ID (`{studentUid}`) is the Firebase Authentication User ID. Includes approval status.",
-          "params": [
-            {
-              "name": "studentUid",
-              "description": "The Firebase Authentication User ID (UID) of the student."
-            }
-          ]
-        }
+        "definition": { "entityName": "Student" }
       },
       {
         "path": "/students/{studentUid}/results/{resultId}",
-        "definition": {
-          "entityName": "Result",
-          "schema": {
-            "$ref": "#/backend/entities/Result"
-          },
-          "description": "Stores academic results specific to a student.",
-          "params": [
-            {
-              "name": "studentUid",
-              "description": "The Firebase Authentication User ID (UID) of the student owner."
-            },
-            {
-              "name": "resultId",
-              "description": "The unique identifier for a specific academic result document."
-            }
-          ]
-        }
+        "definition": { "entityName": "Result" }
       },
       {
         "path": "/exams/{examId}",
-        "definition": {
-          "entityName": "Exam",
-          "schema": {
-            "$ref": "#/backend/entities/Exam"
-          },
-          "description": "Stores examination sessions.",
-          "params": [
-            {
-              "name": "examId",
-              "description": "The unique identifier for a specific exam document."
-            }
-          ]
-        }
+        "definition": { "entityName": "Exam" }
       },
       {
         "path": "/studyMaterials/{materialId}",
-        "definition": {
-          "entityName": "StudyMaterial",
-          "schema": {
-            "$ref": "#/backend/entities/StudyMaterial"
-          },
-          "description": "Houses general study resources.",
-          "params": [
-            {
-              "name": "materialId",
-              "description": "The unique identifier for a specific study material document."
-            }
-          ]
-        }
+        "definition": { "entityName": "StudyMaterial" }
       },
       {
         "path": "/notices/{noticeId}",
-        "definition": {
-          "entityName": "Notice",
-          "schema": {
-            "$ref": "#/backend/entities/Notice"
-          },
-          "description": "Contains important announcements.",
-          "params": [
-            {
-              "name": "noticeId",
-              "description": "The unique identifier for a specific notice document."
-            }
-          ]
-        }
+        "definition": { "entityName": "Notice" }
       },
       {
-        "path": "/roles_admin/{adminUid}",
-        "definition": {
-          "entityName": "admin",
-          "schema": {
-            "$ref": "#/backend/entities/Student"
-          },
-          "description": "A marker collection for admin privileges.",
-          "params": [
-            {
-              "name": "adminUid",
-              "description": "The Firebase Authentication User ID (UID) of an administrator."
-            }
-          ]
-        }
+        "path": "/support_inquiries/{inquiryId}",
+        "definition": { "entityName": "SupportInquiry" }
       }
     ]
   }

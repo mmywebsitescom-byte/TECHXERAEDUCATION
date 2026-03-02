@@ -13,6 +13,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { HelpCircle, Mail, MessageSquare, LifeBuoy, Loader2, Send, Sparkles } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useToast } from '@/hooks/use-toast'
+import { useFirestore } from '@/firebase'
+import { collection, addDoc } from 'firebase/firestore'
 
 const faqs = [
   {
@@ -35,22 +37,36 @@ const faqs = [
 
 export default function SupportPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' })
   const { toast } = useToast()
+  const db = useFirestore()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!db) return
     setIsSubmitting(true)
     
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false)
+    try {
+      await addDoc(collection(db, 'support_inquiries'), {
+        ...formData,
+        timestamp: new Date().toISOString(),
+        status: 'pending'
+      })
+
       toast({
         title: "Inquiry Sent",
         description: "A support ticket has been created. Our team will reach out via email.",
       })
-      const form = e.target as HTMLFormElement
-      form.reset()
-    }, 1500)
+      setFormData({ name: '', email: '', subject: '', message: '' })
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Submission Failed",
+        description: "Could not send inquiry. Please try again later.",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -74,7 +90,6 @@ export default function SupportPage() {
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
-          {/* FAQ Section */}
           <motion.div 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -101,7 +116,6 @@ export default function SupportPage() {
             </Accordion>
           </motion.div>
 
-          {/* Contact Form Section */}
           <motion.div 
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -121,20 +135,20 @@ export default function SupportPage() {
                   <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label htmlFor="name" className="text-xs uppercase font-black tracking-widest text-muted-foreground">Name</Label>
-                      <Input id="name" required placeholder="Alex Smith" className="h-12 rounded-xl bg-background/50" />
+                      <Input id="name" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="Alex Smith" className="h-12 rounded-xl bg-background/50" />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="email" className="text-xs uppercase font-black tracking-widest text-muted-foreground">Campus Email</Label>
-                      <Input id="email" type="email" required placeholder="alex@techxera.edu" className="h-12 rounded-xl bg-background/50" />
+                      <Input id="email" type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="alex@techxera.edu" className="h-12 rounded-xl bg-background/50" />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="subject" className="text-xs uppercase font-black tracking-widest text-muted-foreground">Subject</Label>
-                    <Input id="subject" required placeholder="Issue with results access" className="h-12 rounded-xl bg-background/50" />
+                    <Input id="subject" required value={formData.subject} onChange={e => setFormData({...formData, subject: e.target.value})} placeholder="Issue with results access" className="h-12 rounded-xl bg-background/50" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="message" className="text-xs uppercase font-black tracking-widest text-muted-foreground">Message</Label>
-                    <Textarea id="message" required placeholder="Detailed description of your problem..." className="min-h-[150px] rounded-xl bg-background/50" />
+                    <Textarea id="message" required value={formData.message} onChange={e => setFormData({...formData, message: e.target.value})} placeholder="Detailed description of your problem..." className="min-h-[150px] rounded-xl bg-background/50" />
                   </div>
                   <Button disabled={isSubmitting} className="w-full h-14 text-lg font-bold bg-primary hover:bg-primary/90 rounded-2xl shadow-xl shadow-primary/20 transition-all active:scale-95">
                     {isSubmitting ? <Loader2 className="animate-spin mr-2" /> : <Send className="mr-2" size={20} />}

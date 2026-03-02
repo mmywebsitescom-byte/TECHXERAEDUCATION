@@ -11,57 +11,46 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    function isExistingOwner(userId) {
-      return resource != null && isOwner(userId);
-    }
-
     function isAdmin() {
-      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
-    }
-
-    function isApproved(userId) {
-      return get(/databases/$(database)/documents/students/$(userId)).data.isApproved == true;
+      return isSignedIn() && (request.auth.token.email == 'rraghabbarik@gmail.com');
     }
 
     match /students/{studentUid} {
       allow get: if true;
-      allow list: if isAdmin() || request.query.limit == 1; 
-      
-      allow create: if isOwner(studentUid) && request.resource.data.id == studentUid && request.resource.data.isApproved == false;
-      allow update: if (isExistingOwner(studentUid) && request.resource.data.id == resource.data.id && request.resource.data.isApproved == resource.data.isApproved) || isAdmin();
+      allow list: if isAdmin();
+      allow create: if isOwner(studentUid);
+      allow update: if isOwner(studentUid) || isAdmin();
       allow delete: if isAdmin();
 
       match /results/{resultId} {
-        allow get, list: if true; 
-        allow create, update, delete: if isAdmin();
+        allow get, list: if true;
+        allow write: if isAdmin();
       }
     }
 
     match /exams/{examId} {
       allow get, list: if true;
-      allow create, update, delete: if isAdmin();
+      allow write: if isAdmin();
     }
 
     match /studyMaterials/{materialId} {
       allow get, list: if true;
-      allow create, update, delete: if isAdmin();
+      allow write: if isAdmin();
     }
 
     match /notices/{noticeId} {
       allow get, list: if true;
-      allow create, update, delete: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    match /support_inquiries/{inquiryId} {
+      allow create: if true;
+      allow read, list, delete, update: if isAdmin();
     }
 
     match /settings/{settingId} {
       allow read: if true;
       allow write: if isAdmin();
-    }
-
-    match /roles_admin/{adminUid} {
-      allow get: if isOwner(adminUid);
-      allow list: if false;
-      allow create: if isOwner(adminUid);
-      allow update, delete: if false;
     }
   }
 }
