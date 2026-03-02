@@ -41,7 +41,7 @@ export default function TechBackground() {
       <motion.div 
         animate={{ scale: [1, 1.1, 1], opacity: [0.1, 0.2, 0.1] }}
         transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-[20%] right-[35%] text-accent"
+        className="absolute top-[20%] right-[35%] text-secondary"
       >
         <Chip size={32} />
       </motion.div>

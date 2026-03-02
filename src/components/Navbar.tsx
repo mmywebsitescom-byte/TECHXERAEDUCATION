@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect } from 'react'
@@ -19,9 +18,9 @@ export const TechXeraLogo = ({ className, customUrl }: { className?: string; cus
     ) : (
       <svg viewBox="0 0 100 100" className="w-full h-full p-1" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <linearGradient id="cyan-glow" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#0AC4E0" />
-            <stop offset="100%" stopColor="#0992C2" />
+          <linearGradient id="primary-glow" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#B87C4C" />
+            <stop offset="100%" stopColor="#A8BBA3" />
           </linearGradient>
         </defs>
         
@@ -46,21 +45,21 @@ export const TechXeraLogo = ({ className, customUrl }: { className?: string; cus
 
         <g transform="translate(32, 40)">
           <path d="M0 0 Q3 0 3 3" stroke="white" strokeWidth="2" strokeLinecap="round" />
-          <path d="M6 0 Q9 0 9 3" stroke="url(#cyan-glow)" strokeWidth="2" strokeLinecap="round" />
+          <path d="M6 0 Q9 0 9 3" stroke="url(#primary-glow)" strokeWidth="2" strokeLinecap="round" />
           <path d="M12 0 Q15 0 15 3" stroke="white" strokeWidth="2" strokeLinecap="round" />
-          <path d="M18 3 Q18 0 21 0" stroke="url(#cyan-glow)" strokeWidth="2" strokeLinecap="round" />
+          <path d="M18 3 Q18 0 21 0" stroke="url(#primary-glow)" strokeWidth="2" strokeLinecap="round" />
           <path d="M24 0 Q27 0 27 3" stroke="white" strokeWidth="2" strokeLinecap="round" />
           
           <path d="M1 8 L4 5 L1 2" stroke="white" strokeWidth="1.5" />
-          <path d="M8 2 L12 5 L8 8" stroke="url(#cyan-glow)" strokeWidth="1.5" />
+          <path d="M8 2 L12 5 L8 8" stroke="url(#primary-glow)" strokeWidth="1.5" />
           <path d="M17 8 L21 5 L17 2" stroke="white" strokeWidth="1.5" />
-          <path d="M24 2 L28 5 L24 8" stroke="url(#cyan-glow)" strokeWidth="1.5" />
+          <path d="M24 2 L28 5 L24 8" stroke="url(#primary-glow)" strokeWidth="1.5" />
           
-          <path d="M0 18 Q3 18 3 15" stroke="url(#cyan-glow)" strokeWidth="2" strokeLinecap="round" />
+          <path d="M0 18 Q3 18 3 15" stroke="url(#primary-glow)" strokeWidth="2" strokeLinecap="round" />
           <path d="M6 18 Q9 18 9 15" stroke="white" strokeWidth="2" strokeLinecap="round" />
-          <path d="M12 18 Q15 18 15 15" stroke="url(#cyan-glow)" strokeWidth="2" strokeLinecap="round" />
+          <path d="M12 18 Q15 18 15 15" stroke="url(#primary-glow)" strokeWidth="2" strokeLinecap="round" />
           <path d="M18 15 Q18 18 21 18" stroke="white" strokeWidth="2" strokeLinecap="round" />
-          <path d="M24 18 Q27 18 27 15" stroke="url(#cyan-glow)" strokeWidth="2" strokeLinecap="round" />
+          <path d="M24 18 Q27 18 27 15" stroke="url(#primary-glow)" strokeWidth="2" strokeLinecap="round" />
         </g>
       </svg>
     )}
@@ -81,10 +80,8 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // Strict email-based admin check
   const isAdmin = user?.email === AUTHORIZED_ADMIN_EMAIL
 
-  // Site branding
   const settingsRef = useMemoFirebase(() => (db ? doc(db, 'settings', 'site-config') : null), [db])
   const { data: settings } = useDoc(settingsRef)
 

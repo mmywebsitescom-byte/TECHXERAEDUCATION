@@ -4,47 +4,47 @@
 
 @layer base {
   :root {
-    /* Color Hunt Palette: #1B3C53 #234C6A #456882 #E3E3E3 */
-    --background: 0 0% 89%; /* #E3E3E3 - Light Silver Background */
-    --foreground: 205 51% 12%; /* Deep Navy for text */
+    /* Color Hunt Palette: #A8BBA3 #F7F4EA #EBD9D1 #B87C4C */
+    --background: 48 44% 95%; /* #F7F4EA - Soft Cream */
+    --foreground: 26 30% 15%; /* Deep Earthy Brown for text */
     --card: 0 0% 100%;
-    --card-foreground: 205 51% 12%;
+    --card-foreground: 26 30% 15%;
     --popover: 0 0% 100%;
-    --popover-foreground: 205 51% 12%;
-    --primary: 205 51% 22%; /* #1B3C53 - Deep Slate Blue */
+    --popover-foreground: 26 30% 15%;
+    --primary: 26 44% 51%; /* #B87C4C - Terracotta */
     --primary-foreground: 0 0% 100%;
-    --secondary: 205 50% 28%; /* #234C6A - Medium Blue */
-    --secondary-foreground: 0 0% 100%;
-    --muted: 205 20% 80%;
-    --muted-foreground: 205 30% 35%;
-    --accent: 205 30% 39%; /* #456882 - Greyish Blue */
-    --accent-foreground: 0 0% 100%;
+    --secondary: 107 13% 69%; /* #A8BBA3 - Sage Green */
+    --secondary-foreground: 26 30% 15%;
+    --muted: 18 32% 87%; /* #EBD9D1 - Pale Rose */
+    --muted-foreground: 26 20% 40%;
+    --accent: 18 32% 87%; 
+    --accent-foreground: 26 30% 15%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 205 20% 80%;
-    --input: 205 20% 80%;
-    --ring: 205 51% 22%;
+    --border: 18 20% 85%;
+    --input: 18 20% 85%;
+    --ring: 26 44% 51%;
     --radius: 1.5rem;
   }
 
   .dark {
-    --background: 205 51% 8%;
-    --foreground: 0 0% 89%;
-    --card: 205 51% 10%;
-    --card-foreground: 0 0% 89%;
-    --popover: 205 51% 10%;
-    --popover-foreground: 0 0% 89%;
-    --primary: 205 50% 28%;
+    --background: 26 30% 10%;
+    --foreground: 48 44% 95%;
+    --card: 26 30% 12%;
+    --card-foreground: 48 44% 95%;
+    --popover: 26 30% 12%;
+    --popover-foreground: 48 44% 95%;
+    --primary: 26 44% 51%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 205 51% 22%;
+    --secondary: 107 13% 50%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 205 30% 15%;
-    --muted-foreground: 205 10% 70%;
-    --accent: 205 30% 39%;
+    --muted: 26 20% 20%;
+    --muted-foreground: 48 10% 70%;
+    --accent: 26 20% 25%;
     --accent-foreground: 0 0% 100%;
-    --border: 205 30% 20%;
-    --input: 205 30% 20%;
-    --ring: 205 50% 28%;
+    --border: 26 20% 25%;
+    --input: 26 20% 25%;
+    --ring: 26 44% 51%;
   }
 }
 
@@ -65,8 +65,8 @@
     @apply bg-white/60 backdrop-blur-xl border border-white/40 shadow-xl;
   }
   .tech-grid {
-    background-image: linear-gradient(to right, rgba(27, 60, 83, 0.05) 1px, transparent 1px),
-                      linear-gradient(to bottom, rgba(27, 60, 83, 0.05) 1px, transparent 1px);
+    background-image: linear-gradient(to right, rgba(184, 124, 76, 0.05) 1px, transparent 1px),
+                      linear-gradient(to bottom, rgba(184, 124, 76, 0.05) 1px, transparent 1px);
     background-size: 60px 60px;
   }
 }
