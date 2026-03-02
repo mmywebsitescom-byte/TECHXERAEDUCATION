@@ -8,8 +8,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { CalendarDays, Clock, MapPin, GraduationCap, Loader2, Sparkles } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase'
-import { collection, query, orderBy } from 'firebase/firestore'
+import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from '@/firebase'
+import { collection, query, orderBy, doc } from 'firebase/firestore'
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
 import SplitText from '@/components/SplitText'
@@ -40,16 +40,24 @@ export default function ExamsPage() {
     setMounted(true)
   }, [])
 
+  // Fetch student profile for approval check
+  const studentRef = useMemoFirebase(() => (user && db ? doc(db, 'students', user.uid) : null), [user, db])
+  const { data: profile, isLoading: isProfileLoading } = useDoc(studentRef)
+
   useEffect(() => {
     if (mounted && !isUserLoading && !user) {
       router.push('/login?redirect=/exams')
     }
-  }, [user, isUserLoading, router, mounted])
+    // Redirect to dashboard if not approved
+    if (mounted && !isUserLoading && !isProfileLoading && user && profile && !profile.isApproved) {
+      router.push('/dashboard')
+    }
+  }, [user, isUserLoading, isProfileLoading, profile, router, mounted])
 
   const examsQuery = useMemoFirebase(() => query(collection(db, 'exams'), orderBy('examDate', 'asc')), [db])
   const { data: exams, isLoading } = useCollection(examsQuery)
 
-  if (!mounted || isUserLoading) {
+  if (!mounted || isUserLoading || isProfileLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }}>
@@ -59,7 +67,7 @@ export default function ExamsPage() {
     )
   }
 
-  if (!user) return null
+  if (!user || !profile?.isApproved) return null
 
   return (
     <div className="min-h-screen relative flex flex-col">

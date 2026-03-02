@@ -10,8 +10,8 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { ClipboardList, Search, Loader2, Download, AlertCircle, RefreshCw } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useFirestore, useUser } from '@/firebase'
-import { collection, query, where, getDocs, DocumentData, limit } from 'firebase/firestore'
+import { useFirestore, useUser, useDoc, useMemoFirebase } from '@/firebase'
+import { collection, query, where, getDocs, DocumentData, limit, doc } from 'firebase/firestore'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import SplitText from '@/components/SplitText'
@@ -35,11 +35,19 @@ export default function ResultsLookupPage() {
     setMounted(true)
   }, [])
 
+  // Fetch student profile for approval check
+  const studentRef = useMemoFirebase(() => (user && db ? doc(db, 'students', user.uid) : null), [user, db])
+  const { data: profile, isLoading: isProfileLoading } = useDoc(studentRef)
+
   useEffect(() => {
     if (mounted && !isUserLoading && !user) {
       router.push('/login?redirect=/results')
     }
-  }, [user, isUserLoading, router, mounted])
+    // Redirect to dashboard if not approved
+    if (mounted && !isUserLoading && !isProfileLoading && user && profile && !profile.isApproved) {
+      router.push('/dashboard')
+    }
+  }, [user, isUserLoading, isProfileLoading, profile, router, mounted])
 
   const handleLookup = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -108,7 +116,7 @@ export default function ResultsLookupPage() {
     }
   }
 
-  if (!mounted || isUserLoading) {
+  if (!mounted || isUserLoading || isProfileLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }}>
@@ -118,7 +126,7 @@ export default function ResultsLookupPage() {
     )
   }
 
-  if (!user) return null
+  if (!user || !profile?.isApproved) return null
 
   return (
     <div className="min-h-screen relative flex flex-col">

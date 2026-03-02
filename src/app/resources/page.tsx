@@ -8,8 +8,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Search, Download, FileText, Loader2, BookOpen } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase'
-import { collection, query, orderBy } from 'firebase/firestore'
+import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from '@/firebase'
+import { collection, query, orderBy, doc } from 'firebase/firestore'
 import { useRouter } from 'next/navigation'
 import SplitText from '@/components/SplitText'
 import { TechXeraLogo } from '@/components/Navbar'
@@ -25,11 +25,19 @@ export default function ResourcesPage() {
     setMounted(true)
   }, [])
 
+  // Fetch student profile for approval check
+  const studentRef = useMemoFirebase(() => (user && db ? doc(db, 'students', user.uid) : null), [user, db])
+  const { data: profile, isLoading: isProfileLoading } = useDoc(studentRef)
+
   useEffect(() => {
     if (mounted && !isUserLoading && !user) {
       router.push('/login?redirect=/resources')
     }
-  }, [user, isUserLoading, router, mounted])
+    // Redirect to dashboard if not approved
+    if (mounted && !isUserLoading && !isProfileLoading && user && profile && !profile.isApproved) {
+      router.push('/dashboard')
+    }
+  }, [user, isUserLoading, isProfileLoading, profile, router, mounted])
 
   const resourcesQuery = useMemoFirebase(() => db ? query(collection(db, 'studyMaterials'), orderBy('uploadDate', 'desc')) : null, [db])
   const { data: resources, isLoading: isResourcesLoading } = useCollection(resourcesQuery)
@@ -40,7 +48,7 @@ export default function ResourcesPage() {
     r.materialType.toLowerCase().includes(searchTerm.toLowerCase())
   ) || []
 
-  if (!mounted || isUserLoading) {
+  if (!mounted || isUserLoading || isProfileLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }}>
@@ -50,7 +58,7 @@ export default function ResourcesPage() {
     )
   }
 
-  if (!user) return null
+  if (!user || !profile?.isApproved) return null
 
   return (
     <div className="min-h-screen bg-background text-foreground">
