@@ -15,7 +15,11 @@ import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Shield, List, GraduationCap, Megaphone, Loader2, UserCheck, Trash2, Users, CheckCircle, XCircle, Search, ClipboardList, CreditCard, Edit2, ArrowLeft, Target, Award, Settings as SettingsIcon, Image as ImageIcon, Globe, LogOut, Home, Lock, FileText, Download, Calendar, LifeBuoy, MessageSquare, Camera, ShieldCheck, Clock } from 'lucide-react'
+import { 
+  Plus, Shield, List, GraduationCap, Megaphone, Loader2, 
+  Trash2, Users, CheckCircle, XCircle, Search, ClipboardList, 
+  Settings as SettingsIcon, LogOut, Home, Clock, Camera, ShieldCheck 
+} from 'lucide-react'
 import { useFirestore, useUser, useDoc, useMemoFirebase, useCollection, useAuth } from '@/firebase'
 import { doc, setDoc, collection, deleteDoc, query, orderBy, updateDoc, getDoc, where } from 'firebase/firestore'
 import { signOut } from 'firebase/auth'
@@ -46,12 +50,6 @@ export default function AdminPage() {
   // Scanner Ref
   const scannerRef = useRef<Html5QrcodeScanner | null>(null)
 
-  // Editing IDs
-  const [editingResultId, setEditingResultId] = useState<string | null>(null)
-  const [editingNoticeId, setEditingNoticeId] = useState<string | null>(null)
-  const [editingMaterialId, setEditingMaterialId] = useState<string | null>(null)
-  const [editingExamId, setEditingExamId] = useState<string | null>(null)
-
   // Form States
   const [newNotice, setNewNotice] = useState({ title: '', description: '', isUrgent: false })
   const [newMaterial, setNewMaterial] = useState({ title: '', description: '', subject: '', semester: '', fileUrl: '', thumbnailUrl: '', materialType: 'Notes' })
@@ -59,7 +57,6 @@ export default function AdminPage() {
   const [newExam, setNewExam] = useState({ title: '', semester: '', examDate: new Date().toISOString().split('T')[0], status: 'upcoming', totalMarks: 100 })
   const [newSession, setNewSession] = useState({ className: '', date: format(new Date(), 'yyyy-MM-dd'), startTime: '09:00', endTime: '10:00', description: '' })
   
-  // Site Config State
   const [siteConfig, setSiteConfig] = useState({ 
     siteName: 'TechXera', 
     logoUrl: '', 
@@ -108,11 +105,6 @@ export default function AdminPage() {
   const selectedExam = exams?.find(e => e.id === selectedExamId)
   const activeSession = sessions?.find(s => s.id === selectedSessionId)
 
-  const resultsQuery = useMemoFirebase(() => (db && selectedStudentId && isAuthorizedAdmin) ? query(collection(db, 'students', selectedStudentId, 'results'), orderBy('examDate', 'desc')) : null, [db, selectedStudentId, isAuthorizedAdmin])
-  const { data: allStudentResults } = useCollection(resultsQuery)
-  
-  const selectedStudentExamResults = allStudentResults?.filter(r => r.examId === selectedExamId) || []
-
   // Attendance for presence monitor
   const attendanceQuery = useMemoFirebase(() => (db && selectedSessionId && isAuthorizedAdmin ? query(collection(db, 'attendance'), where('sessionId', '==', selectedSessionId)) : null), [db, selectedSessionId, isAuthorizedAdmin])
   const { data: sessionAttendance } = useCollection(attendanceQuery)
@@ -132,126 +124,126 @@ export default function AdminPage() {
     }
   }, [user, isUserLoading, router, mounted, toast])
 
-  // Scanner Logic
+  // Scanner Logic - Safe Initialization
   useEffect(() => {
-    if (!isScannerOpen || !selectedSessionId || !db) return
+    let scanner: Html5QrcodeScanner | null = null;
 
-    const scanner = new Html5QrcodeScanner(
-      "admin-portal-qr-reader",
-      { fps: 15, qrbox: { width: 250, height: 250 } },
-      false
-    )
-
-    const onScanSuccess = async (decodedText: string) => {
-      try {
-        const studentData = JSON.parse(decodedText)
-        if (studentData.type !== 'techxera-student-id') return
-
-        const recordId = `${studentData.uid}_${selectedSessionId}`
-        const attendanceRef = doc(db, 'attendance', recordId)
-        
-        // Optimistic check
-        const existing = await getDoc(attendanceRef)
-        if (existing.exists()) {
-          toast({ title: "Already Recorded", description: `${studentData.name} is already present.` })
-          return
+    if (isScannerOpen && selectedSessionId && db) {
+      // Use a timeout to ensure the DOM element is rendered inside the Dialog
+      const timer = setTimeout(() => {
+        const element = document.getElementById("admin-portal-qr-reader");
+        if (!element) {
+          console.warn("Scanner element not found in DOM yet.");
+          return;
         }
 
-        const payload = {
-          id: recordId,
-          sessionId: selectedSessionId,
-          studentUid: studentData.uid,
-          studentId: studentData.studentId,
-          studentName: studentData.name,
-          timestamp: new Date().toISOString(),
-          status: 'present'
+        scanner = new Html5QrcodeScanner(
+          "admin-portal-qr-reader",
+          { fps: 15, qrbox: { width: 250, height: 250 } },
+          false
+        );
+
+        const onScanSuccess = async (decodedText: string) => {
+          try {
+            const studentData = JSON.parse(decodedText);
+            if (studentData.type !== 'techxera-student-id') return;
+
+            const recordId = `${studentData.uid}_${selectedSessionId}`;
+            const attendanceRef = doc(db, 'attendance', recordId);
+            
+            const existing = await getDoc(attendanceRef);
+            if (existing.exists()) {
+              toast({ title: "Already Recorded", description: `${studentData.name} is already marked present.` });
+              return;
+            }
+
+            const payload = {
+              id: recordId,
+              sessionId: selectedSessionId,
+              studentUid: studentData.uid,
+              studentId: studentData.studentId,
+              studentName: studentData.name,
+              timestamp: new Date().toISOString(),
+              status: 'present'
+            };
+
+            setDoc(attendanceRef, payload)
+              .then(() => {
+                toast({ title: "Check-in Successful", description: `Student: ${studentData.name}` });
+              })
+              .catch(async (error) => {
+                const permissionError = new FirestorePermissionError({
+                  path: attendanceRef.path,
+                  operation: 'create',
+                  requestResourceData: payload,
+                } satisfies SecurityRuleContext);
+                errorEmitter.emit('permission-error', permissionError);
+              });
+
+          } catch (err) {
+            console.warn("QR parsing failed:", err);
+          }
+        };
+
+        scanner.render(onScanSuccess, (err) => {});
+        scannerRef.current = scanner;
+      }, 300); // 300ms delay for dialog animation
+
+      return () => {
+        clearTimeout(timer);
+        if (scannerRef.current) {
+          scannerRef.current.clear().catch(e => console.warn("Scanner cleanup warning:", e));
+          scannerRef.current = null;
         }
-
-        setDoc(attendanceRef, payload)
-          .then(() => {
-            toast({ title: "Check-in Successful", description: `Student: ${studentData.name}` })
-          })
-          .catch(async (error) => {
-            const permissionError = new FirestorePermissionError({
-              path: attendanceRef.path,
-              operation: 'create',
-              requestResourceData: payload,
-            } satisfies SecurityRuleContext);
-            errorEmitter.emit('permission-error', permissionError);
-          })
-
-      } catch (err) {
-        console.warn("QR parsing failed or data invalid:", err)
-      }
+      };
     }
-
-    scanner.render(onScanSuccess, (err) => {})
-    scannerRef.current = scanner
-
-    return () => {
-      if (scannerRef.current) {
-        scannerRef.current.clear().catch(e => console.warn(e))
-        scannerRef.current = null
-      }
-    }
-  }, [isScannerOpen, selectedSessionId, db, toast])
+  }, [isScannerOpen, selectedSessionId, db, toast]);
 
   const handleLogout = async () => {
-    await signOut(auth)
-    router.push('/')
+    await signOut(auth);
+    router.push('/');
   }
 
-  const handleDelete = async (coll: string, id: string, subColl?: string, subId?: string) => {
-    if (!db || !isAuthorizedAdmin) return
+  const handleDelete = async (coll: string, id: string) => {
+    if (!db || !isAuthorizedAdmin) return;
     try {
-      const docRef = subColl && subId ? doc(db, 'students', id, subColl, subId) : doc(db, coll, id);
-      await deleteDoc(docRef)
-      toast({ title: "Record Removed" })
+      await deleteDoc(doc(db, coll, id));
+      toast({ title: "Record Removed" });
     } catch (err: any) {
-      toast({ variant: "destructive", title: "Delete Failed", description: err.message })
-    }
-  }
-
-  const handleMarkResolved = async (id: string) => {
-    if (!db || !isAuthorizedAdmin) return
-    try {
-      await updateDoc(doc(db, 'support_inquiries', id), { status: 'resolved' })
-      toast({ title: "Inquiry Resolved" })
-    } catch (err: any) {
-      toast({ variant: "destructive", title: "Update Failed", description: err.message })
+      toast({ variant: "destructive", title: "Delete Failed", description: err.message });
     }
   }
 
   const handleApproveStudent = async (uid: string, approved: boolean) => {
-    if (!db || !isAuthorizedAdmin) return
+    if (!db || !isAuthorizedAdmin) return;
     try {
       await updateDoc(doc(db, 'students', uid), { 
         isApproved: approved,
         status: approved ? 'approved' : 'rejected'
-      })
-      toast({ title: approved ? "Student Approved" : "Student Restricted" })
+      });
+      toast({ title: approved ? "Student Approved" : "Student Restricted" });
     } catch (err: any) {
-      toast({ variant: "destructive", title: "Update Failed", description: err.message })
+      toast({ variant: "destructive", title: "Update Failed", description: err.message });
     }
   }
 
   const handleCreateSession = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!db) return
-    const id = Math.random().toString(36).substring(2, 9)
+    e.preventDefault();
+    if (!db) return;
+    const id = Math.random().toString(36).substring(2, 9);
     const payload = {
       ...newSession,
       id,
       status: 'active',
       createdAt: new Date().toISOString(),
-    }
-    const docRef = doc(db, 'sessions', id)
+    };
+    const docRef = doc(db, 'sessions', id);
     
     setDoc(docRef, payload)
       .then(() => {
-        toast({ title: "Session Established" })
-        setIsDialogOpen(false)
-        setNewSession({ className: '', date: format(new Date(), 'yyyy-MM-dd'), startTime: '09:00', endTime: '10:00', description: '' })
+        toast({ title: "Session Established" });
+        setIsDialogOpen(false);
+        setNewSession({ className: '', date: format(new Date(), 'yyyy-MM-dd'), startTime: '09:00', endTime: '10:00', description: '' });
       })
       .catch(async (error) => {
         const permissionError = new FirestorePermissionError({
@@ -260,138 +252,11 @@ export default function AdminPage() {
           requestResourceData: payload,
         } satisfies SecurityRuleContext);
         errorEmitter.emit('permission-error', permissionError);
-      })
-  }
-
-  const resetDialogs = () => {
-    setEditingResultId(null)
-    setEditingNoticeId(null)
-    setEditingMaterialId(null)
-    setEditingExamId(null)
-    setNewNotice({ title: '', description: '', isUrgent: false })
-    setNewMaterial({ title: '', description: '', subject: '', semester: '', fileUrl: '', thumbnailUrl: '', materialType: 'Notes' })
-    setNewExam({ title: '', semester: '', examDate: new Date().toISOString().split('T')[0], status: 'upcoming', totalMarks: 100 })
-  }
-
-  const handleCreateNotice = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!db || !isAuthorizedAdmin) return
-    setIsCreating(true)
-    const docRef = editingNoticeId ? doc(db, 'notices', editingNoticeId) : doc(collection(db, 'notices'))
-    const payload = { ...newNotice, id: docRef.id, publishDate: new Date().toISOString() }
-    
-    setDoc(docRef, payload, { merge: true })
-      .then(() => {
-        toast({ title: "Notice Published" })
-        setIsDialogOpen(false)
-        resetDialogs()
-      })
-      .catch(async (error) => {
-        const permissionError = new FirestorePermissionError({
-          path: docRef.path,
-          operation: 'write',
-          requestResourceData: payload,
-        } satisfies SecurityRuleContext);
-        errorEmitter.emit('permission-error', permissionError);
-      })
-      .finally(() => setIsCreating(false))
-  }
-
-  const handleCreateMaterial = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!db || !isAuthorizedAdmin) return
-    setIsCreating(true)
-    const docRef = editingMaterialId ? doc(db, 'studyMaterials', editingMaterialId) : doc(collection(db, 'studyMaterials'))
-    const payload = { ...newMaterial, id: docRef.id, uploadDate: new Date().toISOString() }
-    
-    setDoc(docRef, payload, { merge: true })
-      .then(() => {
-        toast({ title: "Material Saved" })
-        setIsDialogOpen(false)
-        resetDialogs()
-      })
-      .catch(async (error) => {
-        const permissionError = new FirestorePermissionError({
-          path: docRef.path,
-          operation: 'write',
-          requestResourceData: payload,
-        } satisfies SecurityRuleContext);
-        errorEmitter.emit('permission-error', permissionError);
-      })
-      .finally(() => setIsCreating(false))
-  }
-
-  const handleCreateExam = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!db || !isAuthorizedAdmin) return
-    setIsCreating(true)
-    const docRef = editingExamId ? doc(db, 'exams', editingExamId) : doc(collection(db, 'exams'))
-    const payload = { ...newExam, id: docRef.id }
-    
-    setDoc(docRef, payload, { merge: true })
-      .then(() => {
-        toast({ title: "Exam Cycle Saved" })
-        setIsDialogOpen(false)
-        resetDialogs()
-      })
-      .catch(async (error) => {
-        const permissionError = new FirestorePermissionError({
-          path: docRef.path,
-          operation: 'write',
-          requestResourceData: payload,
-        } satisfies SecurityRuleContext);
-        errorEmitter.emit('permission-error', permissionError);
-      })
-      .finally(() => setIsCreating(false))
-  }
-
-  const handleUpdateSiteConfig = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!db || !isAuthorizedAdmin) return
-    setIsCreating(true)
-    setDoc(doc(db, 'settings', 'site-config'), siteConfig, { merge: true })
-      .then(() => toast({ title: "Branding Updated" }))
-      .finally(() => setIsCreating(false))
-  }
-
-  const handleSaveResult = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!db || !isAuthorizedAdmin || !selectedStudentId || !selectedExamId) return
-    setIsCreating(true)
-    const totalMarks = selectedExam?.totalMarks || 100
-    const percentage = Number(((newResult.marksObtained / totalMarks) * 100).toFixed(2))
-    const docRef = editingResultId ? doc(db, 'students', selectedStudentId, 'results', editingResultId) : doc(collection(db, 'students', selectedStudentId, 'results'))
-    
-    const payload = { 
-      ...newResult, 
-      id: docRef.id, 
-      studentId: selectedStudentId, 
-      examId: selectedExamId, 
-      examTitle: selectedExam?.title || 'General Assessment', 
-      marks: percentage, 
-      totalMarks, 
-      examDate: new Date(newResult.examDate).toISOString() 
-    }
-
-    setDoc(docRef, payload, { merge: true })
-      .then(() => {
-        toast({ title: "Record Saved" })
-        setEditingResultId(null)
-        setNewResult({ ...newResult, subject: '', marksObtained: 0, grade: '' })
-      })
-      .catch(async (error) => {
-        const permissionError = new FirestorePermissionError({
-          path: docRef.path,
-          operation: 'write',
-          requestResourceData: payload,
-        } satisfies SecurityRuleContext);
-        errorEmitter.emit('permission-error', permissionError);
-      })
-      .finally(() => setIsCreating(false))
+      });
   }
 
   if (!mounted || isUserLoading) return <div className="min-h-screen flex items-center justify-center bg-background"><Loader2 className="animate-spin text-primary" size={48} /></div>
-  if (!user || user.email?.toLowerCase() !== AUTHORIZED_ADMIN_EMAIL.toLowerCase()) return null
+  if (!user || user.email?.toLowerCase() !== AUTHORIZED_ADMIN_EMAIL.toLowerCase()) return null;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -409,7 +274,7 @@ export default function AdminPage() {
           </div>
           <div className="flex flex-wrap gap-4 w-full lg:w-auto">
             <Link href="/"><Button variant="outline" className="h-14 px-6 rounded-2xl font-bold border-2"><Home className="mr-2" size={20} /> Portal Home</Button></Link>
-            <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) resetDialogs(); setIsDialogOpen(open); }}>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button disabled={['results', 'config', 'students', 'support'].includes(activeTab)} className="flex-1 lg:flex-none h-14 px-8 bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 text-white rounded-2xl font-bold transition-all active:scale-95">
                   <Plus className="mr-2" size={24} /> Create New
@@ -417,55 +282,9 @@ export default function AdminPage() {
               </DialogTrigger>
               <DialogContent className="sm:max-w-[550px] rounded-[2rem]">
                 <DialogHeader>
-                  <DialogTitle className="text-2xl font-headline font-bold">
-                    {editingNoticeId || editingMaterialId || editingExamId ? 'Edit Entry' : 'New Management Entry'}
-                  </DialogTitle>
+                  <DialogTitle className="text-2xl font-headline font-bold">New Entry</DialogTitle>
                 </DialogHeader>
-                {activeTab === 'notices' ? (
-                  <form onSubmit={handleCreateNotice} className="space-y-6 pt-6">
-                    <div className="space-y-2"><Label>Headline</Label><Input required value={newNotice.title} onChange={e => setNewNotice({ ...newNotice, title: e.target.value })} /></div>
-                    <div className="space-y-2"><Label>Message Body</Label><Textarea required value={newNotice.description} onChange={e => setNewNotice({ ...newNotice, description: e.target.value })} className="min-h-[150px]" /></div>
-                    <div className="flex items-center space-x-3 p-4 bg-muted/30 rounded-2xl"><Switch checked={newNotice.isUrgent} onCheckedChange={c => setNewNotice({ ...newNotice, isUrgent: c })} /><Label>Priority Announcement</Label></div>
-                    <Button type="submit" disabled={isCreating} className="w-full h-12 rounded-xl text-lg font-bold">
-                      {editingNoticeId ? 'Update Notice' : 'Broadcast Notice'}
-                    </Button>
-                  </form>
-                ) : activeTab === 'resources' ? (
-                  <form onSubmit={handleCreateMaterial} className="space-y-6 pt-6">
-                    <div className="space-y-2"><Label>Title</Label><Input required value={newMaterial.title} onChange={e => setNewMaterial({ ...newMaterial, title: e.target.value })} /></div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2"><Label>Subject</Label><Input required value={newMaterial.subject} onChange={e => setNewMaterial({ ...newMaterial, subject: e.target.value })} /></div>
-                      <div className="space-y-2"><Label>Semester</Label><Input required value={newMaterial.semester} onChange={e => setNewMaterial({ ...newMaterial, semester: e.target.value })} /></div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Material Type / Section</Label>
-                      <Input required placeholder="Notes, PYQ, Syllabus..." value={newMaterial.materialType} onChange={e => setNewMaterial({ ...newMaterial, materialType: e.target.value })} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-2">Resource Icon / Logo URL (Optional)</Label>
-                      <Input type="url" placeholder="https://... (SVG/PNG recommended)" value={newMaterial.thumbnailUrl} onChange={e => setNewMaterial({ ...newMaterial, thumbnailUrl: e.target.value })} />
-                    </div>
-                    <div className="space-y-2"><Label>File URL</Label><Input required type="url" value={newMaterial.fileUrl} onChange={e => setNewMaterial({ ...newMaterial, fileUrl: e.target.value })} /></div>
-                    <Button type="submit" disabled={isCreating} className="w-full h-12 rounded-xl text-lg font-bold">
-                      {editingMaterialId ? 'Update Repository' : 'Upload to Repository'}
-                    </Button>
-                  </form>
-                ) : activeTab === 'exams' ? (
-                  <form onSubmit={handleCreateExam} className="space-y-6 pt-6">
-                    <div className="space-y-2"><Label>Exam Title</Label><Input required value={newExam.title} onChange={e => setNewExam({ ...newExam, title: e.target.value })} /></div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2"><Label>Semester</Label><Input required value={newExam.semester} onChange={e => setNewExam({ ...newExam, semester: e.target.value })} /></div>
-                      <div className="space-y-2"><Label>Date</Label><Input required type="date" value={newExam.examDate} onChange={e => setNewExam({ ...newExam, examDate: e.target.value })} /></div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2"><Label>Status</Label><Select value={newExam.status} onValueChange={(val) => setNewExam({ ...newExam, status: val })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="upcoming">Upcoming</SelectItem><SelectItem value="active">Active</SelectItem><SelectItem value="completed">Completed</SelectItem></SelectContent></Select></div>
-                      <div className="space-y-2"><Label>Total Marks</Label><Input required type="number" value={newExam.totalMarks} onChange={e => setNewExam({ ...newExam, totalMarks: Number(e.target.value) })} /></div>
-                    </div>
-                    <Button type="submit" disabled={isCreating} className="w-full h-12 rounded-xl text-lg font-bold">
-                      {editingExamId ? 'Update Cycle' : 'Establish Cycle'}
-                    </Button>
-                  </form>
-                ) : activeTab === 'attendance' ? (
+                {activeTab === 'attendance' ? (
                   <form onSubmit={handleCreateSession} className="space-y-6 pt-6">
                     <div className="space-y-2"><Label>Class Name</Label><Input required value={newSession.className} onChange={e => setNewSession({...newSession, className: e.target.value})} placeholder="e.g. Computer Networks" /></div>
                     <div className="grid grid-cols-2 gap-4">
@@ -486,37 +305,9 @@ export default function AdminPage() {
             <TabsTrigger value="results" className="rounded-2xl py-4 px-8 data-[state=active]:bg-primary data-[state=active]:text-white font-bold transition-all"><GraduationCap className="mr-2" size={20} /> Results</TabsTrigger>
             <TabsTrigger value="attendance" className="rounded-2xl py-4 px-8 data-[state=active]:bg-primary data-[state=active]:text-white font-bold transition-all"><CheckCircle className="mr-2" size={20} /> Attendance</TabsTrigger>
             <TabsTrigger value="students" className="rounded-2xl py-4 px-8 data-[state=active]:bg-primary data-[state=active]:text-white font-bold transition-all"><Users className="mr-2" size={20} /> Students</TabsTrigger>
-            <TabsTrigger value="support" className="rounded-2xl py-4 px-8 data-[state=active]:bg-primary data-[state=active]:text-white font-bold transition-all"><LifeBuoy className="mr-2" size={20} /> Support Hub</TabsTrigger>
-            <TabsTrigger value="exams" className="rounded-2xl py-4 px-8 data-[state=active]:bg-primary data-[state=active]:text-white font-bold transition-all"><ClipboardList className="mr-2" size={20} /> Exams</TabsTrigger>
-            <TabsTrigger value="notices" className="rounded-2xl py-4 px-8 data-[state=active]:bg-primary data-[state=active]:text-white font-bold transition-all"><Megaphone className="mr-2" size={20} /> Notices</TabsTrigger>
-            <TabsTrigger value="resources" className="rounded-2xl py-4 px-8 data-[state=active]:bg-primary data-[state=active]:text-white font-bold transition-all"><List className="mr-2" size={20} /> Repository</TabsTrigger>
-            <TabsTrigger value="config" className="rounded-2xl py-4 px-8 data-[state=active]:bg-primary data-[state=active]:text-white font-bold transition-all"><SettingsIcon className="mr-2" size={20} /> Branding</TabsTrigger>
           </TabsList>
 
           <Card className="shadow-2xl border-none rounded-[3.5rem] overflow-hidden bg-white/90 dark:bg-card/90 backdrop-blur-md min-h-[400px]">
-            <TabsContent value="results" className="p-0 m-0">
-              <div className="p-10 border-b border-border/40 bg-muted/20">
-                <select className="h-14 w-full max-w-md rounded-2xl bg-background border border-border px-6 font-bold focus:ring-2 focus:ring-primary outline-none transition-all" value={selectedExamId || ''} onChange={e => setSelectedExamId(e.target.value)}>
-                  <option value="">-- Select Exam Cycle --</option>
-                  {exams?.map(e => <option key={e.id} value={e.id}>{e.title}</option>)}
-                </select>
-              </div>
-              <Table>
-                <TableHeader><TableRow className="bg-muted/50"><TableHead className="px-10">Student</TableHead><TableHead>Roll No</TableHead><TableHead className="text-right px-10">Operations</TableHead></TableRow></TableHeader>
-                <TableBody>
-                  {selectedExamId ? students?.map(s => (
-                    <TableRow key={s.id} className="hover:bg-primary/[0.02]">
-                      <TableCell className="px-10 font-bold text-lg">{s.firstName} {s.lastName}</TableCell>
-                      <TableCell className="font-bold text-primary">{s.studentId}</TableCell>
-                      <TableCell className="text-right px-10"><Button onClick={() => { setSelectedStudentId(s.id); setIsManageResultsOpen(true); }} variant="outline" className="rounded-xl transition-all active:scale-95">Manage Grades</Button></TableCell>
-                    </TableRow>
-                  )) : (
-                    <TableRow><TableCell colSpan={3} className="text-center py-20 italic text-muted-foreground">Select an exam cycle above to manage grades</TableCell></TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TabsContent>
-
             <TabsContent value="attendance" className="p-0 m-0">
               <div className="grid grid-cols-1 lg:grid-cols-3 divide-x border-border/40">
                 <div className="lg:col-span-2 p-8">
@@ -538,9 +329,6 @@ export default function AdminPage() {
                         </div>
                       </div>
                     ))}
-                    {(!sessions || sessions.length === 0) && (
-                      <div className="py-20 text-center text-muted-foreground italic">No class sessions defined. Create one to begin tracking attendance.</div>
-                    )}
                   </div>
                 </div>
                 <div className="p-8 bg-muted/5">
@@ -567,38 +355,6 @@ export default function AdminPage() {
               </div>
             </TabsContent>
 
-            <TabsContent value="support" className="p-0 m-0">
-              <Table>
-                <TableHeader><TableRow className="bg-muted/50"><TableHead className="px-10">Sender</TableHead><TableHead>Subject</TableHead><TableHead>Date</TableHead><TableHead>Status</TableHead><TableHead className="text-right px-10">Operations</TableHead></TableRow></TableHeader>
-                <TableBody>
-                  {inquiries?.map(iq => (
-                    <TableRow key={iq.id} className="hover:bg-primary/[0.02]">
-                      <TableCell className="px-10">
-                        <div className="font-bold">{iq.name}</div>
-                        <div className="text-xs text-muted-foreground">{iq.email}</div>
-                      </TableCell>
-                      <TableCell className="font-medium">{iq.subject}</TableCell>
-                      <TableCell className="text-xs">{iq.timestamp ? format(new Date(iq.timestamp), 'MMM d, h:mm a') : 'N/A'}</TableCell>
-                      <TableCell><Badge variant={iq.status === 'pending' ? 'destructive' : 'default'}>{iq.status}</Badge></TableCell>
-                      <TableCell className="text-right px-10 space-x-2">
-                        <Dialog>
-                          <DialogTrigger asChild><Button variant="ghost" size="icon" className="text-primary hover:bg-primary/10 transition-all"><Search size={18} /></Button></DialogTrigger>
-                          <DialogContent className="rounded-3xl">
-                            <DialogHeader><DialogTitle className="font-headline font-bold">Inquiry Details</DialogTitle></DialogHeader>
-                            <div className="space-y-4 pt-4">
-                              <div className="p-4 bg-muted/30 rounded-2xl"><p className="text-sm italic">"{iq.message}"</p></div>
-                              <div className="flex gap-4"><Button onClick={() => handleMarkResolved(iq.id)} disabled={iq.status === 'resolved'} className="flex-1 rounded-xl">Resolve Inquiry</Button></div>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete('support_inquiries', iq.id)} className="text-destructive hover:bg-destructive/10 transition-all"><Trash2 size={18} /></Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TabsContent>
-
             <TabsContent value="students" className="p-0 m-0">
               <Table>
                 <TableHeader><TableRow className="bg-muted/50"><TableHead className="px-10">Student</TableHead><TableHead>Roll No</TableHead><TableHead>Verification</TableHead><TableHead className="text-right px-10">Operations</TableHead></TableRow></TableHeader>
@@ -619,34 +375,6 @@ export default function AdminPage() {
             </TabsContent>
           </Card>
         </Tabs>
-
-        {/* Results Modal */}
-        <Dialog open={isManageResultsOpen} onOpenChange={setIsManageResultsOpen}>
-          <DialogContent className="sm:max-w-[800px] rounded-[3rem]">
-            <DialogHeader><DialogTitle className="text-2xl font-bold">Manage Grades for {selectedStudent?.firstName}</DialogTitle></DialogHeader>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 pt-6">
-              <form onSubmit={handleSaveResult} className="space-y-6 p-6 bg-muted/20 rounded-[2rem]">
-                <div className="space-y-2"><Label>Subject</Label><Input required value={newResult.subject} onChange={e => setNewResult({ ...newResult, subject: e.target.value })} /></div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2"><Label>Marks Obtained</Label><Input type="number" required value={newResult.marksObtained} onChange={e => setNewResult({...newResult, marksObtained: Number(e.target.value)})} /></div>
-                  <div className="space-y-2"><Label>Grade</Label><Input required placeholder="A+, B..." value={newResult.grade} onChange={e => setNewResult({...newResult, grade: e.target.value})} /></div>
-                </div>
-                <Button type="submit" disabled={isCreating} className="w-full h-12 bg-primary font-bold rounded-xl">Save Result</Button>
-              </form>
-              <div className="space-y-4">
-                <h3 className="font-bold flex items-center justify-between">Records <Badge variant="secondary">{selectedStudentExamResults.length}</Badge></h3>
-                <div className="max-h-[400px] overflow-y-auto space-y-3 pr-2">
-                  {selectedStudentExamResults.map(res => (
-                    <div key={res.id} className="p-4 border rounded-2xl flex justify-between items-center bg-white dark:bg-black/20">
-                      <div><p className="font-bold">{res.subject}</p><p className="text-xs text-muted-foreground">{res.grade} ({res.marks}%)</p></div>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete('students', selectedStudentId!, 'results', res.id)} className="text-destructive"><Trash2 size={16} /></Button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
 
         {/* Admin Scanner Modal */}
         <Dialog open={isScannerOpen} onOpenChange={setIsScannerOpen}>
