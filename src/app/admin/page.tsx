@@ -315,20 +315,20 @@ export default function AdminPage() {
     <div className="min-h-screen bg-background text-foreground">
       <Navbar />
       
-      <main className="max-w-7xl mx-auto p-6 md:p-10 pt-48 pb-20">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-12">
+      <main className="max-w-7xl mx-auto p-6 md:p-10 pt-56 pb-20">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8 mb-16">
           <div className="flex items-center gap-6">
-            <div className="p-5 bg-primary text-white rounded-[2rem] shadow-2xl shadow-primary/20">
+            <div className="p-5 bg-primary text-white rounded-[2rem] shadow-2xl shadow-primary/20 shrink-0">
               <Shield size={36} />
             </div>
-            <div>
-              <h1 className="text-5xl font-headline font-bold tracking-tighter">Admin Central</h1>
-              <p className="text-muted-foreground font-medium">Identity: <span className="text-primary">{user.email}</span></p>
+            <div className="space-y-1">
+              <h1 className="text-4xl md:text-5xl font-headline font-bold tracking-tighter leading-tight">Admin Central</h1>
+              <p className="text-muted-foreground font-medium text-sm md:text-base">Identity: <span className="text-primary font-bold">{user.email}</span></p>
             </div>
           </div>
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-wrap gap-4 w-full lg:w-auto">
             {!isAdmin && (
-              <Button onClick={handleGrantAdmin} variant="secondary" className="h-14 px-8 shadow-xl shadow-secondary/20 bg-secondary text-white hover:bg-secondary/90 rounded-2xl font-bold">
+              <Button onClick={handleGrantAdmin} variant="secondary" className="flex-1 lg:flex-none h-14 px-8 shadow-xl shadow-secondary/20 bg-secondary text-white hover:bg-secondary/90 rounded-2xl font-bold">
                 <UserCheck className="mr-2" size={20} /> Elevate Privileges
               </Button>
             )}
@@ -337,7 +337,7 @@ export default function AdminPage() {
               <DialogTrigger asChild>
                 <Button 
                   disabled={!isAdmin || activeTab === 'results' || activeTab === 'config'} 
-                  className="h-14 px-8 bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 text-white rounded-2xl font-bold"
+                  className="flex-1 lg:flex-none h-14 px-8 bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 text-white rounded-2xl font-bold"
                 >
                   <Plus className="mr-2" size={24} /> Create New
                 </Button>
