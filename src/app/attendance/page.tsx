@@ -8,16 +8,19 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { QrCode, ShieldCheck, AlertCircle, Clock, Calendar, CheckCircle2, Loader2, TrendingUp } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { QrCode, ShieldCheck, AlertCircle, Clock, Calendar, CheckCircle2, Loader2, TrendingUp, User } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase'
 import { doc, collection, query, where } from 'firebase/firestore'
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
 import SplitText from '@/components/SplitText'
+import { QRCodeSVG } from 'qrcode.react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 export default function AttendancePage() {
   const [mounted, setMounted] = useState(false)
+  const [isIDModalOpen, setIsIDModalOpen] = useState(false)
   const { user, isUserLoading } = useUser()
   const db = useFirestore()
   const router = useRouter()
@@ -29,11 +32,9 @@ export default function AttendancePage() {
   const studentRef = useMemoFirebase(() => (user && db ? doc(db, 'students', user.uid) : null), [user, db])
   const { data: profile, isLoading: isProfileLoading } = useDoc(studentRef)
 
-  // Removed orderBy from query to avoid composite index requirement
   const attendanceQuery = useMemoFirebase(() => (user && db ? query(collection(db, 'attendance'), where('studentUid', '==', user.uid)) : null), [user, db])
   const { data: attendance, isLoading: isAttendanceLoading } = useCollection(attendanceQuery)
 
-  // Handle sorting client-side
   const sortedAttendance = useMemo(() => {
     if (!attendance) return [];
     return [...attendance].sort((a, b) => {
@@ -59,7 +60,6 @@ export default function AttendancePage() {
 
   if (!user) return null
 
-  // If student is not approved, show pending state
   if (profile && !profile.isApproved) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
@@ -72,7 +72,7 @@ export default function AttendancePage() {
               </div>
               <h2 className="text-4xl font-headline font-bold mb-4">Verification Required</h2>
               <p className="text-muted-foreground text-lg mb-8 leading-relaxed">
-                Your profile is currently under review. Attendance tracking and scanning will be available once your registration is approved by the campus administrator.
+                Your profile is currently under review. Identity QR generation will be available once your registration is approved.
               </p>
               <Button onClick={() => router.push('/')} variant="outline" className="rounded-xl h-12 px-8 font-bold">
                 Back to Home
@@ -96,25 +96,25 @@ export default function AttendancePage() {
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 mb-16">
           <div className="space-y-4">
              <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-primary/10 text-primary rounded-full text-xs font-bold uppercase tracking-widest">
-              <ShieldCheck size={16} /> Identity Verified
+              <ShieldCheck size={16} /> Campus Identity Verified
             </div>
             <h1 className="text-5xl md:text-7xl font-headline font-bold tracking-tighter">
               <SplitText 
-                text="Attendance Hub"
+                text="Presence Tracker"
                 tag="span"
                 duration={0.6}
                 delay={30}
               />
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl font-medium leading-relaxed">
-              Track your campus presence and verify session participation in real-time.
+              Show your identity QR to the campus administrator to verify your class attendance.
             </p>
           </div>
           <Button 
-            onClick={() => router.push('/attendance/scan')}
+            onClick={() => setIsIDModalOpen(true)}
             className="h-16 px-10 bg-primary text-white hover:bg-primary/90 rounded-[2rem] text-lg font-bold shadow-2xl shadow-primary/20 transition-all hover:scale-105 active:scale-95"
           >
-            <QrCode className="mr-3" /> Mark Presence Now
+            <QrCode className="mr-3" /> Show My Identity QR
           </Button>
         </div>
 
@@ -142,20 +142,20 @@ export default function AttendancePage() {
                   <div className="p-6 bg-destructive/10 rounded-[2rem] border border-destructive/20 flex gap-4">
                     <AlertCircle className="text-destructive shrink-0" />
                     <p className="text-sm font-bold leading-tight text-destructive">
-                      WARNING: You are below the 75% threshold. Regular attendance is required for exam eligibility.
+                      WARNING: Attendance below 75%. Eligibility for examinations may be restricted.
                     </p>
                   </div>
                 )}
 
                 <div className="grid grid-cols-2 gap-4 pt-4">
                   <div className="p-6 bg-muted/30 rounded-3xl border border-white/40">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Total Scans</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Verified Scans</p>
                     <p className="text-2xl font-black text-foreground">{attendance?.length || 0}</p>
                   </div>
                   <div className="p-6 bg-muted/30 rounded-3xl border border-white/40">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Status</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Standing</p>
                     <p className={`text-sm font-black uppercase ${isBelowThreshold ? 'text-destructive' : 'text-green-500'}`}>
-                      {isBelowThreshold ? 'Critical' : 'Good Standing'}
+                      {isBelowThreshold ? 'At Risk' : 'Elite'}
                     </p>
                   </div>
                 </div>
@@ -163,11 +163,11 @@ export default function AttendancePage() {
             </Card>
 
             <div className="p-8 bg-primary/5 rounded-[3rem] border border-primary/10 flex items-start gap-4">
-              <CheckCircle2 className="text-primary shrink-0 mt-1" size={20} />
+              <User className="text-primary shrink-0 mt-1" size={20} />
               <div className="space-y-1">
-                <p className="text-xs font-bold text-foreground">Verified Presence</p>
+                <p className="text-xs font-bold text-foreground">Digital Credential</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Your attendance is digitally signed and verified using rotating security tokens during class sessions.
+                  Your identity QR is uniquely linked to your student profile. Only authorized campus scanners can read and record your attendance.
                 </p>
               </div>
             </div>
@@ -178,24 +178,24 @@ export default function AttendancePage() {
             <Card className="glass border-none rounded-[3.5rem] shadow-xl overflow-hidden min-h-[500px]">
               <CardHeader className="p-10 border-b border-border/20 bg-white/30">
                 <CardTitle className="text-2xl font-headline font-bold flex items-center gap-3">
-                  <Clock className="text-primary" /> Session History
+                  <Clock className="text-primary" /> Verified History
                 </CardTitle>
-                <CardDescription>Records of your successfully scanned attendance sessions</CardDescription>
+                <CardDescription>Logs of sessions successfully recorded by campus administrators</CardDescription>
               </CardHeader>
               <CardContent className="p-0">
                 {isAttendanceLoading ? (
                   <div className="py-32 flex flex-col items-center justify-center gap-4">
                     <Loader2 className="animate-spin text-primary" size={32} />
-                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Retrieving logs...</p>
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Accessing Logs...</p>
                   </div>
                 ) : sortedAttendance && sortedAttendance.length > 0 ? (
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow className="bg-muted/20 border-b border-border/10">
-                          <TableHead className="px-10 py-6 font-black text-[10px] uppercase tracking-widest">Class Session</TableHead>
+                          <TableHead className="px-10 py-6 font-black text-[10px] uppercase tracking-widest">Class / Session ID</TableHead>
                           <TableHead className="py-6 font-black text-[10px] uppercase tracking-widest">Date</TableHead>
-                          <TableHead className="py-6 font-black text-[10px] uppercase tracking-widest">Time</TableHead>
+                          <TableHead className="py-6 font-black text-[10px] uppercase tracking-widest">Verified At</TableHead>
                           <TableHead className="px-10 py-6 text-right font-black text-[10px] uppercase tracking-widest">Status</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -217,7 +217,7 @@ export default function AttendancePage() {
                             </td>
                             <td className="px-10 py-6 text-right">
                               <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-500/10 text-green-500 rounded-full text-[10px] font-black uppercase tracking-widest">
-                                <CheckCircle2 size={12} /> Present
+                                <CheckCircle2 size={12} /> Verified
                               </div>
                             </td>
                           </motion.tr>
@@ -230,9 +230,9 @@ export default function AttendancePage() {
                     <div className="p-6 bg-muted/20 rounded-full mb-6">
                       <Calendar size={48} className="text-muted-foreground/30" />
                     </div>
-                    <h3 className="text-xl font-headline font-bold text-muted-foreground mb-2">No Attendance Records</h3>
+                    <h3 className="text-xl font-headline font-bold text-muted-foreground mb-2">No Verified Records</h3>
                     <p className="text-muted-foreground max-w-sm font-medium text-sm leading-relaxed">
-                      You haven't scanned any session QR codes yet. Head to your classroom to mark your attendance!
+                      Present your ID QR to the campus administrator during class sessions to mark your attendance.
                     </p>
                   </div>
                 )}
@@ -241,6 +241,41 @@ export default function AttendancePage() {
           </div>
         </div>
       </main>
+
+      {/* Identity QR Modal */}
+      <Dialog open={isIDModalOpen} onOpenChange={setIsIDModalOpen}>
+        <DialogContent className="sm:max-w-md rounded-[3rem] p-10">
+          <DialogHeader className="text-center">
+            <DialogTitle className="text-2xl font-headline font-bold mb-2">Campus Identity QR</DialogTitle>
+            <p className="text-muted-foreground">Present this code to the admin scanner</p>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-8 py-6">
+            <div className="relative p-6 bg-white rounded-[2rem] shadow-2xl">
+              <QRCodeSVG 
+                value={JSON.stringify({
+                  uid: user.uid,
+                  studentId: profile?.studentId,
+                  name: `${profile?.firstName} ${profile?.lastName}`,
+                  type: 'techxera-student-id'
+                })}
+                size={250}
+                level="H"
+                includeMargin
+              />
+            </div>
+            
+            <div className="w-full space-y-2 text-center">
+              <p className="font-bold text-xl">{profile?.firstName} {profile?.lastName}</p>
+              <p className="text-primary font-black uppercase tracking-widest text-xs">ID: {profile?.studentId}</p>
+            </div>
+
+            <div className="p-4 bg-primary/5 rounded-2xl w-full flex items-center gap-3 text-xs text-primary border border-primary/20">
+              <ShieldCheck size={16} />
+              <p>Secure identity token. Attendance is committed instantly upon admin scan.</p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

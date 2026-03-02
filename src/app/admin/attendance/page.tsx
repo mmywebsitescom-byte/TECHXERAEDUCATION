@@ -1,8 +1,8 @@
 
 "use client"
 
-import React, { useState, useEffect, useMemo } from 'react'
-import Navbar, { TechXeraLogo } from '@/components/Navbar'
+import React, { useState, useEffect, useRef } from 'react'
+import Navbar from '@/components/Navbar'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -11,24 +11,24 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { 
-  Plus, Users, QrCode, Clock, Calendar, 
-  Trash2, Play, CheckCircle2, Loader2, Download,
-  ArrowRight, ShieldCheck, AlertCircle
+  Plus, QrCode, Clock, Calendar, 
+  Trash2, Loader2, ShieldCheck, Camera,
+  CheckCircle2, AlertCircle, RefreshCw, ArrowLeft
 } from 'lucide-react'
 import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase'
-import { collection, doc, setDoc, deleteDoc, query, orderBy, updateDoc, where } from 'firebase/firestore'
+import { collection, doc, setDoc, deleteDoc, query, orderBy, where, getDoc } from 'firebase/firestore'
 import { useToast } from '@/hooks/use-toast'
 import { format } from 'date-fns'
-import { QRCodeSVG } from 'qrcode.react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog'
+import { Html5QrcodeScanner } from 'html5-qrcode'
 
 const AUTHORIZED_ADMIN_EMAIL = 'rraghabbarik@gmail.com'
 
 export default function AdminAttendancePage() {
   const [mounted, setMounted] = useState(false)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [isQRModalOpen, setIsQRModalOpen] = useState(false)
+  const [isScannerOpen, setIsScannerOpen] = useState(false)
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
   const [newSession, setNewSession] = useState({
     className: '',
@@ -37,9 +37,8 @@ export default function AdminAttendancePage() {
     endTime: '10:00',
     description: ''
   })
-  const [dynamicToken, setDynamicToken] = useState('')
-  const [countdown, setCountdown] = useState(20)
-
+  
+  const scannerRef = useRef<Html5QrcodeScanner | null>(null)
   const { user, isUserLoading } = useUser()
   const db = useFirestore()
   const { toast } = useToast()
@@ -54,33 +53,6 @@ export default function AdminAttendancePage() {
   const attendanceQuery = useMemoFirebase(() => (db && selectedSessionId ? query(collection(db, 'attendance'), where('sessionId', '==', selectedSessionId)) : null), [db, selectedSessionId])
   const { data: attendance } = useCollection(attendanceQuery)
 
-  // Token rotation logic
-  useEffect(() => {
-    if (!selectedSessionId || !isQRModalOpen) return
-
-    const rotateToken = () => {
-      const newToken = Math.random().toString(36).substring(2, 15)
-      setDynamicToken(newToken)
-      setCountdown(20)
-      
-      const sessionRef = doc(db, 'sessions', selectedSessionId)
-      updateDoc(sessionRef, { dynamicToken: newToken, status: 'active' })
-    }
-
-    rotateToken()
-    const timer = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          rotateToken()
-          return 20
-        }
-        return prev - 1
-      })
-    }, 1000)
-
-    return () => clearInterval(timer)
-  }, [selectedSessionId, isQRModalOpen, db])
-
   const handleCreateSession = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!db) return
@@ -89,9 +61,8 @@ export default function AdminAttendancePage() {
       await setDoc(doc(db, 'sessions', id), {
         ...newSession,
         id,
-        status: 'upcoming',
+        status: 'active',
         createdAt: new Date().toISOString(),
-        dynamicToken: ''
       })
       toast({ title: "Session Created", description: "Class session added to registry." })
       setIsDialogOpen(false)
@@ -117,6 +88,57 @@ export default function AdminAttendancePage() {
     }
   }
 
+  // Scanner Logic
+  useEffect(() => {
+    if (!isScannerOpen || !selectedSessionId) return
+
+    const scanner = new Html5QrcodeScanner(
+      "admin-qr-reader",
+      { fps: 10, qrbox: { width: 250, height: 250 } },
+      false
+    )
+
+    const onScanSuccess = async (decodedText: string) => {
+      try {
+        const studentData = JSON.parse(decodedText)
+        if (studentData.type !== 'techxera-student-id') return
+
+        const recordId = `${studentData.uid}_${selectedSessionId}`
+        const attendanceRef = doc(db, 'attendance', recordId)
+        
+        const existing = await getDoc(attendanceRef)
+        if (existing.exists()) {
+          toast({ title: "Already Marked", description: `${studentData.name} is already present.` })
+          return
+        }
+
+        await setDoc(attendanceRef, {
+          id: recordId,
+          sessionId: selectedSessionId,
+          studentUid: studentData.uid,
+          studentId: studentData.studentId,
+          studentName: studentData.name,
+          timestamp: new Date().toISOString(),
+          status: 'present'
+        })
+
+        toast({ title: "Attendance Success", description: `Marked ${studentData.name} as present.` })
+      } catch (err) {
+        console.error("Scan error:", err)
+      }
+    }
+
+    scanner.render(onScanSuccess, (err) => {})
+    scannerRef.current = scanner
+
+    return () => {
+      if (scannerRef.current) {
+        scannerRef.current.clear().catch(e => console.warn(e))
+        scannerRef.current = null
+      }
+    }
+  }, [isScannerOpen, selectedSessionId, db, toast])
+
   const activeSession = sessions?.find(s => s.id === selectedSessionId)
 
   if (!mounted || isUserLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-primary" size={48} /></div>
@@ -128,8 +150,8 @@ export default function AdminAttendancePage() {
       <main className="max-w-7xl mx-auto p-6 pt-32 pb-24 space-y-12">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="space-y-2">
-            <h1 className="text-4xl md:text-5xl font-headline font-bold tracking-tighter">Attendance Hub</h1>
-            <p className="text-muted-foreground font-medium">Manage class sessions and real-time scanning.</p>
+            <h1 className="text-4xl md:text-5xl font-headline font-bold tracking-tighter text-primary">Attendance Console</h1>
+            <p className="text-muted-foreground font-medium">Create sessions and scan student identity codes.</p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
@@ -169,20 +191,18 @@ export default function AdminAttendancePage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
             <h2 className="text-2xl font-bold font-headline flex items-center gap-2">
-              <Calendar className="text-primary" size={24} /> Recent Sessions
+              <Calendar className="text-primary" size={24} /> Active Sessions
             </h2>
             <div className="grid gap-4">
               {sessionsLoading ? (
                 <div className="py-20 flex justify-center"><Loader2 className="animate-spin" /></div>
               ) : sessions?.map((session) => (
-                <Card key={session.id} className="border-none bg-white dark:bg-card/40 rounded-3xl shadow-sm hover:shadow-md transition-all group">
+                <Card key={session.id} className={`border-none ${selectedSessionId === session.id ? 'ring-2 ring-primary bg-primary/5' : 'bg-white dark:bg-card/40'} rounded-3xl shadow-sm transition-all`}>
                   <CardContent className="p-6 flex items-center justify-between gap-6">
                     <div className="space-y-1">
                       <div className="flex items-center gap-3">
                         <h3 className="font-bold text-xl">{session.className}</h3>
-                        <Badge variant={session.status === 'active' ? 'default' : 'secondary'}>
-                          {session.status}
-                        </Badge>
+                        <Badge variant="secondary">Active</Badge>
                       </div>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground font-medium">
                         <span className="flex items-center gap-1"><Clock size={14} /> {session.startTime} - {session.endTime}</span>
@@ -193,13 +213,11 @@ export default function AdminAttendancePage() {
                       <Button 
                         onClick={() => {
                           setSelectedSessionId(session.id)
-                          setIsQRModalOpen(true)
+                          setIsScannerOpen(true)
                         }}
-                        size="icon" 
-                        variant="ghost" 
-                        className="rounded-xl text-primary hover:bg-primary/10"
+                        className="rounded-xl bg-primary hover:bg-primary/90"
                       >
-                        <QrCode />
+                        <Camera className="mr-2" size={18} /> Open Scanner
                       </Button>
                       <Button 
                         onClick={() => handleDeleteSession(session.id)}
@@ -219,7 +237,7 @@ export default function AdminAttendancePage() {
           <div className="space-y-8">
             <Card className="glass border-none rounded-[2.5rem] shadow-xl overflow-hidden">
               <CardHeader className="bg-primary/5 border-b p-8">
-                <CardTitle className="text-xl">Live Insights</CardTitle>
+                <CardTitle className="text-xl">Presence Monitor</CardTitle>
                 <CardDescription>Stats for selected session</CardDescription>
               </CardHeader>
               <CardContent className="p-8 space-y-8">
@@ -233,8 +251,8 @@ export default function AdminAttendancePage() {
                       <Progress value={((attendance?.length || 0) / 100) * 100} className="h-2" />
                     </div>
                     <div className="space-y-4">
-                      <h4 className="font-bold text-sm uppercase tracking-widest text-muted-foreground">Present Students</h4>
-                      <div className="max-h-[300px] overflow-y-auto space-y-2 pr-2">
+                      <h4 className="font-bold text-sm uppercase tracking-widest text-muted-foreground">Successfully Scanned</h4>
+                      <div className="max-h-[400px] overflow-y-auto space-y-2 pr-2">
                         {attendance?.map(record => (
                           <div key={record.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-xl border border-white/40">
                             <div className="text-sm font-bold">{record.studentName}</div>
@@ -246,7 +264,7 @@ export default function AdminAttendancePage() {
                   </>
                 ) : (
                   <div className="py-12 text-center text-muted-foreground italic">
-                    Select a session QR to view live stats.
+                    Select a class session to begin scanning student identity codes.
                   </div>
                 )}
               </CardContent>
@@ -255,47 +273,22 @@ export default function AdminAttendancePage() {
         </div>
       </main>
 
-      {/* Dynamic QR Modal */}
-      <Dialog open={isQRModalOpen} onOpenChange={setIsQRModalOpen}>
+      {/* Admin Scanner Modal */}
+      <Dialog open={isScannerOpen} onOpenChange={setIsScannerOpen}>
         <DialogContent className="sm:max-w-md rounded-[3rem] p-10">
           <DialogHeader className="text-center">
-            <DialogTitle className="text-2xl font-headline font-bold mb-2">{activeSession?.className}</DialogTitle>
-            <p className="text-muted-foreground">Students must scan this code to mark attendance</p>
+            <DialogTitle className="text-2xl font-headline font-bold mb-2">Scanning: {activeSession?.className}</DialogTitle>
+            <p className="text-muted-foreground">Scan student's identity QR code to mark present</p>
           </DialogHeader>
           <div className="flex flex-col items-center gap-8 py-6">
-            <div className="relative p-6 bg-white rounded-[2rem] shadow-2xl">
-              <QRCodeSVG 
-                value={JSON.stringify({
-                  sessionId: selectedSessionId,
-                  token: dynamicToken,
-                  type: 'techxera-attendance'
-                })}
-                size={250}
-                level="H"
-                includeMargin
-              />
-              <motion.div 
-                key={dynamicToken}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="absolute inset-0 flex items-center justify-center pointer-events-none"
-              >
-                <div className="w-12 h-12 bg-primary/10 rounded-full animate-ping" />
-              </motion.div>
+            <div id="admin-qr-reader" className="w-full rounded-[2rem] overflow-hidden border-4 border-primary/20 bg-muted/20 min-h-[300px]" />
+            <div className="p-4 bg-primary/5 rounded-2xl w-full flex items-center gap-3 text-xs text-primary border border-primary/20">
+              <ShieldCheck size={16} />
+              <p>Secure Admin Mode. Attendance is recorded instantly upon successful student ID validation.</p>
             </div>
-            
-            <div className="w-full space-y-4">
-              <div className="flex justify-between items-center px-4">
-                <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Token Rotates In</span>
-                <span className="text-xl font-black text-primary font-code">{countdown}s</span>
-              </div>
-              <Progress value={(countdown / 20) * 100} className="h-1.5" />
-            </div>
-
-            <div className="p-4 bg-muted/50 rounded-2xl w-full flex items-center gap-3 text-xs text-muted-foreground border">
-              <ShieldCheck className="text-primary" size={16} />
-              <p>Security protocol active. Codes expire after 20s.</p>
-            </div>
+            <Button onClick={() => setIsScannerOpen(false)} variant="outline" className="w-full rounded-xl">
+              Close Scanner
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
