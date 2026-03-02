@@ -186,7 +186,7 @@ export default function AdminPage() {
       subject: material.subject,
       semester: material.semester,
       fileUrl: material.fileUrl,
-      materialType: material.materialType
+      materialType: material.materialType || 'Notes'
     })
     setIsDialogOpen(true)
   }
@@ -407,6 +407,10 @@ export default function AdminPage() {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2"><Label>Academic Subject</Label><Input required value={newMaterial.subject} onChange={e => setNewMaterial({ ...newMaterial, subject: e.target.value })} /></div>
                       <div className="space-y-2"><Label>Term / Semester</Label><Input required value={newMaterial.semester} onChange={e => setNewMaterial({ ...newMaterial, semester: e.target.value })} /></div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Material Type / Section</Label>
+                      <Input required placeholder="e.g. Notes, PYQ, Syllabus" value={newMaterial.materialType} onChange={e => setNewMaterial({ ...newMaterial, materialType: e.target.value })} />
                     </div>
                     <div className="space-y-2"><Label>Resource Description</Label><Textarea placeholder="Briefly describe the content..." value={newMaterial.description} onChange={e => setNewMaterial({ ...newMaterial, description: e.target.value })} className="min-h-[100px]" /></div>
                     <div className="space-y-2"><Label>Source / File URL</Label><Input required type="url" placeholder="https://..." value={newMaterial.fileUrl} onChange={e => setNewMaterial({ ...newMaterial, fileUrl: e.target.value })} /></div>
