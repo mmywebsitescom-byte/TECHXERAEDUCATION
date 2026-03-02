@@ -4,47 +4,48 @@
 
 @layer base {
   :root {
-    /* Color Hunt Palette: #A8BBA3 #F7F4EA #EBD9D1 #B87C4C */
-    --background: 48 44% 95%; /* #F7F4EA - Soft Cream */
-    --foreground: 26 30% 15%; /* Deep Earthy Brown for text */
-    --card: 0 0% 100%;
-    --card-foreground: 26 30% 15%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 26 30% 15%;
-    --primary: 26 44% 51%; /* #B87C4C - Terracotta */
+    /* Color Hunt Palette: #280905 (BG) #740A03 (Secondary) #C3110C (Primary) #E6501B (Accent) */
+    --background: 8 78% 9%; /* #280905 - Deep Maroon/Charcoal */
+    --foreground: 16 100% 98%; /* High contrast light text */
+    --card: 8 60% 12%; /* Slightly lighter than background */
+    --card-foreground: 16 100% 98%;
+    --popover: 8 60% 12%;
+    --popover-foreground: 16 100% 98%;
+    --primary: 2 88% 41%; /* #C3110C - Crimson Red */
     --primary-foreground: 0 0% 100%;
-    --secondary: 107 13% 69%; /* #A8BBA3 - Sage Green */
-    --secondary-foreground: 26 30% 15%;
-    --muted: 18 32% 87%; /* #EBD9D1 - Pale Rose */
-    --muted-foreground: 26 20% 40%;
-    --accent: 18 32% 87%; 
-    --accent-foreground: 26 30% 15%;
+    --secondary: 4 95% 23%; /* #740A03 - Deep Red */
+    --secondary-foreground: 0 0% 100%;
+    --muted: 8 40% 20%;
+    --muted-foreground: 16 20% 70%;
+    --accent: 16 79% 50%; /* #E6501B - Burnt Orange */
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 18 20% 85%;
-    --input: 18 20% 85%;
-    --ring: 26 44% 51%;
+    --border: 8 40% 25%;
+    --input: 8 40% 25%;
+    --ring: 2 88% 41%;
     --radius: 1.5rem;
   }
 
   .dark {
-    --background: 26 30% 10%;
-    --foreground: 48 44% 95%;
-    --card: 26 30% 12%;
-    --card-foreground: 48 44% 95%;
-    --popover: 26 30% 12%;
-    --popover-foreground: 48 44% 95%;
-    --primary: 26 44% 51%;
+    /* Keeping dark mode similar but potentially even deeper */
+    --background: 8 78% 5%;
+    --foreground: 16 100% 98%;
+    --card: 8 60% 8%;
+    --card-foreground: 16 100% 98%;
+    --popover: 8 60% 8%;
+    --popover-foreground: 16 100% 98%;
+    --primary: 2 88% 41%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 107 13% 50%;
+    --secondary: 4 95% 23%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 26 20% 20%;
-    --muted-foreground: 48 10% 70%;
-    --accent: 26 20% 25%;
+    --muted: 8 40% 15%;
+    --muted-foreground: 16 20% 70%;
+    --accent: 16 79% 50%;
     --accent-foreground: 0 0% 100%;
-    --border: 26 20% 25%;
-    --input: 26 20% 25%;
-    --ring: 26 44% 51%;
+    --border: 8 40% 20%;
+    --input: 8 40% 20%;
+    --ring: 2 88% 41%;
   }
 }
 
@@ -53,7 +54,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-body selection:bg-primary/20 antialiased;
+    @apply bg-background text-foreground font-body selection:bg-primary/30 antialiased;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-headline tracking-tight;
@@ -62,11 +63,11 @@
 
 @layer utilities {
   .glass {
-    @apply bg-white/60 backdrop-blur-xl border border-white/40 shadow-xl;
+    @apply bg-card/40 backdrop-blur-xl border border-white/10 shadow-2xl;
   }
   .tech-grid {
-    background-image: linear-gradient(to right, rgba(184, 124, 76, 0.05) 1px, transparent 1px),
-                      linear-gradient(to bottom, rgba(184, 124, 76, 0.05) 1px, transparent 1px);
+    background-image: linear-gradient(to right, rgba(230, 80, 27, 0.03) 1px, transparent 1px),
+                      linear-gradient(to bottom, rgba(230, 80, 27, 0.03) 1px, transparent 1px);
     background-size: 60px 60px;
   }
 }
