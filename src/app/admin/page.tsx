@@ -86,6 +86,12 @@ export default function AdminPage() {
   const studentsQuery = useMemoFirebase(() => (db && isAuthorizedAdmin ? query(collection(db, 'students'), orderBy('enrollmentDate', 'desc')) : null), [db, isAuthorizedAdmin])
   const { data: allStudents } = useCollection(studentsQuery)
 
+  const supportQuery = useMemoFirebase(() => (db && isAuthorizedAdmin ? query(collection(db, 'support_inquiries'), orderBy('timestamp', 'desc')) : null), [db, isAuthorizedAdmin])
+  const { data: supportInquiries } = useCollection(supportQuery)
+
+  const noticesQuery = useMemoFirebase(() => (db && isAuthorizedAdmin ? query(collection(db, 'notices'), orderBy('publishDate', 'desc')) : null), [db, isAuthorizedAdmin])
+  const { data: allNotices } = useCollection(noticesQuery)
+
   const handleLogout = async () => {
     await signOut(auth);
     router.push('/');
@@ -137,14 +143,46 @@ export default function AdminPage() {
     }
   }
 
-  // Scanner Logic
+  const handleApproveStudent = async (studentId: string) => {
+    if (!db) return
+    const docRef = doc(db, 'students', studentId)
+    updateDoc(docRef, { isApproved: true, status: 'approved' })
+      .then(() => toast({ title: "Student Approved" }))
+      .catch(async (err) => {
+        const permissionError = new FirestorePermissionError({
+          path: docRef.path,
+          operation: 'update',
+          requestResourceData: { isApproved: true, status: 'approved' },
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+      })
+  }
+
+  const handleResolveInquiry = async (id: string) => {
+    if (!db) return
+    const docRef = doc(db, 'support_inquiries', id)
+    updateDoc(docRef, { status: 'resolved' })
+      .then(() => toast({ title: "Inquiry Resolved" }))
+      .catch(async (err) => {
+        const permissionError = new FirestorePermissionError({
+          path: docRef.path,
+          operation: 'update',
+          requestResourceData: { status: 'resolved' },
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+      })
+  }
+
+  // Scanner Logic with proper mounting checks
   useEffect(() => {
+    let scanner: Html5QrcodeScanner | null = null;
+    
     if (isScannerOpen && selectedSessionId && db) {
       const timer = setTimeout(() => {
         const element = document.getElementById("admin-portal-qr-reader");
         if (!element) return;
 
-        const scanner = new Html5QrcodeScanner(
+        scanner = new Html5QrcodeScanner(
           "admin-portal-qr-reader",
           { fps: 15, qrbox: { width: 250, height: 250 } },
           false
@@ -188,7 +226,7 @@ export default function AdminPage() {
               });
 
           } catch (err) {
-            console.warn("Scan error:", err)
+            console.warn("Scan processing error:", err)
           }
         }
 
@@ -223,7 +261,7 @@ export default function AdminPage() {
             <h1 className="text-4xl md:text-5xl font-headline font-bold tracking-tighter">Admin Central</h1>
             <div className="flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full w-fit">
               <Shield size={14} className="text-primary" />
-              <p className="text-primary font-bold text-[10px] uppercase tracking-widest">ROOT: {user.email}</p>
+              <p className="text-primary font-bold text-[10px] uppercase tracking-widest">ROOT ACCESS: {user.email}</p>
             </div>
           </div>
         </div>
@@ -366,8 +404,8 @@ export default function AdminPage() {
                 <div className="h-[400px] flex flex-col items-center justify-center gap-8">
                   <GraduationCap size={80} className="text-primary/20" />
                   <div className="text-center space-y-2">
-                    <p className="text-2xl font-headline font-bold">Select an exam cycle above to manage grades</p>
-                    <p className="text-muted-foreground max-w-sm">Use the "Create New" button to add transcripts for students.</p>
+                    <p className="text-2xl font-headline font-bold">Results Management Hub</p>
+                    <p className="text-muted-foreground max-w-sm">Use the "Create New" button to add transcripts for students. Search for roll numbers to update existing scores.</p>
                   </div>
                 </div>
               </TabsContent>
@@ -375,8 +413,8 @@ export default function AdminPage() {
               <TabsContent value="students" className="mt-0">
                 <div className="space-y-8">
                   <div className="flex justify-between items-center">
-                    <h3 className="text-2xl font-headline font-bold">Registered Students</h3>
-                    <Badge variant="outline">{allStudents?.length || 0} Total Records</Badge>
+                    <h3 className="text-2xl font-headline font-bold">Student Registry</h3>
+                    <Badge variant="outline">{allStudents?.length || 0} Records Found</Badge>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {allStudents?.map(student => (
@@ -385,21 +423,19 @@ export default function AdminPage() {
                           <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center font-bold text-primary">
                             {student.firstName[0]}{student.lastName[0]}
                           </div>
-                          <div>
-                            <p className="font-bold">{student.firstName} {student.lastName}</p>
-                            <p className="text-xs text-muted-foreground">{student.studentId}</p>
+                          <div className="overflow-hidden">
+                            <p className="font-bold truncate">{student.firstName} {student.lastName}</p>
+                            <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">{student.studentId}</p>
                           </div>
                         </div>
-                        <div className="flex items-center justify-between pt-2 border-t border-border/10">
-                          <Badge variant={student.isApproved ? 'default' : 'secondary'} className={student.isApproved ? 'bg-green-500' : ''}>
+                        <div className="flex items-center justify-between pt-4 border-t border-border/10">
+                          <Badge variant={student.isApproved ? 'default' : 'secondary'} className={student.isApproved ? 'bg-green-500' : 'bg-orange-500'}>
                             {student.status}
                           </Badge>
                           {!student.isApproved && (
-                             <Button size="sm" className="h-8 rounded-lg" onClick={async () => {
-                               if (!db) return;
-                               await updateDoc(doc(db, 'students', student.id), { isApproved: true, status: 'approved' });
-                               toast({ title: "Student Approved" });
-                             }}>Approve</Button>
+                             <Button size="sm" className="h-9 px-4 rounded-xl font-bold bg-primary" onClick={() => handleApproveStudent(student.id)}>
+                               Approve
+                             </Button>
                           )}
                         </div>
                       </Card>
@@ -409,26 +445,69 @@ export default function AdminPage() {
               </TabsContent>
 
               <TabsContent value="support" className="mt-0">
-                 <div className="h-[400px] flex flex-col items-center justify-center gap-8">
-                  <LifeBuoy size={80} className="text-primary/20" />
-                  <p className="text-2xl font-headline font-bold">Support Hub Active</p>
-                  <p className="text-muted-foreground">Manage and resolve student technical inquiries in real-time.</p>
+                 <div className="space-y-8">
+                    <h3 className="text-2xl font-headline font-bold">Support Queue</h3>
+                    <div className="grid gap-4">
+                      {supportInquiries?.map(inquiry => (
+                        <Card key={inquiry.id} className="bg-background/50 rounded-2xl border-none p-6 flex flex-col md:flex-row justify-between gap-6">
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-3">
+                              <Badge className={inquiry.status === 'pending' ? 'bg-orange-500' : 'bg-green-500'}>{inquiry.status}</Badge>
+                              <h4 className="font-bold text-lg">{inquiry.subject}</h4>
+                            </div>
+                            <p className="text-sm text-muted-foreground">{inquiry.message}</p>
+                            <p className="text-[10px] font-black text-primary/50 uppercase tracking-widest">FROM: {inquiry.name} ({inquiry.email})</p>
+                          </div>
+                          {inquiry.status === 'pending' && (
+                            <Button variant="outline" size="sm" className="h-10 rounded-xl" onClick={() => handleResolveInquiry(inquiry.id)}>Resolve</Button>
+                          )}
+                        </Card>
+                      ))}
+                      {supportInquiries?.length === 0 && (
+                        <div className="h-[300px] flex flex-col items-center justify-center text-muted-foreground italic">No pending inquiries.</div>
+                      )}
+                    </div>
+                 </div>
+              </TabsContent>
+
+              <TabsContent value="notices" className="mt-0">
+                <div className="space-y-8">
+                   <div className="flex justify-between items-center">
+                    <h3 className="text-2xl font-headline font-bold">Official Bulletins</h3>
+                    <Button size="sm" className="rounded-xl"><Plus className="mr-2" size={16} /> New Notice</Button>
+                  </div>
+                  <div className="grid gap-4">
+                    {allNotices?.map(notice => (
+                      <Card key={notice.id} className="bg-background/50 rounded-2xl border-none p-6">
+                        <div className="flex justify-between items-start mb-2">
+                          <h4 className="font-bold text-lg">{notice.title}</h4>
+                          <Badge variant={notice.isUrgent ? 'destructive' : 'default'}>{notice.isUrgent ? 'URGENT' : 'NORMAL'}</Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{notice.description}</p>
+                        <p className="text-[10px] font-black uppercase text-primary/40 mt-4">{format(new Date(notice.publishDate), 'PPP')}</p>
+                      </Card>
+                    ))}
+                  </div>
                 </div>
               </TabsContent>
               
               <TabsContent value="branding" className="mt-0">
                 <div className="max-w-xl space-y-8">
-                  <h3 className="text-2xl font-headline font-bold">Site Configuration</h3>
+                  <h3 className="text-2xl font-headline font-bold">Campus Configuration</h3>
                   <div className="space-y-6">
                     <div className="space-y-2">
                       <Label>Campus Site Name</Label>
-                      <Input value={dbSettings?.siteName || ''} readOnly className="bg-muted h-12 rounded-xl" />
+                      <Input value={dbSettings?.siteName || 'TechXera Campus'} readOnly className="bg-muted h-12 rounded-xl" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Hero Title</Label>
+                      <Input value={dbSettings?.heroTitle || ''} readOnly className="bg-muted h-12 rounded-xl" />
                     </div>
                     <div className="space-y-2">
                       <Label>Primary Logo URL</Label>
                       <Input value={dbSettings?.logoUrl || ''} readOnly className="bg-muted h-12 rounded-xl" />
                     </div>
-                    <p className="text-xs text-muted-foreground italic">Site configuration is managed via root configuration collection.</p>
+                    <p className="text-xs text-muted-foreground italic">Root configuration is managed via protected database collection.</p>
                   </div>
                 </div>
               </TabsContent>
