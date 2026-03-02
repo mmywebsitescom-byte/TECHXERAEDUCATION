@@ -13,6 +13,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 import { 
   Shield, GraduationCap, Users, CheckCircle, 
   Search, ClipboardList, Settings as SettingsIcon, 
@@ -45,6 +46,7 @@ export default function AdminPage() {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [selectedExamCycle, setSelectedExamCycle] = useState<string | null>(null)
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null)
   
   // Create Session State
   const [newSession, setNewSession] = useState({
@@ -481,74 +483,92 @@ export default function AdminPage() {
     }
   }
 
-  // Scanner Logic - Integrated Scan-to-Log Workflow
+  // Scanner Logic - Integrated Scan-to-Log Workflow with Permission Check
   useEffect(() => {
     let scanner: Html5QrcodeScanner | null = null;
     
     if (isScannerOpen && selectedSessionId && db) {
-      const timer = setTimeout(() => {
-        const element = document.getElementById("admin-attendance-scan-reader");
-        if (!element) return;
+      const initScanner = async () => {
+        try {
+          // Request camera permission explicitly
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          stream.getTracks().forEach(track => track.stop()); // Release the stream immediately after permission
+          setHasCameraPermission(true);
 
-        scanner = new Html5QrcodeScanner(
-          "admin-attendance-scan-reader",
-          { fps: 15, qrbox: { width: 250, height: 250 } },
-          false
-        );
+          const timer = setTimeout(() => {
+            const element = document.getElementById("admin-attendance-scan-reader");
+            if (!element) return;
 
-        const onScanSuccess = async (decodedText: string) => {
-          try {
-            const studentData = JSON.parse(decodedText)
-            if (studentData.type !== 'techxera-student-id') return
+            scanner = new Html5QrcodeScanner(
+              "admin-attendance-scan-reader",
+              { fps: 15, qrbox: { width: 250, height: 250 } },
+              false
+            );
 
-            const recordId = `${studentData.uid}_${selectedSessionId}`
-            const attendanceRef = doc(db, 'attendance', recordId)
-            
-            const existing = await getDoc(attendanceRef)
-            if (existing.exists()) {
-              toast({ title: "Already Logged", description: `${studentData.name} is marked present.` })
-              return
+            const onScanSuccess = async (decodedText: string) => {
+              try {
+                const studentData = JSON.parse(decodedText)
+                if (studentData.type !== 'techxera-student-id') return
+
+                const recordId = `${studentData.uid}_${selectedSessionId}`
+                const attendanceRef = doc(db, 'attendance', recordId)
+                
+                const existing = await getDoc(attendanceRef)
+                if (existing.exists()) {
+                  toast({ title: "Already Logged", description: `${studentData.name} is marked present.` })
+                  return
+                }
+
+                // Fetch session token
+                const sessionDoc = await getDoc(doc(db, 'sessions', selectedSessionId));
+                const dynamicToken = sessionDoc.exists() ? sessionDoc.data().dynamicToken : '';
+
+                const payload = {
+                  id: recordId,
+                  sessionId: selectedSessionId,
+                  studentUid: studentData.uid,
+                  studentId: studentData.studentId,
+                  studentName: studentData.name,
+                  timestamp: new Date().toISOString(),
+                  status: 'present',
+                  tokenUsed: dynamicToken
+                };
+
+                setDoc(attendanceRef, payload)
+                  .then(() => {
+                    toast({ title: "Verified", description: `Attendance recorded for ${studentData.name}` })
+                  })
+                  .catch(async (error) => {
+                    const permissionError = new FirestorePermissionError({
+                      path: attendanceRef.path,
+                      operation: 'create',
+                      requestResourceData: payload,
+                    } satisfies SecurityRuleContext);
+                    errorEmitter.emit('permission-error', permissionError);
+                  });
+
+              } catch (err) {
+                console.warn("Scan processing error:", err)
+              }
             }
 
-            // Fetch session token to satisfy potential security rule requirements
-            const sessionDoc = await getDoc(doc(db, 'sessions', selectedSessionId));
-            const dynamicToken = sessionDoc.exists() ? sessionDoc.data().dynamicToken : '';
-
-            const payload = {
-              id: recordId,
-              sessionId: selectedSessionId,
-              studentUid: studentData.uid,
-              studentId: studentData.studentId,
-              studentName: studentData.name,
-              timestamp: new Date().toISOString(),
-              status: 'present',
-              tokenUsed: dynamicToken
-            };
-
-            setDoc(attendanceRef, payload)
-              .then(() => {
-                toast({ title: "Verified", description: `Attendance recorded for ${studentData.name}` })
-              })
-              .catch(async (error) => {
-                const permissionError = new FirestorePermissionError({
-                  path: attendanceRef.path,
-                  operation: 'create',
-                  requestResourceData: payload,
-                } satisfies SecurityRuleContext);
-                errorEmitter.emit('permission-error', permissionError);
-              });
-
-          } catch (err) {
-            console.warn("Scan processing error:", err)
-          }
+            scanner.render(onScanSuccess, (err) => {})
+            scannerRef.current = scanner
+          }, 500);
+        } catch (err) {
+          console.error("Camera permission denied:", err);
+          setHasCameraPermission(false);
+          toast({
+            variant: "destructive",
+            title: "Camera Denied",
+            description: "Please allow camera access to scan student identity codes."
+          });
         }
+      }
 
-        scanner.render(onScanSuccess, (err) => {})
-        scannerRef.current = scanner
-      }, 500);
+      initScanner();
 
       return () => {
-        clearTimeout(timer);
         if (scannerRef.current) {
           scannerRef.current.clear().catch(e => console.warn(e))
           scannerRef.current = null
@@ -1042,11 +1062,30 @@ export default function AdminPage() {
           <DialogHeader className="text-center">
             <DialogTitle className="text-2xl font-headline font-bold mb-2">Scanner: {activeSession?.className}</DialogTitle>
             <DialogDescription className="text-muted-foreground font-medium text-center">
-              Position student identity QR within the frame
+              Align student identity QR within the active frame
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col items-center gap-8 py-6">
-            <div id="admin-attendance-scan-reader" className="w-full rounded-[2.5rem] overflow-hidden border-4 border-primary/20 bg-muted/20 min-h-[300px]" />
+            {hasCameraPermission === false && (
+              <Alert variant="destructive" className="rounded-2xl border-2">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Camera Required</AlertTitle>
+                <AlertDescription>
+                  Access denied. Please update browser settings to allow camera usage.
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            <div className="relative w-full">
+              <div id="admin-attendance-scan-reader" className="w-full rounded-[2.5rem] overflow-hidden border-4 border-primary/20 bg-muted/20 min-h-[300px]" />
+              {hasCameraPermission === null && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/50 backdrop-blur-sm rounded-[2.5rem] p-6 text-center">
+                  <Camera className="animate-pulse text-primary mb-4" size={48} />
+                  <p className="font-bold text-sm">Requesting Camera Access...</p>
+                </div>
+              )}
+            </div>
+
             <div className="p-5 bg-primary/5 rounded-2xl w-full flex items-center gap-4 text-xs text-primary border border-primary/20">
               <ShieldCheck size={20} className="shrink-0" />
               <p className="font-medium leading-relaxed">Secure Admin Hub. Instant verification against campus records.</p>
