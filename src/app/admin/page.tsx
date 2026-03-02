@@ -106,8 +106,8 @@ export default function AdminPage() {
   const attendanceQuery = useMemoFirebase(() => (db && selectedSessionId && isAuthorizedAdmin ? query(collection(db, 'attendance'), where('sessionId', '==', selectedSessionId)) : null), [db, selectedSessionId, isAuthorizedAdmin])
   const { data: sessionAttendance } = useCollection(attendanceQuery)
 
-  const allStudentsQuery = useMemoFirebase(() => (db && isAuthorizedAdmin ? query(collection(db, 'students'), orderBy('enrollmentDate', 'desc')) : null), [db, isAuthorizedAdmin])
-  const { data: allStudents } = useCollection(allStudentsQuery)
+  const studentsQuery = useMemoFirebase(() => (db && isAuthorizedAdmin ? query(collection(db, 'students'), orderBy('enrollmentDate', 'desc')) : null), [db, isAuthorizedAdmin])
+  const { data: allStudents } = useCollection(studentsQuery)
 
   const examsQuery = useMemoFirebase(() => (db && isAuthorizedAdmin ? query(collection(db, 'exams'), orderBy('examDate', 'desc')) : null), [db, isAuthorizedAdmin])
   const { data: allExams } = useCollection(examsQuery)
@@ -218,6 +218,16 @@ export default function AdminPage() {
         } satisfies SecurityRuleContext);
         errorEmitter.emit('permission-error', permissionError);
       })
+  }
+
+  const handleDeleteMaterial = async (id: string) => {
+    if (!db) return
+    try {
+      await deleteDoc(doc(db, 'studyMaterials', id))
+      toast({ title: "Material Removed" })
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Error", description: err.message })
+    }
   }
 
   // Scanner Logic
@@ -601,20 +611,60 @@ export default function AdminPage() {
               </TabsContent>
 
               <TabsContent value="repository" className="mt-0 space-y-8">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-2xl font-headline font-bold">Campus Archives</h3>
-                  <Button size="sm" className="rounded-xl"><Plus className="mr-2" size={16} /> Upload Material</Button>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {allMaterials?.map(item => (
-                    <Card key={item.id} className="p-6 bg-background/50 rounded-2xl border border-white/10 space-y-4">
-                      <div className="w-12 h-12 bg-primary/5 rounded-xl flex items-center justify-center"><FileText className="text-primary" /></div>
-                      <div>
-                        <h4 className="font-bold line-clamp-1">{item.title}</h4>
-                        <p className="text-xs text-muted-foreground">{item.subject}</p>
-                      </div>
-                    </Card>
-                  ))}
+                <div className="border rounded-[2.5rem] overflow-hidden bg-background/30 shadow-inner">
+                  <Table>
+                    <TableHeader className="bg-muted/50 border-b">
+                      <TableRow className="border-none hover:bg-transparent">
+                        <TableHead className="h-16 px-10 font-bold text-muted-foreground uppercase text-[10px] tracking-widest">Title</TableHead>
+                        <TableHead className="h-16 font-bold text-muted-foreground uppercase text-[10px] tracking-widest">Subject</TableHead>
+                        <TableHead className="h-16 font-bold text-muted-foreground uppercase text-[10px] tracking-widest">Type/Section</TableHead>
+                        <TableHead className="h-16 px-10 font-bold text-muted-foreground uppercase text-[10px] tracking-widest text-right">Operations</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {allMaterials && allMaterials.length > 0 ? (
+                        allMaterials.map(material => (
+                          <TableRow key={material.id} className="border-b border-border/10 hover:bg-primary/[0.02] transition-colors">
+                            <TableCell className="px-10 py-6">
+                              <p className="font-bold text-foreground">{material.title}</p>
+                            </TableCell>
+                            <TableCell className="py-6">
+                              <p className="text-muted-foreground uppercase font-medium">{material.subject}</p>
+                            </TableCell>
+                            <TableCell className="py-6">
+                              <Badge variant="outline" className="rounded-full bg-white dark:bg-black/20 text-xs px-4 border-border/40 font-medium">
+                                {material.materialType || 'Notes'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="px-10 text-right">
+                              <div className="flex justify-end gap-2">
+                                <Button variant="ghost" size="icon" className="h-10 w-10 text-primary hover:bg-primary/5 rounded-xl">
+                                  <Edit size={18} />
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="h-10 w-10 text-destructive hover:bg-destructive/5 rounded-xl"
+                                  onClick={() => handleDeleteMaterial(material.id)}
+                                >
+                                  <Trash2 size={18} />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={4} className="h-80 text-center">
+                            <div className="flex flex-col items-center gap-4 opacity-40">
+                              <BookOpen size={48} />
+                              <p className="text-muted-foreground italic font-medium">No materials found in the repository.</p>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
                 </div>
               </TabsContent>
 
