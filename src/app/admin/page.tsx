@@ -331,7 +331,7 @@ export default function AdminPage() {
     const docRef = doc(db, 'studyMaterials', id)
     setDoc(docRef, payload, { merge: true })
       .then(() => {
-        toast({ title: editingMaterial ? "Material Updated" : "Material Added" })
+        toast({ title: font-black ? "Material Updated" : "Material Added" })
         setIsMaterialDialogOpen(false)
         setEditingMaterial(null)
         setMaterialForm({
@@ -704,7 +704,7 @@ export default function AdminPage() {
                           <TableRow>
                             <TableCell colSpan={3} className="h-60 md:h-80 text-center">
                               <div className="flex flex-col items-center gap-4 opacity-40">
-                                <ClipboardList size={40} md:size={48} />
+                                <ClipboardList size={48} />
                                 <p className="text-muted-foreground italic font-medium text-sm">Select an exam cycle above to manage grades</p>
                               </div>
                             </TableCell>
@@ -739,8 +739,8 @@ export default function AdminPage() {
                             <div className="space-y-1 md:space-y-2">
                               <h4 className="font-bold text-lg md:text-2xl tracking-tight">{session.className}</h4>
                               <div className="flex items-center gap-4 md:gap-6 text-[10px] md:text-sm text-muted-foreground font-bold">
-                                <span className="flex items-center gap-1.5 md:gap-2"><Clock size={12} md:size={14} className="text-primary" /> {session.startTime}</span>
-                                <span className="flex items-center gap-1.5 md:gap-2"><CalendarIcon size={12} md:size={14} className="text-primary" /> {session.date}</span>
+                                <span className="flex items-center gap-1.5 md:gap-2"><Clock size={14} className="text-primary" /> {session.startTime}</span>
+                                <span className="flex items-center gap-1.5 md:gap-2"><CalendarIcon size={14} className="text-primary" /> {session.date}</span>
                               </div>
                             </div>
                             <div className="flex items-center gap-2 md:gap-3 w-full md:w-auto mt-2 md:mt-0">
@@ -800,7 +800,7 @@ export default function AdminPage() {
                         </div>
                       ) : (
                         <div className="h-[250px] md:h-[300px] flex flex-col items-center justify-center text-center gap-4 md:gap-6 text-muted-foreground opacity-50">
-                          <CheckCircle2 size={48} md:size={64} />
+                          <CheckCircle2 size={64} />
                           <p className="max-w-[180px] md:max-w-[200px] font-medium text-xs md:text-sm">Select a session to view live presence logs.</p>
                         </div>
                       )}
@@ -844,7 +844,7 @@ export default function AdminPage() {
                                     className="h-8 w-8 md:h-10 md:w-10 text-green-500 hover:bg-green-50 rounded-xl"
                                     onClick={() => handleApproveStudent(student.id)}
                                   >
-                                    <CheckCircle size={16} md:size={18} />
+                                    <CheckCircle size={18} />
                                   </Button>
                                 ) : (
                                   <Button 
@@ -853,7 +853,7 @@ export default function AdminPage() {
                                     className="h-8 w-8 md:h-10 md:w-10 text-orange-500 hover:bg-orange-50 rounded-xl"
                                     onClick={() => handleRejectStudent(student.id)}
                                   >
-                                    <XCircle size={16} md:size={18} />
+                                    <XCircle size={18} />
                                   </Button>
                                 )}
                                 <Button 
@@ -862,7 +862,7 @@ export default function AdminPage() {
                                   className="h-8 w-8 md:h-10 md:w-10 text-destructive hover:bg-destructive/5 rounded-xl"
                                   onClick={() => handleDeleteStudent(student.id)}
                                 >
-                                  <Trash2 size={16} md:size={18} />
+                                  <Trash2 size={18} />
                                 </Button>
                               </div>
                             </TableCell>
@@ -872,7 +872,7 @@ export default function AdminPage() {
                         <TableRow>
                           <TableCell colSpan={4} className="h-60 md:h-80 text-center">
                             <div className="flex flex-col items-center gap-4 opacity-40">
-                              <Users size={40} md:size={48} />
+                              <Users size={48} />
                               <p className="text-muted-foreground italic font-medium text-sm">No registered students found.</p>
                             </div>
                           </TableCell>
@@ -916,8 +916,8 @@ export default function AdminPage() {
                         <Badge variant="outline" className="text-[9px] uppercase">{exam.status}</Badge>
                       </div>
                       <div className="flex items-center gap-4 text-[10px] md:text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1.5"><CalendarIcon size={12} md:size={14} /> {exam.examDate}</span>
-                        <span className="flex items-center gap-1.5"><Layout size={12} md:size={14} /> {exam.semester}</span>
+                        <span className="flex items-center gap-1.5"><CalendarIcon size={14} /> {exam.examDate}</span>
+                        <span className="flex items-center gap-1.5"><Layout size={14} /> {exam.semester}</span>
                       </div>
                     </Card>
                   ))}
@@ -976,7 +976,7 @@ export default function AdminPage() {
                                   className="h-8 w-8 md:h-10 md:w-10 text-primary hover:bg-primary/5 rounded-xl"
                                   onClick={() => handleEditMaterial(material)}
                                 >
-                                  <Edit size={16} md:size={18} />
+                                  <Edit size={18} />
                                 </Button>
                                 <Button 
                                   variant="ghost" 
@@ -984,7 +984,7 @@ export default function AdminPage() {
                                   className="h-8 w-8 md:h-10 md:w-10 text-destructive hover:bg-destructive/5 rounded-xl"
                                   onClick={() => handleDeleteMaterial(material.id)}
                                 >
-                                  <Trash2 size={16} md:size={18} />
+                                  <Trash2 size={18} />
                                 </Button>
                               </div>
                             </TableCell>
@@ -994,7 +994,7 @@ export default function AdminPage() {
                         <TableRow>
                           <TableCell colSpan={4} className="h-60 md:h-80 text-center">
                             <div className="flex flex-col items-center gap-4 opacity-40">
-                              <BookOpen size={40} md:size={48} />
+                              <BookOpen size={48} />
                               <p className="text-muted-foreground italic font-medium text-sm">No materials found.</p>
                             </div>
                           </TableCell>
@@ -1088,14 +1088,14 @@ export default function AdminPage() {
               <div id="admin-attendance-scan-reader" className="w-full rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden border-4 border-primary/20 bg-muted/20 min-h-[250px] md:min-h-[300px]" />
               {hasCameraPermission === null && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/50 backdrop-blur-sm rounded-[1.5rem] md:rounded-[2.5rem] p-6 text-center">
-                  <Camera className="animate-pulse text-primary mb-4" size={40} md:size={48} />
+                  <Camera className="animate-pulse text-primary mb-4" size={48} />
                   <p className="font-bold text-[10px] md:text-sm">Requesting Camera Access...</p>
                 </div>
               )}
             </div>
 
             <div className="p-4 md:p-5 bg-primary/5 rounded-xl md:rounded-2xl w-full flex items-center gap-3 md:gap-4 text-[9px] md:text-xs text-primary border border-primary/20">
-              <ShieldCheck size={18} md:size={20} className="shrink-0" />
+              <ShieldCheck size={20} className="shrink-0" />
               <p className="font-medium leading-relaxed">Secure Admin Hub. Instant verification enabled.</p>
             </div>
             <Button onClick={() => setIsScannerOpen(false)} variant="outline" className="w-full h-10 md:h-12 rounded-xl font-bold text-xs">
