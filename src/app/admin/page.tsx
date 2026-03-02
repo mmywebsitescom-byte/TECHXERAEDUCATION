@@ -57,7 +57,7 @@ export default function AdminPage() {
   const { toast } = useToast()
   const router = useRouter()
 
-  const isAuthorizedAdmin = user?.email?.toLowerCase() === AUTHORIZED_ADMIN_EMAIL.toLowerCase()
+  const isAuthorizedAdmin = !!user && user.email?.toLowerCase() === AUTHORIZED_ADMIN_EMAIL.toLowerCase()
 
   const settingsRef = useMemoFirebase(() => (db ? doc(db, 'settings', 'site-config') : null), [db])
   const { data: dbSettings } = useDoc(settingsRef)
@@ -273,7 +273,7 @@ export default function AdminPage() {
             <Link href="/"><Button variant="outline" className="h-14 px-6 rounded-2xl font-bold border-2"><Home className="mr-2" size={20} /> Portal Home</Button></Link>
             <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) resetDialogs(); setIsDialogOpen(open); }}>
               <DialogTrigger asChild>
-                <Button disabled={['results', 'config', 'students', 'support'].includes(activeTab)} className="flex-1 lg:flex-none h-14 px-8 bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 text-white rounded-2xl font-bold">
+                <Button disabled={['results', 'config', 'students', 'support', 'support'].includes(activeTab)} className="flex-1 lg:flex-none h-14 px-8 bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 text-white rounded-2xl font-bold">
                   <Plus className="mr-2" size={24} /> Create New
                 </Button>
               </DialogTrigger>
