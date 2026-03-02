@@ -91,6 +91,15 @@ export default function AdminPage() {
     status: 'upcoming' as 'upcoming' | 'active' | 'completed'
   })
 
+  // Grade Management State
+  const [isGradeDialogOpen, setIsGradeDialogOpen] = useState(false)
+  const [selectedStudentForGrade, setSelectedStudentForGrade] = useState<any | null>(null)
+  const [gradeForm, setGradeForm] = useState({
+    subject: '',
+    marks: '',
+    grade: ''
+  })
+
   const { user, isUserLoading } = useUser()
   const auth = useAuth()
   const db = useFirestore()
@@ -136,8 +145,8 @@ export default function AdminPage() {
   const attendanceQuery = useMemoFirebase(() => (db && selectedSessionId && isAuthorizedAdmin ? query(collection(db, 'attendance'), where('sessionId', '==', selectedSessionId)) : null), [db, selectedSessionId, isAuthorizedAdmin])
   const { data: sessionAttendance } = useCollection(attendanceQuery)
 
-  const studentsQuery = useMemoFirebase(() => (db && isAuthorizedAdmin ? query(collection(db, 'students'), orderBy('enrollmentDate', 'desc')) : null), [db, isAuthorizedAdmin])
-  const { data: allStudents } = useCollection(studentsQuery)
+  const allStudentsQuery = useMemoFirebase(() => (db && isAuthorizedAdmin ? query(collection(db, 'students'), orderBy('enrollmentDate', 'desc')) : null), [db, isAuthorizedAdmin])
+  const { data: allStudents } = useCollection(allStudentsQuery)
 
   const examsQuery = useMemoFirebase(() => (db && isAuthorizedAdmin ? query(collection(db, 'exams'), orderBy('examDate', 'desc')) : null), [db, isAuthorizedAdmin])
   const { data: allExams } = useCollection(examsQuery)
@@ -392,6 +401,47 @@ export default function AdminPage() {
       })
   }
 
+  // Grade Management Handlers
+  const handleUpdateGradeClick = (student: any) => {
+    setSelectedStudentForGrade(student)
+    setGradeForm({ subject: '', marks: '', grade: '' })
+    setIsGradeDialogOpen(true)
+  }
+
+  const handleSaveGrade = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!db || !selectedStudentForGrade || !selectedExamCycle) return
+
+    const exam = allExams?.find(ex => ex.id === selectedExamCycle)
+    const payload = {
+      subject: gradeForm.subject,
+      marks: parseInt(gradeForm.marks),
+      grade: gradeForm.grade,
+      examId: selectedExamCycle,
+      examTitle: exam?.title || 'Unknown Exam',
+      semester: exam?.semester || selectedStudentForGrade.currentSemester || 'Semester 1',
+      examDate: exam?.examDate || new Date().toISOString(),
+      timestamp: new Date().toISOString()
+    }
+
+    const docRef = doc(db, 'students', selectedStudentForGrade.id, 'results', selectedExamCycle)
+    
+    setDoc(docRef, payload, { merge: true })
+      .then(() => {
+        toast({ title: "Grade Updated", description: `Academic record saved for ${selectedStudentForGrade.firstName}.` })
+        setIsGradeDialogOpen(false)
+        setGradeForm({ subject: '', marks: '', grade: '' })
+      })
+      .catch(async (error) => {
+        const permissionError = new FirestorePermissionError({
+          path: docRef.path,
+          operation: 'update',
+          requestResourceData: payload,
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+      })
+  }
+
   const handleGlobalCreate = () => {
     if (activeTab === 'repository') {
       setEditingMaterial(null)
@@ -591,7 +641,11 @@ export default function AdminPage() {
                               </TableCell>
                               <TableCell className="text-center font-black text-primary/60 text-xs">{student.studentId}</TableCell>
                               <TableCell className="px-10 text-right">
-                                <Button variant="ghost" className="h-10 px-4 rounded-xl font-bold text-xs gap-2">
+                                <Button 
+                                  onClick={() => handleUpdateGradeClick(student)}
+                                  variant="ghost" 
+                                  className="h-10 px-4 rounded-xl font-bold text-xs gap-2"
+                                >
                                   <Edit size={14} /> Update Grade
                                 </Button>
                               </TableCell>
@@ -1138,6 +1192,61 @@ export default function AdminPage() {
             </div>
             <DialogFooter>
               <Button type="submit" className="w-full h-12 rounded-xl font-bold text-lg">Create Schedule</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Grade Update Dialog */}
+      <Dialog open={isGradeDialogOpen} onOpenChange={setIsGradeDialogOpen}>
+        <DialogContent className="rounded-[2.5rem] p-10 sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-headline font-bold">Enter Academic Score</DialogTitle>
+            <DialogDescription>
+              Record the evaluation for {selectedStudentForGrade?.firstName} {selectedStudentForGrade?.lastName}.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSaveGrade} className="space-y-6 pt-4">
+            <div className="space-y-2">
+              <Label>Subject / Paper</Label>
+              <Input 
+                required 
+                placeholder="e.g. Quantum Computing" 
+                value={gradeForm.subject} 
+                onChange={e => setGradeForm({...gradeForm, subject: e.target.value})}
+                className="h-12 rounded-xl" 
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Marks (%)</Label>
+                <Input 
+                  required 
+                  type="number" 
+                  max="100" 
+                  min="0"
+                  placeholder="85" 
+                  value={gradeForm.marks} 
+                  onChange={e => setGradeForm({...gradeForm, marks: e.target.value})}
+                  className="h-12 rounded-xl" 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Letter Grade</Label>
+                <Select value={gradeForm.grade} onValueChange={val => setGradeForm({...gradeForm, grade: val})}>
+                  <SelectTrigger className="h-12 rounded-xl">
+                    <SelectValue placeholder="Grade" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    {['O', 'A+', 'A', 'B+', 'B', 'C', 'P', 'F'].map(g => (
+                      <SelectItem key={g} value={g}>{g}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="submit" className="w-full h-12 rounded-xl font-bold text-lg">Save Result</Button>
             </DialogFooter>
           </form>
         </DialogContent>
