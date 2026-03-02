@@ -449,7 +449,6 @@ export default function AdminPage() {
 
     const docRef = doc(db, 'students', selectedStudentForGrade.id, 'results', selectedExamCycle)
     
-    // Non-blocking update pattern
     setDoc(docRef, payload, { merge: true })
       .catch(async (error) => {
         const permissionError = new FirestorePermissionError({
@@ -460,7 +459,6 @@ export default function AdminPage() {
         errorEmitter.emit('permission-error', permissionError);
       });
 
-    // Optimistic completion
     toast({ 
       title: "Result Archived", 
       description: `Academic record saved for ${selectedStudentForGrade.firstName} ${selectedStudentForGrade.lastName}.` 
@@ -483,7 +481,7 @@ export default function AdminPage() {
     }
   }
 
-  // Scanner Logic - Now works with unique student-side IDs
+  // Scanner Logic - Integrated Scan-to-Log Workflow
   useEffect(() => {
     let scanner: Html5QrcodeScanner | null = null;
     
@@ -512,6 +510,10 @@ export default function AdminPage() {
               return
             }
 
+            // Fetch session token to satisfy potential security rule requirements
+            const sessionDoc = await getDoc(doc(db, 'sessions', selectedSessionId));
+            const dynamicToken = sessionDoc.exists() ? sessionDoc.data().dynamicToken : '';
+
             const payload = {
               id: recordId,
               sessionId: selectedSessionId,
@@ -519,7 +521,8 @@ export default function AdminPage() {
               studentId: studentData.studentId,
               studentName: studentData.name,
               timestamp: new Date().toISOString(),
-              status: 'present'
+              status: 'present',
+              tokenUsed: dynamicToken
             };
 
             setDoc(attendanceRef, payload)
@@ -565,7 +568,6 @@ export default function AdminPage() {
     <div className="min-h-screen bg-background relative overflow-hidden flex flex-col">
       <TechBackground />
       
-      {/* Header Section */}
       <header className="w-full px-6 md:px-12 pt-12 pb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-8 z-10">
         <div className="flex items-center gap-6">
           <TechXeraLogo className="w-20 h-20 shadow-2xl shadow-primary/20" customUrl={dbSettings?.logoUrl} />
@@ -601,7 +603,6 @@ export default function AdminPage() {
         </div>
       </header>
 
-      {/* Main Content Area with Tabbed Layout */}
       <main className="flex-1 max-w-7xl mx-auto w-full px-6 md:px-12 pb-32 space-y-8 z-10">
         <Tabs defaultValue="results" className="w-full" onValueChange={setActiveTab}>
           <div className="bg-white/80 dark:bg-card/40 backdrop-blur-xl rounded-[2.5rem] p-3 shadow-xl mb-12 border border-white/20">
@@ -630,7 +631,6 @@ export default function AdminPage() {
           <Card className="glass border-none rounded-[3.5rem] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.1)] overflow-hidden min-h-[600px]">
             <CardContent className="p-12">
               
-              {/* Results Tab */}
               <TabsContent value="results" className="mt-0 space-y-12">
                 <div className="space-y-8">
                   <div className="max-w-md">
@@ -694,7 +694,6 @@ export default function AdminPage() {
                 </div>
               </TabsContent>
 
-              {/* Attendance Tab */}
               <TabsContent value="attendance" className="mt-0 space-y-12">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                   <div className="space-y-8">
@@ -780,7 +779,6 @@ export default function AdminPage() {
                 </div>
               </TabsContent>
 
-              {/* Students Tab */}
               <TabsContent value="students" className="mt-0 space-y-8">
                 <div className="border rounded-[2.5rem] overflow-hidden bg-background/30 shadow-inner">
                   <Table>
@@ -914,7 +912,6 @@ export default function AdminPage() {
                 </div>
               </TabsContent>
 
-              {/* Repository Tab */}
               <TabsContent value="repository" className="mt-0 space-y-8">
                 <div className="border rounded-[2.5rem] overflow-hidden bg-background/30 shadow-inner">
                   <Table>
@@ -1040,7 +1037,6 @@ export default function AdminPage() {
         </Tabs>
       </main>
 
-      {/* Admin Scanner Modal */}
       <Dialog open={isScannerOpen} onOpenChange={setIsScannerOpen}>
         <DialogContent className="sm:max-w-md rounded-[3rem] p-10 overflow-hidden">
           <DialogHeader className="text-center">
@@ -1062,7 +1058,6 @@ export default function AdminPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Create Session Dialog (Attendance) */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent className="rounded-[2.5rem] p-10">
           <DialogHeader><DialogTitle className="text-2xl font-headline font-bold">Initialize Class</DialogTitle></DialogHeader>
@@ -1088,7 +1083,6 @@ export default function AdminPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Material Management Dialog */}
       <Dialog open={isMaterialDialogOpen} onOpenChange={setIsMaterialDialogOpen}>
         <DialogContent className="rounded-[2.5rem] p-10 sm:max-w-lg">
           <DialogHeader>
@@ -1161,7 +1155,6 @@ export default function AdminPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Notice Creation Dialog */}
       <Dialog open={isNoticeDialogOpen} onOpenChange={setIsNoticeDialogOpen}>
         <DialogContent className="rounded-[2.5rem] p-10 sm:max-w-lg">
           <DialogHeader>
@@ -1190,7 +1183,6 @@ export default function AdminPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Exam Creation Dialog */}
       <Dialog open={isExamDialogOpen} onOpenChange={setIsExamDialogOpen}>
         <DialogContent className="rounded-[2.5rem] p-10 sm:max-w-lg">
           <DialogHeader>
@@ -1226,7 +1218,6 @@ export default function AdminPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Grade Update Dialog */}
       <Dialog open={isGradeDialogOpen} onOpenChange={setIsGradeDialogOpen}>
         <DialogContent className="rounded-[2.5rem] p-10 sm:max-w-md">
           <DialogHeader>

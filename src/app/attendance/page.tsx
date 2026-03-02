@@ -7,11 +7,10 @@ import TechBackground from '@/components/TechBackground'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/table'
 import { QrCode, ShieldCheck, AlertCircle, Clock, Calendar, CheckCircle2, Loader2, TrendingUp, User, Sparkles } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase'
-import { doc, collection, query, where } from 'firebase/firestore'
+import { doc, collection, query, where, orderBy } from 'firebase/firestore'
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
 import SplitText from '@/components/SplitText'
@@ -32,17 +31,9 @@ export default function AttendancePage() {
   const studentRef = useMemoFirebase(() => (user && db ? doc(db, 'students', user.uid) : null), [user, db])
   const { data: profile, isLoading: isProfileLoading } = useDoc(studentRef)
 
-  const attendanceQuery = useMemoFirebase(() => (user && db ? query(collection(db, 'attendance'), where('studentUid', '==', user.uid)) : null), [user, db])
+  // Real-time attendance collection for instant dashboard updates
+  const attendanceQuery = useMemoFirebase(() => (user && db ? query(collection(db, 'attendance'), where('studentUid', '==', user.uid), orderBy('timestamp', 'desc')) : null), [user, db])
   const { data: attendance, isLoading: isAttendanceLoading } = useCollection(attendanceQuery)
-
-  const sortedAttendance = useMemo(() => {
-    if (!attendance) return [];
-    return [...attendance].sort((a, b) => {
-      const dateA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
-      const dateB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
-      return dateB - dateA;
-    });
-  }, [attendance]);
 
   useEffect(() => {
     if (mounted && !isUserLoading && !user) {
@@ -87,6 +78,7 @@ export default function AttendancePage() {
   const attendancePercentage = attendance ? Math.min(100, (attendance.length / 50) * 100) : 0;
   const isBelowThreshold = attendancePercentage < 75;
 
+  // Unique student identity token format recognized by Admin scanner
   const studentQrValue = JSON.stringify({
     uid: user.uid,
     studentId: profile?.studentId,
@@ -159,7 +151,6 @@ export default function AttendancePage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-          {/* Stats & Identity Card */}
           <div className="space-y-8">
             <Card className="glass border-none rounded-[3rem] shadow-xl overflow-hidden group">
               <CardHeader className="p-10 pb-4">
@@ -217,7 +208,6 @@ export default function AttendancePage() {
             </div>
           </div>
 
-          {/* History List */}
           <div className="lg:col-span-2">
             <Card className="glass border-none rounded-[3.5rem] shadow-xl overflow-hidden min-h-[600px]">
               <CardHeader className="p-10 border-b border-border/20 bg-white/30">
@@ -232,7 +222,7 @@ export default function AttendancePage() {
                     <Loader2 className="animate-spin text-primary" size={32} />
                     <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Accessing Logs...</p>
                   </div>
-                ) : sortedAttendance && sortedAttendance.length > 0 ? (
+                ) : attendance && attendance.length > 0 ? (
                   <div className="overflow-x-auto">
                     <table className="w-full text-left">
                       <thead>
@@ -244,7 +234,7 @@ export default function AttendancePage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {sortedAttendance.map((record, i) => (
+                        {attendance.map((record, i) => (
                           <motion.tr 
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}

@@ -31,9 +31,11 @@ service cloud.firestore {
 
     match /attendance/{recordId} {
       allow read: if isSignedIn();
-      allow create: if isSignedIn() 
+      allow create: if isAdmin() || (
+        isSignedIn() 
         && request.resource.data.studentUid == request.auth.uid
-        && request.resource.data.tokenUsed == get(/databases/$(database)/documents/sessions/$(request.resource.data.sessionId)).data.dynamicToken;
+        && request.resource.data.tokenUsed == get(/databases/$(database)/documents/sessions/$(request.resource.data.sessionId)).data.dynamicToken
+      );
       allow update, delete: if isAdmin();
     }
 
