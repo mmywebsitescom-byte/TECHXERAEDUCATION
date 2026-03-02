@@ -9,16 +9,19 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { 
   Shield, GraduationCap, Users, CheckCircle, 
   Search, ClipboardList, Settings as SettingsIcon, 
   LogOut, Home, ArrowRight, Bell, HelpCircle,
   Plus, LifeBuoy, BookOpen, Camera, Trash2, 
   Loader2, CheckCircle2, AlertCircle, RefreshCw,
-  Clock, Calendar as CalendarIcon
+  Clock, Calendar as CalendarIcon, FileText, Edit,
+  ShieldCheck, Layout
 } from 'lucide-react'
 import { useFirestore, useUser, useDoc, useMemoFirebase, useAuth, useCollection } from '@/firebase'
-import { collection, doc, setDoc, deleteDoc, query, orderBy, where, getDocs, updateDoc, getDoc } from 'firebase/firestore'
+import { collection, doc, setDoc, deleteDoc, query, orderBy, where, updateDoc, getDoc } from 'firebase/firestore'
 import { signOut } from 'firebase/auth'
 import { useToast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
@@ -35,10 +38,11 @@ const AUTHORIZED_ADMIN_EMAIL = 'rraghabbarik@gmail.com'
 
 export default function AdminPage() {
   const [mounted, setMounted] = useState(false)
-  const [activeTab, setActiveTab] = useState('attendance')
+  const [activeTab, setActiveTab] = useState('results')
   const [isScannerOpen, setIsScannerOpen] = useState(false)
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [selectedExamCycle, setSelectedExamCycle] = useState<string | null>(null)
   
   // Create Session State
   const [newSession, setNewSession] = useState({
@@ -84,13 +88,19 @@ export default function AdminPage() {
   const { data: sessionAttendance } = useCollection(attendanceQuery)
 
   const studentsQuery = useMemoFirebase(() => (db && isAuthorizedAdmin ? query(collection(db, 'students'), orderBy('enrollmentDate', 'desc')) : null), [db, isAuthorizedAdmin])
-  const { data: allStudents } = useCollection(studentsQuery)
+  const { data: allStudents } = useCollection(allStudentsQuery)
+
+  const examsQuery = useMemoFirebase(() => (db && isAuthorizedAdmin ? query(collection(db, 'exams'), orderBy('examDate', 'desc')) : null), [db, isAuthorizedAdmin])
+  const { data: allExams } = useCollection(examsQuery)
 
   const supportQuery = useMemoFirebase(() => (db && isAuthorizedAdmin ? query(collection(db, 'support_inquiries'), orderBy('timestamp', 'desc')) : null), [db, isAuthorizedAdmin])
   const { data: supportInquiries } = useCollection(supportQuery)
 
   const noticesQuery = useMemoFirebase(() => (db && isAuthorizedAdmin ? query(collection(db, 'notices'), orderBy('publishDate', 'desc')) : null), [db, isAuthorizedAdmin])
   const { data: allNotices } = useCollection(noticesQuery)
+
+  const materialsQuery = useMemoFirebase(() => (db && isAuthorizedAdmin ? query(collection(db, 'studyMaterials'), orderBy('uploadDate', 'desc')) : null), [db, isAuthorizedAdmin])
+  const { data: allMaterials } = useCollection(materialsQuery)
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -107,6 +117,7 @@ export default function AdminPage() {
       id,
       status: 'active',
       createdAt: new Date().toISOString(),
+      dynamicToken: Math.random().toString(36).substring(2, 10).toUpperCase()
     }
     const docRef = doc(db, 'sessions', id)
     
@@ -173,17 +184,17 @@ export default function AdminPage() {
       })
   }
 
-  // Scanner Logic with proper mounting checks
+  // Scanner Logic
   useEffect(() => {
     let scanner: Html5QrcodeScanner | null = null;
     
     if (isScannerOpen && selectedSessionId && db) {
       const timer = setTimeout(() => {
-        const element = document.getElementById("admin-portal-qr-reader");
+        const element = document.getElementById("admin-attendance-scan-reader");
         if (!element) return;
 
         scanner = new Html5QrcodeScanner(
-          "admin-portal-qr-reader",
+          "admin-attendance-scan-reader",
           { fps: 15, qrbox: { width: 250, height: 250 } },
           false
         );
@@ -214,7 +225,7 @@ export default function AdminPage() {
 
             setDoc(attendanceRef, payload)
               .then(() => {
-                toast({ title: "Check-in Confirmed", description: `Scanned ${studentData.name}` })
+                toast({ title: "Check-in Confirmed", description: `Verified ${studentData.name}` })
               })
               .catch(async (error) => {
                 const permissionError = new FirestorePermissionError({
@@ -253,7 +264,7 @@ export default function AdminPage() {
     <div className="min-h-screen bg-background relative overflow-hidden flex flex-col">
       <TechBackground />
       
-      {/* Header Section */}
+      {/* Header Section matching reference */}
       <header className="w-full px-6 md:px-12 pt-12 pb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-8 z-10">
         <div className="flex items-center gap-6">
           <TechXeraLogo className="w-20 h-20 shadow-2xl shadow-primary/20" customUrl={dbSettings?.logoUrl} />
@@ -261,7 +272,7 @@ export default function AdminPage() {
             <h1 className="text-4xl md:text-5xl font-headline font-bold tracking-tighter">Admin Central</h1>
             <div className="flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full w-fit">
               <Shield size={14} className="text-primary" />
-              <p className="text-primary font-bold text-[10px] uppercase tracking-widest">ROOT ACCESS: {user.email}</p>
+              <p className="text-primary font-bold text-[10px] uppercase tracking-widest">ROOT: {user.email}</p>
             </div>
           </div>
         </div>
@@ -284,17 +295,17 @@ export default function AdminPage() {
         </div>
       </header>
 
-      {/* Main Content Area */}
+      {/* Main Content Area with Tabbed Layout */}
       <main className="flex-1 max-w-7xl mx-auto w-full px-6 md:px-12 pb-32 space-y-8 z-10">
-        <Tabs defaultValue="attendance" className="w-full" onValueChange={setActiveTab}>
-          {/* Tabs Navigation */}
+        <Tabs defaultValue="results" className="w-full" onValueChange={setActiveTab}>
+          {/* Tabs Navigation matching reference sequence */}
           <div className="bg-white/80 dark:bg-card/40 backdrop-blur-xl rounded-[2.5rem] p-3 shadow-xl mb-12 border border-white/20">
             <TabsList className="bg-transparent flex flex-wrap justify-center h-auto gap-2 border-none">
               {[
-                { id: 'attendance', label: 'Attendance', icon: <CheckCircle2 size={16} /> },
                 { id: 'results', label: 'Results', icon: <GraduationCap size={16} /> },
                 { id: 'students', label: 'Students', icon: <Users size={16} /> },
                 { id: 'support', label: 'Support Hub', icon: <LifeBuoy size={16} /> },
+                { id: 'attendance', label: 'Attendance', icon: <CheckCircle2 size={16} /> },
                 { id: 'exams', label: 'Exams', icon: <CalendarIcon size={16} /> },
                 { id: 'notices', label: 'Notices', icon: <Bell size={16} /> },
                 { id: 'repository', label: 'Repository', icon: <BookOpen size={16} /> },
@@ -311,15 +322,75 @@ export default function AdminPage() {
             </TabsList>
           </div>
 
-          {/* Tab Contents */}
           <Card className="glass border-none rounded-[3.5rem] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.1)] overflow-hidden min-h-[600px]">
             <CardContent className="p-12">
               
+              {/* Results Tab - Matching Reference Image */}
+              <TabsContent value="results" className="mt-0 space-y-12">
+                <div className="space-y-8">
+                  <div className="max-w-md">
+                    <Select onValueChange={setSelectedExamCycle}>
+                      <SelectTrigger className="h-14 rounded-2xl bg-background/50 border-2 font-bold text-lg shadow-sm">
+                        <SelectValue placeholder="-- Select Exam Cycle --" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl">
+                        {allExams?.map(exam => (
+                          <SelectItem key={exam.id} value={exam.id} className="font-medium">{exam.title} - {exam.semester}</SelectItem>
+                        ))}
+                        {allExams?.length === 0 && <p className="p-4 text-xs italic text-muted-foreground">No active exam sessions found.</p>}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="border rounded-[2.5rem] overflow-hidden bg-background/30 shadow-inner">
+                    <Table>
+                      <TableHeader className="bg-muted/50 border-b">
+                        <TableRow className="border-none hover:bg-transparent">
+                          <TableHead className="h-16 px-10 font-bold text-muted-foreground uppercase text-[10px] tracking-widest">Student</TableHead>
+                          <TableHead className="h-16 font-bold text-muted-foreground uppercase text-[10px] tracking-widest text-center">Roll No</TableHead>
+                          <TableHead className="h-16 px-10 font-bold text-muted-foreground uppercase text-[10px] tracking-widest text-right">Operations</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {selectedExamCycle ? (
+                          allStudents?.map(student => (
+                            <TableRow key={student.id} className="border-b border-border/10 hover:bg-primary/[0.02] transition-colors">
+                              <TableCell className="px-10 py-6">
+                                <div className="flex items-center gap-4">
+                                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary">{student.firstName[0]}</div>
+                                  <p className="font-bold">{student.firstName} {student.lastName}</p>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-center font-black text-primary/60 text-xs">{student.studentId}</TableCell>
+                              <TableCell className="px-10 text-right">
+                                <Button variant="ghost" className="h-10 px-4 rounded-xl font-bold text-xs gap-2">
+                                  <Edit size={14} /> Update Grade
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={3} className="h-80 text-center">
+                              <div className="flex flex-col items-center gap-4 opacity-40">
+                                <ClipboardList size={48} />
+                                <p className="text-muted-foreground italic font-medium">Select an exam cycle above to manage grades</p>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              </TabsContent>
+
+              {/* Attendance Tab - Fully Integrated */}
               <TabsContent value="attendance" className="mt-0 space-y-12">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                   <div className="space-y-8">
                     <h3 className="text-2xl font-headline font-bold flex items-center gap-3">
-                      <Clock className="text-primary" /> Active Class Sessions
+                      <Clock className="text-primary" /> Class Registries
                     </h3>
                     <div className="space-y-6">
                       {sessionsLoading ? (
@@ -370,7 +441,7 @@ export default function AdminPage() {
                         {selectedSessionId && <Badge className="bg-primary">{sessionAttendance?.length || 0} Present</Badge>}
                       </h4>
                       {selectedSessionId ? (
-                        <div className="space-y-4 max-h-[450px] overflow-y-auto pr-2">
+                        <div className="space-y-4 max-h-[450px] overflow-y-auto pr-2 scrollbar-thin">
                           {sessionAttendance?.map(record => (
                             <motion.div 
                               initial={{ opacity: 0, x: 10 }}
@@ -400,97 +471,118 @@ export default function AdminPage() {
                 </div>
               </TabsContent>
 
-              <TabsContent value="results" className="mt-0">
-                <div className="h-[400px] flex flex-col items-center justify-center gap-8">
-                  <GraduationCap size={80} className="text-primary/20" />
-                  <div className="text-center space-y-2">
-                    <p className="text-2xl font-headline font-bold">Results Management Hub</p>
-                    <p className="text-muted-foreground max-w-sm">Use the "Create New" button to add transcripts for students. Search for roll numbers to update existing scores.</p>
-                  </div>
+              {/* Other functional tabs restored... */}
+              <TabsContent value="students" className="mt-0 space-y-8">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-2xl font-headline font-bold">Student Registry</h3>
+                  <Badge variant="outline">{allStudents?.length || 0} Records</Badge>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {allStudents?.map(student => (
+                    <Card key={student.id} className="bg-background/50 rounded-3xl border-none shadow-sm p-6 space-y-4 border border-white/10">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center font-bold text-primary">
+                          {student.firstName[0]}{student.lastName[0]}
+                        </div>
+                        <div className="overflow-hidden">
+                          <p className="font-bold truncate">{student.firstName} {student.lastName}</p>
+                          <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">{student.studentId}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between pt-4 border-t border-border/10">
+                        <Badge variant={student.isApproved ? 'default' : 'secondary'} className={student.isApproved ? 'bg-green-500' : 'bg-orange-500'}>
+                          {student.status}
+                        </Badge>
+                        {!student.isApproved && (
+                           <Button size="sm" className="h-9 px-4 rounded-xl font-bold bg-primary" onClick={() => handleApproveStudent(student.id)}>
+                             Approve
+                           </Button>
+                        )}
+                      </div>
+                    </Card>
+                  ))}
                 </div>
               </TabsContent>
 
-              <TabsContent value="students" className="mt-0">
-                <div className="space-y-8">
-                  <div className="flex justify-between items-center">
-                    <h3 className="text-2xl font-headline font-bold">Student Registry</h3>
-                    <Badge variant="outline">{allStudents?.length || 0} Records Found</Badge>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {allStudents?.map(student => (
-                      <Card key={student.id} className="bg-background/50 rounded-3xl border-none shadow-sm p-6 space-y-4">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center font-bold text-primary">
-                            {student.firstName[0]}{student.lastName[0]}
-                          </div>
-                          <div className="overflow-hidden">
-                            <p className="font-bold truncate">{student.firstName} {student.lastName}</p>
-                            <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">{student.studentId}</p>
-                          </div>
+              <TabsContent value="support" className="mt-0 space-y-8">
+                <h3 className="text-2xl font-headline font-bold">Inquiry Management</h3>
+                <div className="grid gap-4">
+                  {supportInquiries?.map(inquiry => (
+                    <Card key={inquiry.id} className="bg-background/50 rounded-2xl border-none p-6 flex flex-col md:flex-row justify-between gap-6 border border-white/10">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-3">
+                          <Badge className={inquiry.status === 'pending' ? 'bg-orange-500' : 'bg-green-500'}>{inquiry.status}</Badge>
+                          <h4 className="font-bold text-lg">{inquiry.subject}</h4>
                         </div>
-                        <div className="flex items-center justify-between pt-4 border-t border-border/10">
-                          <Badge variant={student.isApproved ? 'default' : 'secondary'} className={student.isApproved ? 'bg-green-500' : 'bg-orange-500'}>
-                            {student.status}
-                          </Badge>
-                          {!student.isApproved && (
-                             <Button size="sm" className="h-9 px-4 rounded-xl font-bold bg-primary" onClick={() => handleApproveStudent(student.id)}>
-                               Approve
-                             </Button>
-                          )}
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="support" className="mt-0">
-                 <div className="space-y-8">
-                    <h3 className="text-2xl font-headline font-bold">Support Queue</h3>
-                    <div className="grid gap-4">
-                      {supportInquiries?.map(inquiry => (
-                        <Card key={inquiry.id} className="bg-background/50 rounded-2xl border-none p-6 flex flex-col md:flex-row justify-between gap-6">
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-3">
-                              <Badge className={inquiry.status === 'pending' ? 'bg-orange-500' : 'bg-green-500'}>{inquiry.status}</Badge>
-                              <h4 className="font-bold text-lg">{inquiry.subject}</h4>
-                            </div>
-                            <p className="text-sm text-muted-foreground">{inquiry.message}</p>
-                            <p className="text-[10px] font-black text-primary/50 uppercase tracking-widest">FROM: {inquiry.name} ({inquiry.email})</p>
-                          </div>
-                          {inquiry.status === 'pending' && (
-                            <Button variant="outline" size="sm" className="h-10 rounded-xl" onClick={() => handleResolveInquiry(inquiry.id)}>Resolve</Button>
-                          )}
-                        </Card>
-                      ))}
-                      {supportInquiries?.length === 0 && (
-                        <div className="h-[300px] flex flex-col items-center justify-center text-muted-foreground italic">No pending inquiries.</div>
+                        <p className="text-sm text-muted-foreground">{inquiry.message}</p>
+                        <p className="text-[10px] font-black text-primary/50 uppercase tracking-widest">FROM: {inquiry.name} ({inquiry.email})</p>
+                      </div>
+                      {inquiry.status === 'pending' && (
+                        <Button variant="outline" size="sm" className="h-10 rounded-xl" onClick={() => handleResolveInquiry(inquiry.id)}>Mark Resolved</Button>
                       )}
-                    </div>
-                 </div>
-              </TabsContent>
-
-              <TabsContent value="notices" className="mt-0">
-                <div className="space-y-8">
-                   <div className="flex justify-between items-center">
-                    <h3 className="text-2xl font-headline font-bold">Official Bulletins</h3>
-                    <Button size="sm" className="rounded-xl"><Plus className="mr-2" size={16} /> New Notice</Button>
-                  </div>
-                  <div className="grid gap-4">
-                    {allNotices?.map(notice => (
-                      <Card key={notice.id} className="bg-background/50 rounded-2xl border-none p-6">
-                        <div className="flex justify-between items-start mb-2">
-                          <h4 className="font-bold text-lg">{notice.title}</h4>
-                          <Badge variant={notice.isUrgent ? 'destructive' : 'default'}>{notice.isUrgent ? 'URGENT' : 'NORMAL'}</Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{notice.description}</p>
-                        <p className="text-[10px] font-black uppercase text-primary/40 mt-4">{format(new Date(notice.publishDate), 'PPP')}</p>
-                      </Card>
-                    ))}
-                  </div>
+                    </Card>
+                  ))}
                 </div>
               </TabsContent>
-              
+
+              <TabsContent value="exams" className="mt-0 space-y-8">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-2xl font-headline font-bold">Academic Calendar</h3>
+                  <Button size="sm" className="rounded-xl"><Plus className="mr-2" size={16} /> New Exam</Button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {allExams?.map(exam => (
+                    <Card key={exam.id} className="p-6 bg-background/50 rounded-2xl border border-white/10 space-y-4">
+                      <div className="flex justify-between">
+                        <h4 className="font-bold text-xl">{exam.title}</h4>
+                        <Badge>{exam.status}</Badge>
+                      </div>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-2"><CalendarIcon size={14} /> {exam.examDate}</span>
+                        <span className="flex items-center gap-2"><Layout size={14} /> {exam.semester}</span>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="notices" className="mt-0 space-y-8">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-2xl font-headline font-bold">Official Bulletins</h3>
+                  <Button size="sm" className="rounded-xl"><Plus className="mr-2" size={16} /> New Notice</Button>
+                </div>
+                <div className="grid gap-4">
+                  {allNotices?.map(notice => (
+                    <Card key={notice.id} className="bg-background/50 rounded-2xl border-none p-6 border border-white/10">
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-bold text-lg">{notice.title}</h4>
+                        <Badge variant={notice.isUrgent ? 'destructive' : 'default'}>{notice.isUrgent ? 'URGENT' : 'NORMAL'}</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{notice.description}</p>
+                      <p className="text-[10px] font-black uppercase text-primary/40 mt-4">{format(new Date(notice.publishDate), 'PPP')}</p>
+                    </Card>
+                  ))}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="repository" className="mt-0 space-y-8">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-2xl font-headline font-bold">Campus Archives</h3>
+                  <Button size="sm" className="rounded-xl"><Plus className="mr-2" size={16} /> Upload Material</Button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {allMaterials?.map(item => (
+                    <Card key={item.id} className="p-6 bg-background/50 rounded-2xl border border-white/10 space-y-4">
+                      <div className="w-12 h-12 bg-primary/5 rounded-xl flex items-center justify-center"><FileText className="text-primary" /></div>
+                      <div>
+                        <h4 className="font-bold line-clamp-1">{item.title}</h4>
+                        <p className="text-xs text-muted-foreground">{item.subject}</p>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </TabsContent>
+
               <TabsContent value="branding" className="mt-0">
                 <div className="max-w-xl space-y-8">
                   <h3 className="text-2xl font-headline font-bold">Campus Configuration</h3>
@@ -507,7 +599,7 @@ export default function AdminPage() {
                       <Label>Primary Logo URL</Label>
                       <Input value={dbSettings?.logoUrl || ''} readOnly className="bg-muted h-12 rounded-xl" />
                     </div>
-                    <p className="text-xs text-muted-foreground italic">Root configuration is managed via protected database collection.</p>
+                    <p className="text-xs text-muted-foreground italic">Root configuration is restricted to direct database updates for security.</p>
                   </div>
                 </div>
               </TabsContent>
@@ -522,13 +614,13 @@ export default function AdminPage() {
         <DialogContent className="sm:max-w-md rounded-[3rem] p-10 overflow-hidden">
           <DialogHeader className="text-center">
             <DialogTitle className="text-2xl font-headline font-bold mb-2">Scanner: {activeSession?.className}</DialogTitle>
-            <p className="text-muted-foreground font-medium">Position student's identity QR within the frame</p>
+            <p className="text-muted-foreground font-medium">Position student identity QR within the frame</p>
           </DialogHeader>
           <div className="flex flex-col items-center gap-8 py-6">
-            <div id="admin-portal-qr-reader" className="w-full rounded-[2.5rem] overflow-hidden border-4 border-primary/20 bg-muted/20 min-h-[300px]" />
+            <div id="admin-attendance-scan-reader" className="w-full rounded-[2.5rem] overflow-hidden border-4 border-primary/20 bg-muted/20 min-h-[300px]" />
             <div className="p-5 bg-primary/5 rounded-2xl w-full flex items-center gap-4 text-xs text-primary border border-primary/20">
-              <CheckCircle2 size={20} className="shrink-0" />
-              <p className="font-medium leading-relaxed">Secure Admin Mode. Instant student verification and database logging.</p>
+              <ShieldCheck size={20} className="shrink-0" />
+              <p className="font-medium leading-relaxed">Secure Admin Hub. Instant verification against campus records.</p>
             </div>
             <Button onClick={() => setIsScannerOpen(false)} variant="outline" className="w-full h-12 rounded-xl font-bold">
               Terminate Scanner
@@ -544,7 +636,7 @@ export default function AdminPage() {
           <form onSubmit={handleCreateSession} className="space-y-6 pt-4">
             <div className="space-y-2">
               <Label>Module Name</Label>
-              <Input required placeholder="e.g. Data Structures" value={newSession.className} onChange={e => setNewSession({...newSession, className: e.target.value})} className="h-12 rounded-xl" />
+              <Input required placeholder="e.g. Advanced AI" value={newSession.className} onChange={e => setNewSession({...newSession, className: e.target.value})} className="h-12 rounded-xl" />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
