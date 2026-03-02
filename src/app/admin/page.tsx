@@ -310,7 +310,11 @@ export default function AdminPage() {
                       <Label>Material Type / Section</Label>
                       <Input required placeholder="Notes, PYQ, Syllabus..." value={newMaterial.materialType} onChange={e => setNewMaterial({ ...newMaterial, materialType: e.target.value })} />
                     </div>
-                    <div className="space-y-2"><Label>Resource Thumbnail URL (Optional)</Label><Input type="url" placeholder="https://..." value={newMaterial.thumbnailUrl} onChange={e => setNewMaterial({ ...newMaterial, thumbnailUrl: e.target.value })} /></div>
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">Resource Icon / Logo URL (Optional)</Label>
+                      <Input type="url" placeholder="https://... (SVG/PNG recommended)" value={newMaterial.thumbnailUrl} onChange={e => setNewMaterial({ ...newMaterial, thumbnailUrl: e.target.value })} />
+                      <p className="text-[10px] text-muted-foreground italic">Displayed inside the resource card's icon box.</p>
+                    </div>
                     <div className="space-y-2"><Label>File URL</Label><Input required type="url" value={newMaterial.fileUrl} onChange={e => setNewMaterial({ ...newMaterial, fileUrl: e.target.value })} /></div>
                     <Button type="submit" disabled={isCreating} className="w-full h-12 rounded-xl text-lg font-bold">
                       {editingMaterialId ? 'Update Repository' : 'Upload to Repository'}

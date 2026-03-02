@@ -87,7 +87,7 @@ export default function ResourcesPage() {
         </div>
 
         {/* Search Bar */}
-        <div className="flex flex-col md:flex-row gap-4 items-center bg-white p-4 rounded-3xl shadow-sm border border-border/40">
+        <div className="flex flex-col md:flex-row gap-4 items-center bg-white dark:bg-card/50 p-4 rounded-3xl shadow-sm border border-border/40 backdrop-blur-md">
           <div className="relative flex-1 w-full">
             <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-muted-foreground/40" size={20} />
             <input 
@@ -120,56 +120,50 @@ export default function ResourcesPage() {
                   transition={{ delay: idx * 0.05 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                 >
-                  <Card className="bg-white border-none hover:bg-primary/[0.01] transition-all duration-300 rounded-[2rem] overflow-hidden group shadow-sm hover:shadow-md h-full flex flex-col border border-border/20">
-                    <CardContent className="p-0 flex-1 flex flex-col">
-                      {/* Thumbnail Header */}
-                      <div className="h-40 w-full overflow-hidden bg-muted relative">
-                        {item.thumbnailUrl ? (
-                          <img 
-                            src={item.thumbnailUrl} 
-                            alt={item.title} 
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-primary/20">
-                            <ImageIcon size={64} />
-                          </div>
-                        )}
-                        <Badge variant="secondary" className="absolute top-4 right-4 bg-white/80 backdrop-blur-md text-muted-foreground border-none uppercase text-[10px] font-bold tracking-widest px-4 py-1 rounded-full">
+                  <Card className="bg-white dark:bg-card/40 border-none hover:bg-primary/[0.01] transition-all duration-300 rounded-[2.5rem] overflow-hidden group shadow-sm hover:shadow-lg h-full flex flex-col border border-border/20 backdrop-blur-sm">
+                    <CardContent className="p-8 flex-1 flex flex-col">
+                      <div className="flex justify-between items-start mb-6">
+                        {/* The specific icon box requested */}
+                        <div className="w-16 h-16 bg-primary/5 dark:bg-primary/10 rounded-2xl flex items-center justify-center overflow-hidden shrink-0 group-hover:scale-105 transition-transform duration-300">
+                          {item.thumbnailUrl ? (
+                            <img 
+                              src={item.thumbnailUrl} 
+                              alt="Resource Icon" 
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <FileText size={28} className="text-primary" />
+                          )}
+                        </div>
+                        <Badge variant="secondary" className="bg-primary/10 text-primary border-none uppercase text-[9px] font-black tracking-widest px-3 py-1 rounded-full">
                           {item.semester}
                         </Badge>
                       </div>
+                      
+                      <div className="flex-1">
+                        <h3 className="text-xl md:text-2xl font-headline font-bold mb-3 tracking-tight line-clamp-2 leading-tight">{item.title}</h3>
+                        <div className="space-y-1 mb-6">
+                          <p className="text-primary text-xs font-black uppercase tracking-widest">{item.subject}</p>
+                          <Badge variant="outline" className="text-muted-foreground/60 text-[9px] font-bold uppercase tracking-[0.2em] border-muted-foreground/20">
+                            {item.materialType}
+                          </Badge>
+                        </div>
+                      </div>
 
-                      <div className="p-8 flex-1 flex flex-col">
-                        <div className="flex justify-between items-start mb-6">
-                          <div className="p-4 bg-primary/5 text-primary rounded-xl group-hover:scale-105 transition-transform duration-300">
-                            <FileText size={24} />
-                          </div>
-                        </div>
-                        
-                        <div className="flex-1">
-                          <h3 className="text-xl font-headline font-bold mb-4 tracking-tight line-clamp-2">{item.title}</h3>
-                          <div className="space-y-1 mb-6">
-                            <p className="text-primary text-xs font-bold uppercase tracking-widest">{item.subject}</p>
-                            <p className="text-muted-foreground/60 text-[10px] font-bold uppercase tracking-widest">{item.materialType}</p>
-                          </div>
-                        </div>
-
-                        <div className="pt-6 border-t border-border/40 flex items-center justify-between">
-                          <span className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-[0.2em]">
-                            {item.uploadDate ? new Date(item.uploadDate).toLocaleDateString() : 'N/A'}
-                          </span>
-                          <a 
-                            href={item.fileUrl} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="inline-block"
-                          >
-                            <Button variant="ghost" className="text-primary hover:bg-primary/5 px-4 rounded-xl flex items-center gap-2 font-bold text-xs uppercase tracking-widest h-10">
-                              Access <Download size={16} />
-                            </Button>
-                          </a>
-                        </div>
+                      <div className="pt-6 border-t border-border/40 flex items-center justify-between mt-4">
+                        <span className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-[0.2em]">
+                          {item.uploadDate ? new Date(item.uploadDate).toLocaleDateString() : 'N/A'}
+                        </span>
+                        <a 
+                          href={item.fileUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="inline-block"
+                        >
+                          <Button variant="ghost" className="text-primary hover:bg-primary/5 px-4 rounded-xl flex items-center gap-2 font-bold text-xs uppercase tracking-widest h-10">
+                            Get File <Download size={16} />
+                          </Button>
+                        </a>
                       </div>
                     </CardContent>
                   </Card>
@@ -183,7 +177,7 @@ export default function ResourcesPage() {
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-center py-20 text-muted-foreground/40 border-2 border-dashed border-border rounded-[2rem] bg-white/50"
+            className="text-center py-20 text-muted-foreground/40 border-2 border-dashed border-border rounded-[3rem] bg-white/30 backdrop-blur-sm"
           >
             <div className="p-6 bg-muted/20 w-fit mx-auto rounded-full mb-4">
               <Search size={32} className="opacity-20" />
