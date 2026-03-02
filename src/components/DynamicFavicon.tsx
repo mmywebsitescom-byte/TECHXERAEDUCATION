@@ -7,6 +7,7 @@ import { doc } from 'firebase/firestore'
 
 /**
  * DynamicFavicon - Synchronizes the browser tab icon with the logo URL defined in site settings.
+ * It removes existing static icons to ensure the custom logo is prioritized.
  */
 export default function DynamicFavicon() {
   const db = useFirestore()
@@ -15,23 +16,30 @@ export default function DynamicFavicon() {
 
   useEffect(() => {
     if (settings?.logoUrl) {
-      // Find existing favicon or create a new one
-      let link: HTMLLinkElement | null = document.querySelector("link[rel*='icon']");
-      
-      if (!link) {
-        link = document.createElement('link');
-        link.rel = 'icon';
-        document.getElementsByTagName('head')[0].appendChild(link);
-      }
+      const updateFavicon = (url: string) => {
+        // Remove all existing icon links to prevent conflicts
+        const existingIcons = document.querySelectorAll("link[rel*='icon']");
+        existingIcons.forEach(el => el.parentNode?.removeChild(el));
 
-      // Update the favicon URL
-      link.href = settings.logoUrl;
-      
-      // Update shortcut icon for older browsers
-      let shortcutLink: HTMLLinkElement | null = document.querySelector("link[rel='shortcut icon']");
-      if (shortcutLink) {
-        shortcutLink.href = settings.logoUrl;
-      }
+        // Create new link for the favicon
+        const link = document.createElement('link');
+        link.type = 'image/x-icon';
+        link.rel = 'icon';
+        link.href = url;
+
+        // Also add a shortcut icon for better compatibility
+        const shortcutLink = document.createElement('link');
+        shortcutLink.rel = 'shortcut icon';
+        shortcutLink.href = url;
+
+        document.getElementsByTagName('head')[0].appendChild(link);
+        document.getElementsByTagName('head')[0].appendChild(shortcutLink);
+        
+        // Force refresh for certain browsers by appending a timestamp if needed
+        // but usually just replacing the elements is enough.
+      };
+
+      updateFavicon(settings.logoUrl);
     }
   }, [settings?.logoUrl])
 
