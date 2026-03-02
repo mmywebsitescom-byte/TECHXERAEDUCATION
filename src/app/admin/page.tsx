@@ -401,10 +401,26 @@ export default function AdminPage() {
       })
   }
 
-  // Grade Management Handlers
+  // Grade Management Logic
+  const calculateGrade = (marks: number): string => {
+    if (marks >= 90) return 'O';
+    if (marks >= 80) return 'A+';
+    if (marks >= 70) return 'A';
+    if (marks >= 60) return 'B+';
+    if (marks >= 50) return 'B';
+    if (marks >= 40) return 'C';
+    if (marks >= 33) return 'P';
+    return 'F';
+  }
+
   const handleUpdateGradeClick = (student: any) => {
+    const selectedExam = allExams?.find(ex => ex.id === selectedExamCycle)
     setSelectedStudentForGrade(student)
-    setGradeForm({ subject: '', marks: '', grade: '' })
+    setGradeForm({ 
+      subject: selectedExam?.title || '', 
+      marks: '', 
+      grade: '' 
+    })
     setIsGradeDialogOpen(true)
   }
 
@@ -1227,7 +1243,12 @@ export default function AdminPage() {
                   min="0"
                   placeholder="85" 
                   value={gradeForm.marks} 
-                  onChange={e => setGradeForm({...gradeForm, marks: e.target.value})}
+                  onChange={e => {
+                    const val = e.target.value;
+                    const marks = parseInt(val);
+                    const grade = isNaN(marks) ? '' : calculateGrade(marks);
+                    setGradeForm({...gradeForm, marks: val, grade: grade});
+                  }}
                   className="h-12 rounded-xl" 
                 />
               </div>
