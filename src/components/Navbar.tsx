@@ -10,6 +10,8 @@ import { signOut } from 'firebase/auth'
 import { doc } from 'firebase/firestore'
 import { cn } from '@/lib/utils'
 
+const AUTHORIZED_ADMIN_EMAIL = 'rraghabbarik@gmail.com'
+
 export const TechXeraLogo = ({ className, customUrl }: { className?: string; customUrl?: string }) => (
   <div className={cn("relative flex items-center justify-center bg-black rounded-full overflow-hidden shadow-2xl ring-1 ring-white/10", className)}>
     {customUrl ? (
@@ -79,9 +81,8 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  const adminRef = useMemoFirebase(() => (user && db ? doc(db, 'roles_admin', user.uid) : null), [user, db])
-  const { data: adminDoc } = useDoc(adminRef)
-  const isAdmin = !!adminDoc
+  // Strict email-based admin check
+  const isAdmin = user?.email === AUTHORIZED_ADMIN_EMAIL
 
   // Site branding
   const settingsRef = useMemoFirebase(() => (db ? doc(db, 'settings', 'site-config') : null), [db])
