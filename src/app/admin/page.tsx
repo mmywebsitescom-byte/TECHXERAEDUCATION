@@ -22,6 +22,7 @@ import { useToast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
 import Link from 'next/link'
+import { cn } from '@/lib/utils'
 
 const AUTHORIZED_ADMIN_EMAIL = 'rraghabbarik@gmail.com'
 
@@ -279,7 +280,7 @@ export default function AdminPage() {
             <Link href="/"><Button variant="outline" className="h-14 px-6 rounded-2xl font-bold border-2"><Home className="mr-2" size={20} /> Portal Home</Button></Link>
             <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) resetDialogs(); setIsDialogOpen(open); }}>
               <DialogTrigger asChild>
-                <Button disabled={['results', 'config', 'students', 'support'].includes(activeTab)} className="flex-1 lg:flex-none h-14 px-8 bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 text-white rounded-2xl font-bold">
+                <Button disabled={['results', 'config', 'students', 'support'].includes(activeTab)} className="flex-1 lg:flex-none h-14 px-8 bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 text-white rounded-2xl font-bold transition-all active:scale-95">
                   <Plus className="mr-2" size={24} /> Create New
                 </Button>
               </DialogTrigger>
@@ -337,20 +338,20 @@ export default function AdminPage() {
         </div>
 
         <Tabs defaultValue="results" className="space-y-12" onValueChange={setActiveTab}>
-          <TabsList className="bg-white p-2 rounded-[2rem] shadow-xl border border-border/40 h-auto flex flex-wrap w-full md:w-fit gap-2">
-            <TabsTrigger value="results" className="rounded-2xl py-4 px-8 data-[state=active]:bg-primary data-[state=active]:text-white font-bold"><GraduationCap className="mr-2" size={20} /> Results</TabsTrigger>
-            <TabsTrigger value="students" className="rounded-2xl py-4 px-8 data-[state=active]:bg-primary data-[state=active]:text-white font-bold"><Users className="mr-2" size={20} /> Students</TabsTrigger>
-            <TabsTrigger value="support" className="rounded-2xl py-4 px-8 data-[state=active]:bg-primary data-[state=active]:text-white font-bold"><LifeBuoy className="mr-2" size={20} /> Support Hub</TabsTrigger>
-            <TabsTrigger value="exams" className="rounded-2xl py-4 px-8 data-[state=active]:bg-primary data-[state=active]:text-white font-bold"><ClipboardList className="mr-2" size={20} /> Exams</TabsTrigger>
-            <TabsTrigger value="notices" className="rounded-2xl py-4 px-8 data-[state=active]:bg-primary data-[state=active]:text-white font-bold"><Megaphone className="mr-2" size={20} /> Notices</TabsTrigger>
-            <TabsTrigger value="resources" className="rounded-2xl py-4 px-8 data-[state=active]:bg-primary data-[state=active]:text-white font-bold"><List className="mr-2" size={20} /> Repository</TabsTrigger>
-            <TabsTrigger value="config" className="rounded-2xl py-4 px-8 data-[state=active]:bg-primary data-[state=active]:text-white font-bold"><SettingsIcon className="mr-2" size={20} /> Branding</TabsTrigger>
+          <TabsList className="bg-white/50 dark:bg-black/20 p-2 rounded-[2rem] shadow-xl border border-border/40 h-auto flex flex-wrap w-full md:w-fit gap-2 backdrop-blur-md">
+            <TabsTrigger value="results" className="rounded-2xl py-4 px-8 data-[state=active]:bg-primary data-[state=active]:text-white font-bold transition-all"><GraduationCap className="mr-2" size={20} /> Results</TabsTrigger>
+            <TabsTrigger value="students" className="rounded-2xl py-4 px-8 data-[state=active]:bg-primary data-[state=active]:text-white font-bold transition-all"><Users className="mr-2" size={20} /> Students</TabsTrigger>
+            <TabsTrigger value="support" className="rounded-2xl py-4 px-8 data-[state=active]:bg-primary data-[state=active]:text-white font-bold transition-all"><LifeBuoy className="mr-2" size={20} /> Support Hub</TabsTrigger>
+            <TabsTrigger value="exams" className="rounded-2xl py-4 px-8 data-[state=active]:bg-primary data-[state=active]:text-white font-bold transition-all"><ClipboardList className="mr-2" size={20} /> Exams</TabsTrigger>
+            <TabsTrigger value="notices" className="rounded-2xl py-4 px-8 data-[state=active]:bg-primary data-[state=active]:text-white font-bold transition-all"><Megaphone className="mr-2" size={20} /> Notices</TabsTrigger>
+            <TabsTrigger value="resources" className="rounded-2xl py-4 px-8 data-[state=active]:bg-primary data-[state=active]:text-white font-bold transition-all"><List className="mr-2" size={20} /> Repository</TabsTrigger>
+            <TabsTrigger value="config" className="rounded-2xl py-4 px-8 data-[state=active]:bg-primary data-[state=active]:text-white font-bold transition-all"><SettingsIcon className="mr-2" size={20} /> Branding</TabsTrigger>
           </TabsList>
 
-          <Card className="shadow-2xl border-none rounded-[3.5rem] overflow-hidden bg-white/90 backdrop-blur-md min-h-[400px]">
+          <Card className="shadow-2xl border-none rounded-[3.5rem] overflow-hidden bg-white/90 dark:bg-card/90 backdrop-blur-md min-h-[400px]">
             <TabsContent value="results" className="p-0 m-0">
               <div className="p-10 border-b border-border/40 bg-muted/20">
-                <select className="h-14 w-full max-w-md rounded-2xl bg-background px-6 font-bold" value={selectedExamId || ''} onChange={e => setSelectedExamId(e.target.value)}>
+                <select className="h-14 w-full max-w-md rounded-2xl bg-background border border-border px-6 font-bold focus:ring-2 focus:ring-primary outline-none transition-all" value={selectedExamId || ''} onChange={e => setSelectedExamId(e.target.value)}>
                   <option value="">-- Select Exam Cycle --</option>
                   {exams?.map(e => <option key={e.id} value={e.id}>{e.title}</option>)}
                 </select>
@@ -362,7 +363,7 @@ export default function AdminPage() {
                     <TableRow key={s.id} className="hover:bg-primary/[0.02]">
                       <TableCell className="px-10 font-bold text-lg">{s.firstName} {s.lastName}</TableCell>
                       <TableCell className="font-bold text-primary">{s.studentId}</TableCell>
-                      <TableCell className="text-right px-10"><Button onClick={() => { setSelectedStudentId(s.id); setIsManageResultsOpen(true); }} variant="outline" className="rounded-xl">Manage Grades</Button></TableCell>
+                      <TableCell className="text-right px-10"><Button onClick={() => { setSelectedStudentId(s.id); setIsManageResultsOpen(true); }} variant="outline" className="rounded-xl transition-all active:scale-95">Manage Grades</Button></TableCell>
                     </TableRow>
                   )) : (
                     <TableRow><TableCell colSpan={3} className="text-center py-20 italic text-muted-foreground">Select an exam cycle above to manage grades</TableCell></TableRow>
@@ -390,7 +391,7 @@ export default function AdminPage() {
                       <TableCell><Badge variant={iq.status === 'pending' ? 'destructive' : 'default'}>{iq.status}</Badge></TableCell>
                       <TableCell className="text-right px-10 space-x-2">
                         <Dialog>
-                          <DialogTrigger asChild><Button variant="ghost" size="icon" className="text-primary"><Search size={18} /></Button></DialogTrigger>
+                          <DialogTrigger asChild><Button variant="ghost" size="icon" className="text-primary hover:bg-primary/10 transition-all"><Search size={18} /></Button></DialogTrigger>
                           <DialogContent className="rounded-3xl">
                             <DialogHeader><DialogTitle className="font-headline font-bold">Inquiry Details</DialogTitle></DialogHeader>
                             <div className="space-y-4 pt-4">
@@ -399,7 +400,7 @@ export default function AdminPage() {
                             </div>
                           </DialogContent>
                         </Dialog>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete('support_inquiries', iq.id)} className="text-destructive"><Trash2 size={18} /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete('support_inquiries', iq.id)} className="text-destructive hover:bg-destructive/10 transition-all"><Trash2 size={18} /></Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -412,13 +413,13 @@ export default function AdminPage() {
                 <TableHeader><TableRow className="bg-muted/50"><TableHead className="px-10">Student</TableHead><TableHead>Roll No</TableHead><TableHead>Verification</TableHead><TableHead className="text-right px-10">Operations</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {students?.map(s => (
-                    <TableRow key={s.id}>
+                    <TableRow key={s.id} className="hover:bg-primary/[0.02]">
                       <TableCell className="px-10 font-bold">{s.firstName} {s.lastName}</TableCell>
                       <TableCell>{s.studentId}</TableCell>
                       <TableCell><Badge variant={s.isApproved ? 'default' : 'outline'}>{s.status}</Badge></TableCell>
                       <TableCell className="text-right px-10 space-x-2">
-                        {s.isApproved ? <Button size="icon" variant="ghost" onClick={() => handleApproveStudent(s.id, false)}><XCircle className="text-orange-500" /></Button> : <Button size="icon" variant="ghost" onClick={() => handleApproveStudent(s.id, true)}><CheckCircle className="text-green-500" /></Button>}
-                        <Button size="icon" variant="ghost" onClick={() => handleDelete('students', s.id)} className="text-destructive"><Trash2 /></Button>
+                        {s.isApproved ? <Button size="icon" variant="ghost" className="hover:bg-orange-50" onClick={() => handleApproveStudent(s.id, false)}><XCircle className="text-orange-500" /></Button> : <Button size="icon" variant="ghost" className="hover:bg-green-50" onClick={() => handleApproveStudent(s.id, true)}><CheckCircle className="text-green-500" /></Button>}
+                        <Button size="icon" variant="ghost" onClick={() => handleDelete('students', s.id)} className="text-destructive hover:bg-destructive/10"><Trash2 /></Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -431,13 +432,13 @@ export default function AdminPage() {
                 <TableHeader><TableRow className="bg-muted/50"><TableHead className="px-10">Title</TableHead><TableHead>Date</TableHead><TableHead>Status</TableHead><TableHead className="text-right px-10">Operations</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {exams?.map(ex => (
-                    <TableRow key={ex.id}>
+                    <TableRow key={ex.id} className="hover:bg-primary/[0.02]">
                       <TableCell className="px-10 font-bold">{ex.title}</TableCell>
                       <TableCell>{ex.examDate}</TableCell>
                       <TableCell><Badge>{ex.status}</Badge></TableCell>
                       <TableCell className="text-right px-10 space-x-2">
-                        <Button variant="ghost" size="icon" onClick={() => startEditExam(ex)} className="text-primary"><Edit2 size={18} /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete('exams', ex.id)} className="text-destructive"><Trash2 size={18} /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => startEditExam(ex)} className="text-primary hover:bg-primary/10 transition-all"><Edit2 size={18} /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete('exams', ex.id)} className="text-destructive hover:bg-destructive/10 transition-all"><Trash2 size={18} /></Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -450,12 +451,12 @@ export default function AdminPage() {
                 <TableHeader><TableRow className="bg-muted/50"><TableHead className="px-10">Headline</TableHead><TableHead>Priority</TableHead><TableHead className="text-right px-10">Operations</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {notices?.map(n => (
-                    <TableRow key={n.id}>
+                    <TableRow key={n.id} className="hover:bg-primary/[0.02]">
                       <TableCell className="px-10 font-bold">{n.title}</TableCell>
                       <TableCell><Badge variant={n.isUrgent ? 'destructive' : 'secondary'}>{n.isUrgent ? 'Urgent' : 'Normal'}</Badge></TableCell>
                       <TableCell className="text-right px-10 space-x-2">
-                        <Button variant="ghost" size="icon" onClick={() => startEditNotice(n)} className="text-primary"><Edit2 size={18} /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete('notices', n.id)} className="text-destructive"><Trash2 size={18} /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => startEditNotice(n)} className="text-primary hover:bg-primary/10 transition-all"><Edit2 size={18} /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete('notices', n.id)} className="text-destructive hover:bg-destructive/10 transition-all"><Trash2 size={18} /></Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -468,13 +469,13 @@ export default function AdminPage() {
                 <TableHeader><TableRow className="bg-muted/50"><TableHead className="px-10">Title</TableHead><TableHead>Subject</TableHead><TableHead>Type/Section</TableHead><TableHead className="text-right px-10">Operations</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {materials?.map(m => (
-                    <TableRow key={m.id}>
+                    <TableRow key={m.id} className="hover:bg-primary/[0.02]">
                       <TableCell className="px-10 font-bold">{m.title}</TableCell>
                       <TableCell>{m.subject}</TableCell>
                       <TableCell><Badge variant="outline">{m.materialType}</Badge></TableCell>
                       <TableCell className="text-right px-10 space-x-2">
-                        <Button variant="ghost" size="icon" onClick={() => startEditMaterial(m)} className="text-primary"><Edit2 size={18} /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete('studyMaterials', m.id)} className="text-destructive"><Trash2 size={18} /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => startEditMaterial(m)} className="text-primary hover:bg-primary/10 transition-all"><Edit2 size={18} /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete('studyMaterials', m.id)} className="text-destructive hover:bg-destructive/10 transition-all"><Trash2 size={18} /></Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -500,7 +501,7 @@ export default function AdminPage() {
                 </div>
 
                 <div className="space-y-2"><Label>Hero Description</Label><Textarea value={siteConfig.heroDescription} onChange={e => setSiteConfig({...siteConfig, heroDescription: e.target.value})} className="min-h-[120px] rounded-2xl" /></div>
-                <Button type="submit" disabled={isCreating} className="h-14 px-10 rounded-2xl font-bold">Update Branding</Button>
+                <Button type="submit" disabled={isCreating} className="h-14 px-10 rounded-2xl font-bold shadow-lg active:scale-95 transition-all">Update Branding</Button>
               </form>
             </TabsContent>
           </Card>
@@ -518,7 +519,7 @@ export default function AdminPage() {
                   <div className="space-y-2"><Label>Grade</Label><Input required placeholder="A+, B, O..." value={newResult.grade} onChange={e => setNewResult({...newResult, grade: e.target.value})} /></div>
                 </div>
                 <div className="space-y-2"><Label>Assessment Date</Label><Input type="date" required value={newResult.examDate} onChange={e => setNewResult({ ...newResult, examDate: e.target.value })} /></div>
-                <Button type="submit" disabled={isCreating} className="w-full h-12 bg-primary font-bold rounded-xl">
+                <Button type="submit" disabled={isCreating} className="w-full h-12 bg-primary font-bold rounded-xl transition-all active:scale-95">
                   {editingResultId ? 'Update Record' : 'Save Result'}
                 </Button>
               </form>
@@ -526,7 +527,7 @@ export default function AdminPage() {
                 <h3 className="font-bold flex items-center justify-between">Existing Records <Badge variant="secondary">{selectedStudentExamResults.length}</Badge></h3>
                 <div className="max-h-[400px] overflow-y-auto space-y-3 pr-2">
                   {selectedStudentExamResults.map(res => (
-                    <div key={res.id} className="p-4 border rounded-2xl flex justify-between items-center bg-white shadow-sm hover:shadow-md transition-shadow">
+                    <div key={res.id} className="p-4 border rounded-2xl flex justify-between items-center bg-white dark:bg-black/20 shadow-sm hover:shadow-md transition-shadow">
                       <div>
                         <p className="font-bold">{res.subject}</p>
                         <p className="text-xs text-muted-foreground">{res.grade} ({res.marks}%)</p>
@@ -541,8 +542,8 @@ export default function AdminPage() {
                             grade: res.grade,
                             examDate: res.examDate ? res.examDate.split('T')[0] : new Date().toISOString().split('T')[0]
                           });
-                        }} className="text-primary"><Edit2 size={16} /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete('students', selectedStudentId!, 'results', res.id)} className="text-destructive"><Trash2 size={16} /></Button>
+                        }} className="text-primary hover:bg-primary/10 transition-all"><Edit2 size={16} /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete('students', selectedStudentId!, 'results', res.id)} className="text-destructive hover:bg-destructive/10 transition-all"><Trash2 size={16} /></Button>
                       </div>
                     </div>
                   ))}

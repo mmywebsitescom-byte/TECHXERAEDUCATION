@@ -104,8 +104,8 @@ export default function SupportPage() {
             
             <Accordion type="single" collapsible className="w-full space-y-4">
               {faqs.map((faq, index) => (
-                <AccordionItem key={index} value={`item-${index}`} className="border-none bg-white/50 backdrop-blur-sm rounded-[2rem] px-8 overflow-hidden shadow-sm hover:shadow-md transition-all">
-                  <AccordionTrigger className="text-left py-6 hover:no-underline font-bold text-lg hover:text-primary transition-colors">
+                <AccordionItem key={index} value={`item-${index}`} className="border-none bg-white/50 dark:bg-black/10 backdrop-blur-sm rounded-[2rem] px-8 overflow-hidden shadow-sm hover:shadow-md transition-all">
+                  <AccordionTrigger className="text-left py-6 hover:no-underline font-bold text-lg hover:text-primary transition-colors focus:outline-none">
                     {faq.question}
                   </AccordionTrigger>
                   <AccordionContent className="text-muted-foreground text-base leading-relaxed pb-6">
