@@ -116,7 +116,7 @@ export default function AdminPage() {
 
   const handleLogout = async () => {
     await signOut(auth)
-    router.push('/admin/login')
+    router.push('/')
   }
 
   const handleDelete = async (coll: string, id: string, subColl?: string, subId?: string) => {

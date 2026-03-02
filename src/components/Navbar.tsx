@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Button } from './ui/button'
 import { 
   LogIn, 
@@ -118,6 +119,7 @@ export default function Navbar() {
   const { user } = useUser()
   const auth = useAuth()
   const db = useFirestore()
+  const router = useRouter()
 
   useEffect(() => {
     setMounted(true)
@@ -134,8 +136,9 @@ export default function Navbar() {
   const siteName = settings?.siteName || 'TECHXERA'
   const customLogoUrl = settings?.logoUrl || null
 
-  const handleLogout = () => {
-    signOut(auth)
+  const handleLogout = async () => {
+    await signOut(auth)
+    router.push('/')
   }
 
   return (

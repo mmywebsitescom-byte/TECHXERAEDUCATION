@@ -100,6 +100,11 @@ export default function DashboardPage() {
     }
   }
 
+  const handleLogout = async () => {
+    await signOut(auth)
+    router.push('/')
+  }
+
   if (!mounted || isUserLoading || isProfileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -126,7 +131,7 @@ export default function DashboardPage() {
                 Your student record could not be found or has been removed from the system. Access to academic records requires an active profile.
               </p>
               <div className="flex justify-center gap-4">
-                <Button onClick={() => signOut(auth)} variant="destructive" className="rounded-xl h-12 px-8 font-bold">
+                <Button onClick={handleLogout} variant="destructive" className="rounded-xl h-12 px-8 font-bold">
                   <LogOut size={18} className="mr-2" /> Log Out
                 </Button>
                 <Button onClick={() => router.push('/')} variant="outline" className="rounded-xl h-12 px-8 font-bold">
