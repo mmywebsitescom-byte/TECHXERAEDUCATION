@@ -17,6 +17,8 @@ import { doc, setDoc } from 'firebase/firestore'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 
+const AUTHORIZED_ADMIN_EMAIL = 'rraghabbarik@gmail.com'
+
 function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -34,16 +36,18 @@ function LoginForm() {
   const searchParams = useSearchParams()
   const { toast } = useToast()
 
-  // Updated default redirect to home page "/"
   const redirectTo = searchParams.get('redirect') || '/'
 
-  // Dynamic branding fetch
   const settingsRef = useMemoFirebase(() => (db ? doc(db, 'settings', 'site-config') : null), [db])
   const { data: settings } = useDoc(settingsRef)
 
   useEffect(() => {
     if (!isUserLoading && user) {
-      router.push(redirectTo)
+      if (user.email === AUTHORIZED_ADMIN_EMAIL) {
+        router.push('/admin')
+      } else {
+        router.push(redirectTo)
+      }
     }
   }, [user, isUserLoading, router, redirectTo])
 
@@ -59,6 +63,16 @@ function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isLoading) return;
+
+    if (email.toLowerCase() === AUTHORIZED_ADMIN_EMAIL.toLowerCase()) {
+      toast({
+        variant: "destructive",
+        title: "Admin Account Restricted",
+        description: "Administrators must use the dedicated Admin Console.",
+      })
+      router.push('/admin/login')
+      return;
+    }
     
     setIsLoading(true)
     try {

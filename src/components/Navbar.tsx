@@ -132,7 +132,7 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  const isAdmin = user?.email === AUTHORIZED_ADMIN_EMAIL
+  const isAdmin = user?.email?.toLowerCase() === AUTHORIZED_ADMIN_EMAIL.toLowerCase()
 
   const settingsRef = useMemoFirebase(() => (db ? doc(db, 'settings', 'site-config') : null), [db])
   const { data: settings } = useDoc(settingsRef)
@@ -218,9 +218,9 @@ export default function Navbar() {
           <ThemeToggle />
           {mounted && user ? (
             <div className="flex items-center gap-2 md:gap-4">
-              <Link href="/dashboard">
+              <Link href={isAdmin ? "/admin" : "/dashboard"}>
                 <Button className="flex items-center gap-2 bg-primary text-white hover:bg-primary/90 shadow-lg shadow-primary/20 px-4 md:px-6 rounded-xl font-bold h-10 text-xs md:text-sm">
-                  <LayoutDashboard size={18} className="hidden xs:block" /> DASHBOARD
+                  <LayoutDashboard size={18} className="hidden xs:block" /> {isAdmin ? 'ADMIN PANEL' : 'DASHBOARD'}
                 </Button>
               </Link>
               <Button onClick={handleLogout} variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 rounded-xl w-10 h-10">

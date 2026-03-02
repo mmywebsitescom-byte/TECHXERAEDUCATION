@@ -19,6 +19,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useToast } from '@/hooks/use-toast'
 import SplitText from '@/components/SplitText'
 
+const AUTHORIZED_ADMIN_EMAIL = 'rraghabbarik@gmail.com'
+
 const container = {
   hidden: { opacity: 0 },
   show: {
@@ -50,6 +52,12 @@ export default function DashboardPage() {
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  useEffect(() => {
+    if (!isUserLoading && user?.email?.toLowerCase() === AUTHORIZED_ADMIN_EMAIL.toLowerCase()) {
+      router.push('/admin')
+    }
+  }, [user, isUserLoading, router])
 
   const studentRef = useMemoFirebase(() => (user && db ? doc(db, 'students', user.uid) : null), [user, db])
   const { data: profile, isLoading: isProfileLoading } = useDoc(studentRef)
@@ -113,7 +121,7 @@ export default function DashboardPage() {
     )
   }
 
-  if (!user) return null
+  if (!user || user.email?.toLowerCase() === AUTHORIZED_ADMIN_EMAIL.toLowerCase()) return null
 
   if (!profile && !isProfileLoading) {
     return (
@@ -267,7 +275,7 @@ export default function DashboardPage() {
           className="grid grid-cols-1 lg:grid-cols-3 gap-12"
         >
           <motion.div variants={itemVariant} className="lg:col-span-2">
-            <Card className="glass border-none rounded-[3rem] overflow-hidden h-full shadow-lg">
+            <Card className="glass border-none rounded-[3rem] shadow-lg overflow-hidden h-full">
               <CardHeader className="p-8 md:p-12 border-b border-border/40 bg-white/30">
                 <div className="flex items-center justify-between">
                   <div>
