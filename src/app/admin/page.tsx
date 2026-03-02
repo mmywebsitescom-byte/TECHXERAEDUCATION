@@ -633,6 +633,7 @@ export default function AdminPage() {
                             <TableCell className="font-medium text-muted-foreground">{notice.publishDate ? format(new Date(notice.publishDate), 'MMM d, yyyy') : 'N/A'}</TableCell>
                             <TableCell className="text-right px-10">
                               <Button variant="ghost" size="icon" onClick={() => handleDelete('notices', notice.id)} className="text-destructive"><Trash2 size={22} /></Button>
+                            </TableCell>
                           </TableRow>
                         ))}
                         {activeTab === 'resources' && materials?.map((material) => (
