@@ -1,50 +1,53 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    /* Color Hunt Palette: #280905 (BG) #740A03 (Secondary) #C3110C (Primary) #E6501B (Accent) */
-    --background: 8 78% 9%; /* #280905 - Deep Maroon/Charcoal */
-    --foreground: 16 100% 98%; /* High contrast light text */
-    --card: 8 60% 12%; /* Slightly lighter than background */
-    --card-foreground: 16 100% 98%;
-    --popover: 8 60% 12%;
-    --popover-foreground: 16 100% 98%;
-    --primary: 2 88% 41%; /* #C3110C - Crimson Red */
+    /* Day Mode - Light Palette */
+    --background: 20 20% 98%;
+    --foreground: 8 78% 5%;
+    --card: 0 0% 100%;
+    --card-foreground: 8 78% 5%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 8 78% 5%;
+    --primary: 2 88% 41%; /* Crimson Red remains consistent */
     --primary-foreground: 0 0% 100%;
-    --secondary: 4 95% 23%; /* #740A03 - Deep Red */
+    --secondary: 4 95% 23%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 8 40% 20%;
-    --muted-foreground: 16 20% 70%;
-    --accent: 16 79% 50%; /* #E6501B - Burnt Orange */
+    --muted: 8 10% 90%;
+    --muted-foreground: 8 20% 40%;
+    --accent: 16 79% 50%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 8 40% 25%;
-    --input: 8 40% 25%;
+    --border: 8 20% 90%;
+    --input: 8 20% 90%;
     --ring: 2 88% 41%;
     --radius: 1.5rem;
   }
 
   .dark {
-    /* Keeping dark mode similar but potentially even deeper */
-    --background: 8 78% 5%;
+    /* Night Mode - Maroon & Charcoal Palette */
+    --background: 8 78% 9%; /* #280905 */
     --foreground: 16 100% 98%;
-    --card: 8 60% 8%;
+    --card: 8 60% 12%;
     --card-foreground: 16 100% 98%;
-    --popover: 8 60% 8%;
+    --popover: 8 60% 12%;
     --popover-foreground: 16 100% 98%;
-    --primary: 2 88% 41%;
+    --primary: 2 88% 41%; /* #C3110C */
     --primary-foreground: 0 0% 100%;
-    --secondary: 4 95% 23%;
+    --secondary: 4 95% 23%; /* #740A03 */
     --secondary-foreground: 0 0% 100%;
-    --muted: 8 40% 15%;
+    --muted: 8 40% 20%;
     --muted-foreground: 16 20% 70%;
-    --accent: 16 79% 50%;
+    --accent: 16 79% 50%; /* #E6501B */
     --accent-foreground: 0 0% 100%;
-    --border: 8 40% 20%;
-    --input: 8 40% 20%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 8 40% 25%;
+    --input: 8 40% 25%;
     --ring: 2 88% 41%;
   }
 }
@@ -54,7 +57,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-body selection:bg-primary/30 antialiased;
+    @apply bg-background text-foreground font-body selection:bg-primary/30 antialiased transition-colors duration-300;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-headline tracking-tight;

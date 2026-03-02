@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect } from 'react'
@@ -8,6 +9,7 @@ import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from '@/fireb
 import { signOut } from 'firebase/auth'
 import { doc } from 'firebase/firestore'
 import { cn } from '@/lib/utils'
+import { ThemeToggle } from './ThemeToggle'
 
 const AUTHORIZED_ADMIN_EMAIL = 'rraghabbarik@gmail.com'
 
@@ -95,7 +97,7 @@ export default function Navbar() {
   return (
     <nav className={cn(
       "fixed top-0 z-50 w-full px-6 py-4 transition-all duration-300",
-      scrolled ? "bg-white/80 backdrop-blur-xl border-b border-primary/10 py-3 shadow-md" : "bg-transparent"
+      scrolled ? "bg-white/80 dark:bg-background/80 backdrop-blur-xl border-b border-primary/10 py-3 shadow-md" : "bg-transparent"
     )}>
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <Link href="/" className="flex items-center gap-4 group">
@@ -107,7 +109,7 @@ export default function Navbar() {
             {siteName.includes(' ') ? (
               <>
                 {siteName.split(' ')[0]}
-                <span className="text-secondary">{siteName.split(' ').slice(1).join(' ')}</span>
+                <span className="text-secondary dark:text-white/60">{siteName.split(' ').slice(1).join(' ')}</span>
               </>
             ) : siteName}
           </span>
@@ -135,11 +137,12 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-4">
+          <ThemeToggle />
           {mounted && user ? (
             <div className="flex items-center gap-4">
               {isAdmin && (
                 <Link href="/admin">
-                  <Button variant="ghost" className="hidden sm:flex items-center gap-2 text-secondary font-bold hover:bg-secondary/10 px-4 rounded-xl h-10">
+                  <Button variant="ghost" className="hidden sm:flex items-center gap-2 text-secondary dark:text-white font-bold hover:bg-secondary/10 px-4 rounded-xl h-10">
                     <Shield size={18} /> ADMIN
                   </Button>
                 </Link>
@@ -155,7 +158,7 @@ export default function Navbar() {
             </div>
           ) : mounted ? (
             <Link href="/login">
-              <Button variant="outline" className="flex items-center gap-2 border-primary/20 bg-white/50 backdrop-blur-sm text-primary hover:bg-primary hover:text-white transition-all px-8 rounded-xl font-bold h-10">
+              <Button variant="outline" className="flex items-center gap-2 border-primary/20 bg-white/50 dark:bg-background/50 backdrop-blur-sm text-primary hover:bg-primary hover:text-white transition-all px-8 rounded-xl font-bold h-10">
                 <LogIn size={18} /> LOGIN
               </Button>
             </Link>
