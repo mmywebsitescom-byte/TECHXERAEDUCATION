@@ -490,12 +490,10 @@ export default function AdminPage() {
     if (isScannerOpen && selectedSessionId && db) {
       const initScanner = async () => {
         try {
-          // Explicitly request camera permission to trigger browser prompt
           const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-          stream.getTracks().forEach(track => track.stop()); // Release immediately after verification
+          stream.getTracks().forEach(track => track.stop()); 
           setHasCameraPermission(true);
 
-          // Short delay to allow Dialog animation to complete before DOM manipulation
           const timer = setTimeout(() => {
             const element = document.getElementById("admin-attendance-scan-reader");
             if (!element) return;
@@ -511,17 +509,15 @@ export default function AdminPage() {
                 const studentData = JSON.parse(decodedText)
                 if (studentData.type !== 'techxera-student-id') return
 
-                // Unique record key: studentUID_sessionID
                 const recordId = `${studentData.uid}_${selectedSessionId}`
                 const attendanceRef = doc(db, 'attendance', recordId)
                 
                 const existing = await getDoc(attendanceRef)
                 if (existing.exists()) {
-                  toast({ title: "Already Logged", description: `${studentData.name} has already been verified for this session.` })
+                  toast({ title: "Already Logged", description: `${studentData.name} has already been verified.` })
                   return
                 }
 
-                // Verify session token for security
                 const sessionDoc = await getDoc(doc(db, 'sessions', selectedSessionId));
                 const dynamicToken = sessionDoc.exists() ? sessionDoc.data().dynamicToken : '';
 
@@ -536,7 +532,6 @@ export default function AdminPage() {
                   tokenUsed: dynamicToken
                 };
 
-                // Commit to Firestore - results in immediate real-time sync for both Admin and Student listeners
                 setDoc(attendanceRef, payload)
                   .then(() => {
                     toast({ title: "Presence Verified", description: `Student: ${studentData.name} marked as present.` })
@@ -551,17 +546,15 @@ export default function AdminPage() {
                   });
 
               } catch (err) {
-                console.warn("QR parsing or processing failed:", err)
+                console.warn("QR parsing failed:", err)
               }
             }
 
-            scanner.render(onScanSuccess, (err) => {
-              // Noise during idle is expected
-            })
+            scanner.render(onScanSuccess, (err) => {})
             scannerRef.current = scanner
           }, 600);
         } catch (err) {
-          console.error("Camera access denied by administrator:", err);
+          console.error("Camera access denied:", err);
           setHasCameraPermission(false);
           toast({
             variant: "destructive",
@@ -628,10 +621,10 @@ export default function AdminPage() {
         </div>
       </header>
 
-      <main className="flex-1 max-w-7xl mx-auto w-full px-6 md:px-12 pb-32 space-y-8 z-10">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-6 md:px-12 pb-32 space-y-8 z-10 overflow-hidden">
         <Tabs defaultValue="results" className="w-full" onValueChange={setActiveTab}>
-          <div className="bg-white/80 dark:bg-card/40 backdrop-blur-xl rounded-[2.5rem] p-3 shadow-xl mb-12 border border-white/20">
-            <TabsList className="bg-transparent flex flex-wrap justify-center h-auto gap-2 border-none">
+          <div className="bg-white/80 dark:bg-card/40 backdrop-blur-xl rounded-[2.5rem] p-3 shadow-xl mb-12 border border-white/20 overflow-x-auto scrollbar-hide">
+            <TabsList className="bg-transparent flex flex-nowrap justify-start lg:justify-center h-auto gap-2 border-none min-w-max">
               {[
                 { id: 'results', label: 'Results', icon: <GraduationCap size={16} /> },
                 { id: 'students', label: 'Students', icon: <Users size={16} /> },
@@ -645,7 +638,7 @@ export default function AdminPage() {
                 <TabsTrigger 
                   key={tab.id}
                   value={tab.id} 
-                  className="data-[state=active]:bg-primary data-[state=active]:text-white h-12 px-8 rounded-[1.5rem] font-bold uppercase text-[10px] tracking-widest gap-2 transition-all hover:bg-primary/5 border-none"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-white h-12 px-8 rounded-[1.5rem] font-bold uppercase text-[10px] tracking-widest gap-2 transition-all hover:bg-primary/5 border-none whitespace-nowrap"
                 >
                   {tab.icon} {tab.label}
                 </TabsTrigger>
@@ -790,13 +783,13 @@ export default function AdminPage() {
                             </motion.div>
                           ))}
                           {sessionAttendance?.length === 0 && (
-                            <div className="text-center py-20 text-muted-foreground italic">Waiting for student scans...</div>
+                            <div className="text-center py-20 text-muted-foreground italic">Waiting for scans...</div>
                           )}
                         </div>
                       ) : (
                         <div className="h-[300px] flex flex-col items-center justify-center text-center gap-6 text-muted-foreground opacity-50">
                           <CheckCircle2 size={64} />
-                          <p className="max-w-[200px] font-medium text-sm">Select a session to view real-time presence logs.</p>
+                          <p className="max-w-[200px] font-medium text-sm">Select a session to view live presence logs.</p>
                         </div>
                       )}
                     </Card>
@@ -990,7 +983,7 @@ export default function AdminPage() {
                           <TableCell colSpan={4} className="h-80 text-center">
                             <div className="flex flex-col items-center gap-4 opacity-40">
                               <BookOpen size={48} />
-                              <p className="text-muted-foreground italic font-medium">No materials found in the repository.</p>
+                              <p className="text-muted-foreground italic font-medium">No materials found.</p>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -1021,22 +1014,20 @@ export default function AdminPage() {
                         <Input 
                           value={brandingForm.logoUrl} 
                           onChange={e => setBrandingForm({...brandingForm, logoUrl: e.target.value})}
-                          placeholder="https://i.postimg.cc/..."
+                          placeholder="https://..."
                           className="h-14 rounded-2xl bg-background/50 border-none ring-1 ring-border focus-visible:ring-primary text-sm font-medium px-6 shadow-sm" 
                         />
-                        <p className="text-[10px] text-muted-foreground/60 font-medium ml-2">Logo displayed in Navbar and Dashboard</p>
                       </div>
                       <div className="space-y-3">
                         <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                          <Globe size={14} /> Tab Icon (Favicon) URL
+                          <Globe size={14} /> Favicon URL
                         </Label>
                         <Input 
                           value={brandingForm.faviconUrl} 
                           onChange={e => setBrandingForm({...brandingForm, faviconUrl: e.target.value})}
-                          placeholder="https://i.postimg.cc/..."
+                          placeholder="https://..."
                           className="h-14 rounded-2xl bg-background/50 border-none ring-1 ring-border focus-visible:ring-primary text-sm font-medium px-6 shadow-sm" 
                         />
-                        <p className="text-[10px] text-muted-foreground/60 font-medium ml-2">Icon displayed in the browser tab</p>
                       </div>
                     </div>
 
@@ -1045,7 +1036,7 @@ export default function AdminPage() {
                       <Textarea 
                         value={brandingForm.heroDescription} 
                         onChange={e => setBrandingForm({...brandingForm, heroDescription: e.target.value})}
-                        placeholder="A high-performance student portal engineered for TechXera students."
+                        placeholder="A high-performance student portal..."
                         className="min-h-[180px] rounded-3xl bg-background/50 border-none ring-1 ring-border focus-visible:ring-primary p-6 text-sm leading-relaxed shadow-sm" 
                       />
                     </div>
@@ -1067,7 +1058,7 @@ export default function AdminPage() {
           <DialogHeader className="text-center">
             <DialogTitle className="text-2xl font-headline font-bold mb-2">Scanner: {activeSession?.className}</DialogTitle>
             <DialogDescription className="text-muted-foreground font-medium text-center">
-              Align student identity QR within the active frame
+              Align student identity QR within the frame
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col items-center gap-8 py-6">
@@ -1076,7 +1067,7 @@ export default function AdminPage() {
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Camera Required</AlertTitle>
                 <AlertDescription>
-                  Access denied. Please update browser settings to allow camera usage.
+                  Access denied. Please update browser settings.
                 </AlertDescription>
               </Alert>
             )}
@@ -1093,7 +1084,7 @@ export default function AdminPage() {
 
             <div className="p-5 bg-primary/5 rounded-2xl w-full flex items-center gap-4 text-xs text-primary border border-primary/20">
               <ShieldCheck size={20} className="shrink-0" />
-              <p className="font-medium leading-relaxed">Secure Admin Hub. Instant verification against campus records.</p>
+              <p className="font-medium leading-relaxed">Secure Admin Hub. Instant verification.</p>
             </div>
             <Button onClick={() => setIsScannerOpen(false)} variant="outline" className="w-full h-12 rounded-xl font-bold">
               Terminate Scanner
@@ -1131,37 +1122,23 @@ export default function AdminPage() {
         <DialogContent className="rounded-[2.5rem] p-10 sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-2xl font-headline font-bold">
-              {editingMaterial ? 'Update Repository Item' : 'New Study Material'}
+              {editingMaterial ? 'Update Material' : 'New Study Material'}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSaveMaterial} className="space-y-6 pt-4">
             <div className="space-y-2">
               <Label>Title</Label>
-              <Input 
-                required 
-                placeholder="e.g. Intro to Neural Networks" 
-                value={materialForm.title} 
-                onChange={e => setMaterialForm({...materialForm, title: e.target.value})} 
-                className="h-12 rounded-xl" 
-              />
+              <Input required placeholder="e.g. Intro to Neural Networks" value={materialForm.title} onChange={e => setMaterialForm({...materialForm, title: e.target.value})} className="h-12 rounded-xl" />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Subject</Label>
-                <Input 
-                  required 
-                  placeholder="e.g. Artificial Intelligence" 
-                  value={materialForm.subject} 
-                  onChange={e => setMaterialForm({...materialForm, subject: e.target.value})} 
-                  className="h-12 rounded-xl" 
-                />
+                <Input required placeholder="e.g. Artificial Intelligence" value={materialForm.subject} onChange={e => setMaterialForm({...materialForm, subject: e.target.value})} className="h-12 rounded-xl" />
               </div>
               <div className="space-y-2">
                 <Label>Type</Label>
                 <Select value={materialForm.materialType} onValueChange={val => setMaterialForm({...materialForm, materialType: val})}>
-                  <SelectTrigger className="h-12 rounded-xl">
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger className="h-12 rounded-xl"><SelectValue /></SelectTrigger>
                   <SelectContent className="rounded-xl">
                     <SelectItem value="Notes">Notes</SelectItem>
                     <SelectItem value="Assignment">Assignment</SelectItem>
@@ -1173,26 +1150,11 @@ export default function AdminPage() {
             </div>
             <div className="space-y-2">
               <Label>File URL</Label>
-              <Input 
-                required 
-                placeholder="https://drive.google.com/..." 
-                value={materialForm.fileUrl} 
-                onChange={e => setMaterialForm({...materialForm, fileUrl: e.target.value})} 
-                className="h-12 rounded-xl" 
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Thumbnail URL (Optional)</Label>
-              <Input 
-                placeholder="https://..." 
-                value={materialForm.thumbnailUrl} 
-                onChange={e => setMaterialForm({...materialForm, thumbnailUrl: e.target.value})} 
-                className="h-12 rounded-xl" 
-              />
+              <Input required placeholder="https://..." value={materialForm.fileUrl} onChange={e => setMaterialForm({...materialForm, fileUrl: e.target.value})} className="h-12 rounded-xl" />
             </div>
             <DialogFooter>
               <Button type="submit" className="w-full h-12 rounded-xl font-bold text-lg">
-                {editingMaterial ? 'Update Material' : 'Publish Material'}
+                {editingMaterial ? 'Update' : 'Publish'} Material
               </Button>
             </DialogFooter>
           </form>
@@ -1201,41 +1163,32 @@ export default function AdminPage() {
 
       <Dialog open={isNoticeDialogOpen} onOpenChange={setIsNoticeDialogOpen}>
         <DialogContent className="rounded-[2.5rem] p-10 sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-headline font-bold">Publish New Notice</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle className="text-2xl font-headline font-bold">Publish Notice</DialogTitle></DialogHeader>
           <form onSubmit={handleCreateNotice} className="space-y-6 pt-4">
             <div className="space-y-2">
-              <Label>Notice Title</Label>
-              <Input required placeholder="e.g. End Semester Schedule" value={noticeForm.title} onChange={e => setNoticeForm({...noticeForm, title: e.target.value})} className="h-12 rounded-xl" />
+              <Label>Title</Label>
+              <Input required placeholder="e.g. Assessment Schedule" value={noticeForm.title} onChange={e => setNoticeForm({...noticeForm, title: e.target.value})} className="h-12 rounded-xl" />
             </div>
             <div className="space-y-2">
-              <Label>Message Content</Label>
-              <Textarea required placeholder="Provide details about the announcement..." value={noticeForm.description} onChange={e => setNoticeForm({...noticeForm, description: e.target.value})} className="min-h-[120px] rounded-xl" />
+              <Label>Content</Label>
+              <Textarea required placeholder="Details..." value={noticeForm.description} onChange={e => setNoticeForm({...noticeForm, description: e.target.value})} className="min-h-[120px] rounded-xl" />
             </div>
             <div className="flex items-center justify-between p-4 bg-muted/20 rounded-2xl">
-              <div className="space-y-0.5">
-                <Label className="text-sm font-bold">Urgent Priority</Label>
-                <p className="text-xs text-muted-foreground">Highlight this notice as high-priority.</p>
-              </div>
+              <Label className="font-bold">Urgent Priority</Label>
               <Switch checked={noticeForm.isUrgent} onCheckedChange={val => setNoticeForm({...noticeForm, isUrgent: val})} />
             </div>
-            <DialogFooter>
-              <Button type="submit" className="w-full h-12 rounded-xl font-bold text-lg">Publish Bulletin</Button>
-            </DialogFooter>
+            <DialogFooter><Button type="submit" className="w-full h-12 rounded-xl font-bold">Publish</Button></DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
       <Dialog open={isExamDialogOpen} onOpenChange={setIsExamDialogOpen}>
         <DialogContent className="rounded-[2.5rem] p-10 sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-headline font-bold">Schedule Examination</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle className="text-2xl font-headline font-bold">Schedule Exam</DialogTitle></DialogHeader>
           <form onSubmit={handleCreateExam} className="space-y-6 pt-4">
             <div className="space-y-2">
               <Label>Exam Title</Label>
-              <Input required placeholder="e.g. Mid-Term Assessment" value={examForm.title} onChange={e => setExamForm({...examForm, title: e.target.value})} className="h-12 rounded-xl" />
+              <Input required placeholder="e.g. Mid-Term" value={examForm.title} onChange={e => setExamForm({...examForm, title: e.target.value})} className="h-12 rounded-xl" />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -1251,13 +1204,11 @@ export default function AdminPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Start Date</Label>
+                <Label>Date</Label>
                 <Input type="date" required value={examForm.examDate} onChange={e => setExamForm({...examForm, examDate: e.target.value})} className="h-12 rounded-xl" />
               </div>
             </div>
-            <DialogFooter>
-              <Button type="submit" className="w-full h-12 rounded-xl font-bold text-lg">Create Schedule</Button>
-            </DialogFooter>
+            <DialogFooter><Button type="submit" className="w-full h-12 rounded-xl font-bold">Create Schedule</Button></DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
@@ -1266,8 +1217,8 @@ export default function AdminPage() {
         <DialogContent className="rounded-[2.5rem] p-10 sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-2xl font-headline font-bold">Enter Academic Score</DialogTitle>
-            <DialogDescription className="text-muted-foreground font-medium">
-              Record the evaluation for {selectedStudentForGrade?.firstName} {selectedStudentForGrade?.lastName}.
+            <DialogDescription>
+              Record evaluation for {selectedStudentForGrade?.firstName} {selectedStudentForGrade?.lastName}.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSaveGrade} className="space-y-6 pt-4">
@@ -1275,7 +1226,7 @@ export default function AdminPage() {
               <Label>Subject / Paper</Label>
               <Input 
                 required 
-                placeholder="e.g. Quantum Computing" 
+                placeholder="e.g. Physics" 
                 value={gradeForm.subject} 
                 onChange={e => setGradeForm({...gradeForm, subject: e.target.value})}
                 className="h-12 rounded-xl" 
@@ -1314,9 +1265,7 @@ export default function AdminPage() {
                 </Select>
               </div>
             </div>
-            <DialogFooter>
-              <Button type="submit" className="w-full h-12 rounded-xl font-bold text-lg">Save Result</Button>
-            </DialogFooter>
+            <DialogFooter><Button type="submit" className="w-full h-12 rounded-xl font-bold">Save Result</Button></DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
