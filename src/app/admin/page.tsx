@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useRef } from 'react'
@@ -87,7 +86,7 @@ export default function AdminPage() {
   const attendanceQuery = useMemoFirebase(() => (db && selectedSessionId && isAuthorizedAdmin ? query(collection(db, 'attendance'), where('sessionId', '==', selectedSessionId)) : null), [db, selectedSessionId, isAuthorizedAdmin])
   const { data: sessionAttendance } = useCollection(attendanceQuery)
 
-  const studentsQuery = useMemoFirebase(() => (db && isAuthorizedAdmin ? query(collection(db, 'students'), orderBy('enrollmentDate', 'desc')) : null), [db, isAuthorizedAdmin])
+  const allStudentsQuery = useMemoFirebase(() => (db && isAuthorizedAdmin ? query(collection(db, 'students'), orderBy('enrollmentDate', 'desc')) : null), [db, isAuthorizedAdmin])
   const { data: allStudents } = useCollection(allStudentsQuery)
 
   const examsQuery = useMemoFirebase(() => (db && isAuthorizedAdmin ? query(collection(db, 'exams'), orderBy('examDate', 'desc')) : null), [db, isAuthorizedAdmin])
@@ -264,7 +263,7 @@ export default function AdminPage() {
     <div className="min-h-screen bg-background relative overflow-hidden flex flex-col">
       <TechBackground />
       
-      {/* Header Section matching reference */}
+      {/* Header Section */}
       <header className="w-full px-6 md:px-12 pt-12 pb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-8 z-10">
         <div className="flex items-center gap-6">
           <TechXeraLogo className="w-20 h-20 shadow-2xl shadow-primary/20" customUrl={dbSettings?.logoUrl} />
@@ -298,7 +297,6 @@ export default function AdminPage() {
       {/* Main Content Area with Tabbed Layout */}
       <main className="flex-1 max-w-7xl mx-auto w-full px-6 md:px-12 pb-32 space-y-8 z-10">
         <Tabs defaultValue="results" className="w-full" onValueChange={setActiveTab}>
-          {/* Tabs Navigation matching reference sequence */}
           <div className="bg-white/80 dark:bg-card/40 backdrop-blur-xl rounded-[2.5rem] p-3 shadow-xl mb-12 border border-white/20">
             <TabsList className="bg-transparent flex flex-wrap justify-center h-auto gap-2 border-none">
               {[
@@ -325,7 +323,7 @@ export default function AdminPage() {
           <Card className="glass border-none rounded-[3.5rem] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.1)] overflow-hidden min-h-[600px]">
             <CardContent className="p-12">
               
-              {/* Results Tab - Matching Reference Image */}
+              {/* Results Tab */}
               <TabsContent value="results" className="mt-0 space-y-12">
                 <div className="space-y-8">
                   <div className="max-w-md">
@@ -385,7 +383,7 @@ export default function AdminPage() {
                 </div>
               </TabsContent>
 
-              {/* Attendance Tab - Fully Integrated */}
+              {/* Attendance Tab */}
               <TabsContent value="attendance" className="mt-0 space-y-12">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                   <div className="space-y-8">
@@ -471,7 +469,7 @@ export default function AdminPage() {
                 </div>
               </TabsContent>
 
-              {/* Other functional tabs restored... */}
+              {/* Students Tab */}
               <TabsContent value="students" className="mt-0 space-y-8">
                 <div className="flex justify-between items-center">
                   <h3 className="text-2xl font-headline font-bold">Student Registry</h3>
