@@ -46,6 +46,15 @@ function LoginForm() {
     }
   }, [user, isUserLoading, router, redirectTo])
 
+  if (isUserLoading || user) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 space-y-4">
+        <Loader2 className="animate-spin text-primary" size={48} />
+        <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Synchronizing Session...</p>
+      </div>
+    )
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isLoading) return;
@@ -56,7 +65,6 @@ function LoginForm() {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password)
         const newUser = userCredential.user
         
-        // Create initial student profile (pending approval)
         await setDoc(doc(db, 'students', newUser.uid), {
           id: newUser.uid,
           studentId: studentId.trim(),

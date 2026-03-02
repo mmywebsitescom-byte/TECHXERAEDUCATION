@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Label } from '@/components/ui/label'
 import TechBackground from '@/components/TechBackground'
 import { TechXeraLogo } from '@/components/Navbar'
-import { Lock, User, ArrowRight, Loader2, Info, Home, ShieldAlert } from 'lucide-react'
+import { Lock, User, ArrowRight, Loader2, Home, ShieldAlert } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase'
@@ -46,6 +46,15 @@ function AdminLoginForm() {
       }
     }
   }, [user, isUserLoading, router, toast])
+
+  if (isUserLoading || (user && user.email === AUTHORIZED_ADMIN_EMAIL)) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 space-y-4">
+        <Loader2 className="animate-spin text-primary" size={48} />
+        <p className="text-sm font-bold uppercase tracking-widest text-primary">Verifying Root Access...</p>
+      </div>
+    )
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
