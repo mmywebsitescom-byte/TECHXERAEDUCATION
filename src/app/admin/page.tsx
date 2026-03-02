@@ -726,7 +726,11 @@ export default function AdminPage() {
                           <p className="font-bold text-muted-foreground uppercase tracking-widest text-xs">No active sessions found.</p>
                         </div>
                       ) : sessions?.map((session) => (
-                        <Card key={session.id} className={`border-none ${selectedSessionId === session.id ? 'ring-2 ring-primary bg-primary/5' : 'bg-background/50'} rounded-[2.5rem] shadow-lg transition-all`}>
+                        <Card 
+                          key={session.id} 
+                          onClick={() => setSelectedSessionId(session.id)}
+                          className={`border-none cursor-pointer hover:shadow-xl transition-all ${selectedSessionId === session.id ? 'ring-2 ring-primary bg-primary/5' : 'bg-background/50 hover:bg-background/80'} rounded-[2.5rem] shadow-lg`}
+                        >
                           <CardContent className="p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                             <div className="space-y-2">
                               <h4 className="font-bold text-2xl tracking-tight">{session.className}</h4>
@@ -737,7 +741,8 @@ export default function AdminPage() {
                             </div>
                             <div className="flex items-center gap-3 w-full md:w-auto">
                               <Button 
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.stopPropagation()
                                   setSelectedSessionId(session.id)
                                   setIsScannerOpen(true)
                                 }}
@@ -746,7 +751,10 @@ export default function AdminPage() {
                                 <Camera className="mr-2" size={18} /> Launch Scanner
                               </Button>
                               <Button 
-                                onClick={() => handleDeleteSession(session.id)}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleDeleteSession(session.id)
+                                }}
                                 size="icon" 
                                 variant="ghost" 
                                 className="h-12 w-12 rounded-xl text-destructive hover:bg-destructive/10"
