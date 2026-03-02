@@ -1,7 +1,7 @@
 
 "use client"
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import Navbar from '@/components/Navbar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
@@ -54,11 +54,22 @@ export default function DashboardPage() {
   const studentRef = useMemoFirebase(() => (user && db ? doc(db, 'students', user.uid) : null), [user, db])
   const { data: profile, isLoading: isProfileLoading } = useDoc(studentRef)
 
+  // Use a simple query without orderBy to avoid index requirement
   const attendanceQuery = useMemoFirebase(() => (user && db ? query(collection(db, 'attendance'), where('studentUid', '==', user.uid)) : null), [user, db])
   const { data: attendanceData } = useCollection(attendanceQuery)
 
   const resultsQuery = useMemoFirebase(() => (user && profile?.isApproved && db ? collection(db, 'students', user.uid, 'results') : null), [user, profile, db])
   const { data: results, isLoading: isResultsLoading } = useCollection(resultsQuery)
+
+  // Sort attendance logs client-side
+  const sortedAttendance = useMemo(() => {
+    if (!attendanceData) return [];
+    return [...attendanceData].sort((a, b) => {
+      const dateA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+      const dateB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+      return dateB - dateA;
+    });
+  }, [attendanceData]);
 
   useEffect(() => {
     if (mounted && !isUserLoading && !user) {
@@ -172,7 +183,7 @@ export default function DashboardPage() {
     )
   }
 
-  const attendancePercentage = attendanceData ? Math.min(100, (attendanceData.length / 50) * 100) : 0; // Assuming 50 classes for demo
+  const attendancePercentage = attendanceData ? Math.min(100, (attendanceData.length / 50) * 100) : 0; 
   const isBelowThreshold = attendancePercentage < 75;
 
   const chartData = results?.map(r => ({
@@ -348,10 +359,10 @@ export default function DashboardPage() {
 
                   <div className="pt-4 space-y-3">
                     <h4 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Recent Scan Log</h4>
-                    {attendanceData?.slice(0, 3).map((log, i) => (
+                    {sortedAttendance?.slice(0, 3).map((log, i) => (
                       <div key={i} className="flex justify-between text-sm font-bold p-3 bg-muted/30 rounded-xl">
                         <span>Session {log.sessionId}</span>
-                        <span className="text-primary">{format(new Date(log.timestamp), 'MMM d')}</span>
+                        <span className="text-primary">{log.timestamp ? format(new Date(log.timestamp), 'MMM d') : 'N/A'}</span>
                       </div>
                     ))}
                   </div>

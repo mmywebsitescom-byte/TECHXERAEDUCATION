@@ -1,7 +1,7 @@
 
 "use client"
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import Navbar from '@/components/Navbar'
 import TechBackground from '@/components/TechBackground'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { QrCode, ShieldCheck, AlertCircle, Clock, Calendar, CheckCircle2, Loader2, TrendingUp } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase'
-import { doc, collection, query, where, orderBy } from 'firebase/firestore'
+import { doc, collection, query, where } from 'firebase/firestore'
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
 import SplitText from '@/components/SplitText'
@@ -29,8 +29,19 @@ export default function AttendancePage() {
   const studentRef = useMemoFirebase(() => (user && db ? doc(db, 'students', user.uid) : null), [user, db])
   const { data: profile, isLoading: isProfileLoading } = useDoc(studentRef)
 
-  const attendanceQuery = useMemoFirebase(() => (user && db ? query(collection(db, 'attendance'), where('studentUid', '==', user.uid), orderBy('timestamp', 'desc')) : null), [user, db])
+  // Removed orderBy from query to avoid composite index requirement
+  const attendanceQuery = useMemoFirebase(() => (user && db ? query(collection(db, 'attendance'), where('studentUid', '==', user.uid)) : null), [user, db])
   const { data: attendance, isLoading: isAttendanceLoading } = useCollection(attendanceQuery)
+
+  // Handle sorting client-side
+  const sortedAttendance = useMemo(() => {
+    if (!attendance) return [];
+    return [...attendance].sort((a, b) => {
+      const dateA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+      const dateB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+      return dateB - dateA;
+    });
+  }, [attendance]);
 
   useEffect(() => {
     if (mounted && !isUserLoading && !user) {
@@ -177,7 +188,7 @@ export default function AttendancePage() {
                     <Loader2 className="animate-spin text-primary" size={32} />
                     <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Retrieving logs...</p>
                   </div>
-                ) : attendance && attendance.length > 0 ? (
+                ) : sortedAttendance && sortedAttendance.length > 0 ? (
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
@@ -189,7 +200,7 @@ export default function AttendancePage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {attendance.map((record, i) => (
+                        {sortedAttendance.map((record, i) => (
                           <motion.tr 
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
@@ -199,10 +210,10 @@ export default function AttendancePage() {
                           >
                             <td className="px-10 py-6 font-bold text-lg">Session {record.sessionId}</td>
                             <td className="py-6 text-sm font-medium text-muted-foreground">
-                              {format(new Date(record.timestamp), 'MMM d, yyyy')}
+                              {record.timestamp ? format(new Date(record.timestamp), 'MMM d, yyyy') : 'N/A'}
                             </td>
                             <td className="py-6 text-sm font-medium text-muted-foreground">
-                              {format(new Date(record.timestamp), 'h:mm a')}
+                              {record.timestamp ? format(new Date(record.timestamp), 'h:mm a') : 'N/A'}
                             </td>
                             <td className="px-10 py-6 text-right">
                               <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-500/10 text-green-500 rounded-full text-[10px] font-black uppercase tracking-widest">
