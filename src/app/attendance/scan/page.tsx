@@ -9,7 +9,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 import { Loader2, Camera, CheckCircle2, AlertCircle, ShieldCheck, ArrowLeft, RefreshCw } from 'lucide-react'
 import { Html5QrcodeScanner } from 'html5-qrcode'
 import { useFirestore, useUser, useMemoFirebase, useDoc } from '@/firebase'
-import { doc, setDoc, getDoc, collection, serverTimestamp } from 'firebase/firestore'
+import { doc, setDoc, getDoc } from 'firebase/firestore'
 import { useToast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -20,7 +20,6 @@ export default function AttendanceScanPage() {
   const [scanning, setScanning] = useState(true)
   const [status, setStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState('')
-  const [successData, setSuccessData] = useState<any>(null)
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null)
   
   const scannerRef = useRef<Html5QrcodeScanner | null>(null)
@@ -36,68 +35,65 @@ export default function AttendanceScanPage() {
     setMounted(true)
   }, [])
 
-  // Proactive camera permission check
+  // Handle scanner lifecycle
   useEffect(() => {
-    const getCameraPermission = async () => {
+    if (!mounted || !scanning || status !== 'idle' || isUserLoading) return;
+
+    const startScanner = async () => {
       try {
+        // Test permission first
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        stream.getTracks().forEach(track => track.stop()); // Release immediately
         setHasCameraPermission(true);
-        // Stop tracks so the stream is released for the scanner library
-        stream.getTracks().forEach(track => track.stop());
+
+        // Initialize scanner
+        const scanner = new Html5QrcodeScanner(
+          "qr-reader",
+          { 
+            fps: 15, 
+            qrbox: { width: 280, height: 280 },
+            aspectRatio: 1.0
+          },
+          /* verbose= */ false
+        )
+        
+        scanner.render(
+          (decodedText) => handleScan(decodedText),
+          (error) => {
+            // Noise is expected during search
+          }
+        )
+        
+        scannerRef.current = scanner
       } catch (error) {
-        console.error('Error accessing camera:', error);
+        console.error('Scanner start error:', error);
         setHasCameraPermission(false);
-        toast({
-          variant: 'destructive',
-          title: 'Camera Access Denied',
-          description: 'Please enable camera permissions in your browser settings to use this app.',
-        });
       }
-    };
-
-    if (mounted) {
-      getCameraPermission();
     }
-  }, [mounted, toast]);
 
-  useEffect(() => {
-    if (!mounted || !scanning || status !== 'idle' || hasCameraPermission !== true) return;
+    startScanner();
 
-    // Initialize the scanner only when ready, idle, and permission is granted
-    const scanner = new Html5QrcodeScanner(
-      "qr-reader",
-      { fps: 10, qrbox: { width: 250, height: 250 } },
-      /* verbose= */ false
-    )
-    
-    scanner.render(
-      (decodedText) => handleScan(decodedText),
-      (error) => {} // Suppress noise
-    )
-    
-    scannerRef.current = scanner
-
-    // Cleanup on unmount or state change
     return () => {
       if (scannerRef.current) {
         scannerRef.current.clear().catch((err) => {
-          // Silent catch to prevent 'node not found' or parent-related removeChild errors
+          console.warn('Scanner cleanup warning:', err);
         });
         scannerRef.current = null;
       }
     }
-  }, [mounted, scanning, status, hasCameraPermission])
+  }, [mounted, scanning, status, isUserLoading])
 
   const handleScan = async (data: string) => {
-    if (status === 'processing' || !db) return
+    if (status === 'processing' || !db || !user || !profile) return
     
     try {
       const parsed = JSON.parse(data)
       if (parsed.type !== 'techxera-attendance' || !parsed.sessionId || !parsed.token) {
-        throw new Error("Invalid TechXera QR Code.")
+        // Silently ignore if it's not our QR format
+        return;
       }
 
-      // Stop scanning as soon as we get a valid code
+      // Valid QR found, stop UI scanner immediately
       if (scannerRef.current) {
         await scannerRef.current.clear().catch(() => {});
         scannerRef.current = null;
@@ -105,7 +101,7 @@ export default function AttendanceScanPage() {
       
       setStatus('processing')
       
-      const recordId = `${user?.uid}_${parsed.sessionId}`
+      const recordId = `${user.uid}_${parsed.sessionId}`
       const attendanceRef = doc(db, 'attendance', recordId)
       
       const existing = await getDoc(attendanceRef)
@@ -116,19 +112,19 @@ export default function AttendanceScanPage() {
       await setDoc(attendanceRef, {
         id: recordId,
         sessionId: parsed.sessionId,
-        studentUid: user?.uid,
-        studentId: profile?.studentId,
-        studentName: `${profile?.firstName} ${profile?.lastName}`,
+        studentUid: user.uid,
+        studentId: profile.studentId,
+        studentName: `${profile.firstName} ${profile.lastName}`,
         timestamp: new Date().toISOString(),
         tokenUsed: parsed.token,
         status: 'present'
       })
 
-      setSuccessData(parsed)
       setStatus('success')
       toast({ title: "Attendance Marked", description: "Successfully verified presence." })
 
     } catch (err: any) {
+      console.error('Scan handling error:', err);
       setErrorMessage(err.message || "Scanning failed.")
       setStatus('error')
     }
@@ -137,6 +133,7 @@ export default function AttendanceScanPage() {
   const resetScanner = () => {
     setStatus('idle')
     setScanning(true)
+    setErrorMessage('')
   }
 
   if (!mounted || isUserLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-primary" size={48} /></div>
@@ -222,7 +219,14 @@ export default function AttendanceScanPage() {
                       </Alert>
                     )}
                     
-                    <div id="qr-reader" className="overflow-hidden rounded-[2.5rem] border-4 border-primary/20 bg-black/5 min-h-[300px]" />
+                    <div className="relative">
+                      <div id="qr-reader" className="overflow-hidden rounded-[2.5rem] border-4 border-primary/20 bg-black/5 min-h-[300px]" />
+                      {status === 'processing' && (
+                        <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center rounded-[2.5rem]">
+                          <Loader2 className="animate-spin text-primary" size={48} />
+                        </div>
+                      )}
+                    </div>
                     
                     <div className="p-6 bg-primary/5 rounded-[2rem] border border-primary/10 flex items-center gap-4 text-xs text-muted-foreground">
                       <ShieldCheck className="text-primary shrink-0" size={20} />
