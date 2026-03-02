@@ -7,8 +7,8 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import TechBackground from '@/components/TechBackground'
-import Navbar, { TechXeraLogo } from '@/components/Navbar'
-import { Lock, User, ArrowRight, Loader2, Info } from 'lucide-react'
+import { TechXeraLogo } from '@/components/Navbar'
+import { Lock, User, ArrowRight, Loader2, Info, Home } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase'
@@ -159,6 +159,11 @@ function AdminLoginForm() {
               <div className="pt-2">
                 Are you a student? <Link href="/login" className="text-primary font-medium hover:underline">Student Login</Link>
               </div>
+              <div className="pt-2">
+                <Link href="/" className="inline-flex items-center text-muted-foreground hover:text-primary transition-colors">
+                  <Home size={14} className="mr-1" /> Back to Home
+                </Link>
+              </div>
             </div>
           </CardFooter>
         </form>
@@ -187,8 +192,6 @@ export default function AdminLoginPage() {
   return (
     <div className="min-h-screen relative flex flex-col">
       <TechBackground />
-      <Navbar />
-      
       <main className="flex-1 flex items-center justify-center p-6">
         <Suspense fallback={<TechXeraLogo className="w-16 h-16 animate-pulse opacity-50" />}>
           <AdminLoginForm />

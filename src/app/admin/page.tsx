@@ -2,7 +2,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
-import Navbar from '@/components/Navbar'
+import { TechXeraLogo } from '@/components/Navbar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -14,12 +14,14 @@ import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Shield, List, GraduationCap, Megaphone, Loader2, UserCheck, Trash2, Users, CheckCircle, XCircle, Search, ClipboardList, CreditCard, Edit2, ArrowLeft, Target, Award, Settings as SettingsIcon, Image as ImageIcon, Globe } from 'lucide-react'
-import { useFirestore, useUser, useDoc, useMemoFirebase, useCollection, errorEmitter, FirestorePermissionError } from '@/firebase'
+import { Plus, Shield, List, GraduationCap, Megaphone, Loader2, UserCheck, Trash2, Users, CheckCircle, XCircle, Search, ClipboardList, CreditCard, Edit2, ArrowLeft, Target, Award, Settings as SettingsIcon, Image as ImageIcon, Globe, LogOut, Home } from 'lucide-react'
+import { useFirestore, useUser, useDoc, useMemoFirebase, useCollection, errorEmitter, FirestorePermissionError, useAuth } from '@/firebase'
 import { doc, setDoc, collection, deleteDoc, query, orderBy, updateDoc } from 'firebase/firestore'
+import { signOut } from 'firebase/auth'
 import { useToast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
+import Link from 'next/link'
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState('results')
@@ -45,6 +47,7 @@ export default function AdminPage() {
   const [siteConfig, setSiteConfig] = useState({ siteName: 'TechXera', logoUrl: '', heroDescription: 'A high-performance student portal engineered for TechXera students.' })
 
   const { user, isUserLoading } = useUser()
+  const auth = useAuth()
   const db = useFirestore()
   const { toast } = useToast()
   const router = useRouter()
@@ -97,6 +100,11 @@ export default function AdminPage() {
       router.push('/admin/login')
     }
   }, [user, isUserLoading, router, mounted])
+
+  const handleLogout = async () => {
+    await signOut(auth)
+    router.push('/admin/login')
+  }
 
   // Grade Calculation Logic
   const calculateGrade = (percentage: number) => {
@@ -313,9 +321,7 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Navbar />
-      
-      <main className="max-w-7xl mx-auto p-6 md:p-10 pt-56 pb-20">
+      <main className="max-w-7xl mx-auto p-6 md:p-10 pt-12 pb-20">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8 mb-16">
           <div className="flex items-center gap-6">
             <div className="p-5 bg-primary text-white rounded-[2rem] shadow-2xl shadow-primary/20 shrink-0">
@@ -327,6 +333,12 @@ export default function AdminPage() {
             </div>
           </div>
           <div className="flex flex-wrap gap-4 w-full lg:w-auto">
+            <Link href="/">
+              <Button variant="outline" className="h-14 px-6 rounded-2xl font-bold border-2">
+                <Home className="mr-2" size={20} /> Portal Home
+              </Button>
+            </Link>
+            
             {!isAdmin && (
               <Button onClick={handleGrantAdmin} variant="secondary" className="flex-1 lg:flex-none h-14 px-8 shadow-xl shadow-secondary/20 bg-secondary text-white hover:bg-secondary/90 rounded-2xl font-bold">
                 <UserCheck className="mr-2" size={20} /> Elevate Privileges
@@ -401,6 +413,10 @@ export default function AdminPage() {
                 ) : null}
               </DialogContent>
             </Dialog>
+
+            <Button onClick={handleLogout} variant="ghost" className="h-14 px-6 text-destructive hover:bg-destructive/10 rounded-2xl font-bold">
+              <LogOut className="mr-2" size={20} /> Logout
+            </Button>
           </div>
         </div>
 
@@ -617,7 +633,6 @@ export default function AdminPage() {
                             <TableCell className="font-medium text-muted-foreground">{notice.publishDate ? format(new Date(notice.publishDate), 'MMM d, yyyy') : 'N/A'}</TableCell>
                             <TableCell className="text-right px-10">
                               <Button variant="ghost" size="icon" onClick={() => handleDelete('notices', notice.id)} className="text-destructive"><Trash2 size={22} /></Button>
-                            </TableCell>
                           </TableRow>
                         ))}
                         {activeTab === 'resources' && materials?.map((material) => (
