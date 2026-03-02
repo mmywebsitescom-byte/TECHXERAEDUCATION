@@ -10,7 +10,7 @@ import { Progress } from '@/components/ui/progress'
 import { QrCode, ShieldCheck, AlertCircle, Clock, Calendar, CheckCircle2, Loader2, TrendingUp, User, Sparkles } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase'
-import { doc, collection, query, where, orderBy } from 'firebase/firestore'
+import { doc, collection, query, where } from 'firebase/firestore'
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
 import SplitText from '@/components/SplitText'
@@ -31,9 +31,19 @@ export default function AttendancePage() {
   const studentRef = useMemoFirebase(() => (user && db ? doc(db, 'students', user.uid) : null), [user, db])
   const { data: profile, isLoading: isProfileLoading } = useDoc(studentRef)
 
-  // Real-time attendance collection for instant dashboard updates
-  const attendanceQuery = useMemoFirebase(() => (user && db ? query(collection(db, 'attendance'), where('studentUid', '==', user.uid), orderBy('timestamp', 'desc')) : null), [user, db])
-  const { data: attendance, isLoading: isAttendanceLoading } = useCollection(attendanceQuery)
+  // Real-time attendance collection - Removed server-side orderBy to avoid index requirements
+  const attendanceQuery = useMemoFirebase(() => (user && db ? query(collection(db, 'attendance'), where('studentUid', '==', user.uid)) : null), [user, db])
+  const { data: attendanceRaw, isLoading: isAttendanceLoading } = useCollection(attendanceQuery)
+
+  // Client-side sorting for maximum reliability without needing manual indexes
+  const attendance = useMemo(() => {
+    if (!attendanceRaw) return []
+    return [...attendanceRaw].sort((a, b) => {
+      const dateA = a.timestamp ? new Date(a.timestamp).getTime() : 0
+      const dateB = b.timestamp ? new Date(b.timestamp).getTime() : 0
+      return dateB - dateA
+    })
+  }, [attendanceRaw])
 
   useEffect(() => {
     if (mounted && !isUserLoading && !user) {
@@ -84,7 +94,7 @@ export default function AttendancePage() {
     studentId: profile?.studentId,
     name: `${profile?.firstName} ${profile?.lastName}`,
     type: 'techxera-student-id',
-    issuedAt: profile?.enrollmentDate
+    issuedAt: profile?.enrollmentDate || new Date().toISOString()
   })
 
   return (
@@ -243,7 +253,7 @@ export default function AttendancePage() {
                             className="border-b border-border/10 hover:bg-primary/[0.02] transition-colors group"
                           >
                             <td className="px-10 py-6">
-                              <p className="font-bold text-lg leading-none">Session {record.sessionId.slice(-4)}</p>
+                              <p className="font-bold text-lg leading-none">Session {record.sessionId?.slice(-4) || 'N/A'}</p>
                               <p className="text-[10px] text-muted-foreground font-medium mt-1 uppercase tracking-widest">Academic Point: VERIFIED</p>
                             </td>
                             <td className="py-6 text-sm font-bold text-foreground">
