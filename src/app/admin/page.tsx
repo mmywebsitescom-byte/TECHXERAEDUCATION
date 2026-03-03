@@ -81,6 +81,7 @@ export default function AdminPage() {
 
   // Notice Management State
   const [isNoticeDialogOpen, setIsNoticeDialogOpen] = useState(false)
+  const [editingNotice, setEditingNotice] = useState<any | null>(null)
   const [noticeForm, setNoticeForm] = useState({
     title: '',
     description: '',
@@ -354,26 +355,50 @@ export default function AdminPage() {
       })
   }
 
-  const handleCreateNotice = async (e: React.FormEvent) => {
+  const handleEditNotice = (notice: any) => {
+    setEditingNotice(notice)
+    setNoticeForm({
+      title: notice.title,
+      description: notice.description,
+      isUrgent: notice.isUrgent || false
+    })
+    setIsNoticeDialogOpen(true)
+  }
+
+  const handleDeleteNotice = async (id: string) => {
+    if (!db) return
+    if (!confirm("Permanently remove this bulletin?")) return
+    try {
+      await deleteDoc(doc(db, 'notices', id))
+      toast({ title: "Notice Removed" })
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Error", description: err.message })
+    }
+  }
+
+  const handleSaveNotice = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!db) return
-    const id = Math.random().toString(36).substring(2, 9)
+    
+    const id = editingNotice?.id || Math.random().toString(36).substring(2, 9)
     const payload = {
       ...noticeForm,
       id,
-      publishDate: new Date().toISOString()
+      publishDate: editingNotice?.publishDate || new Date().toISOString()
     }
+    
     const docRef = doc(db, 'notices', id)
-    setDoc(docRef, payload)
+    setDoc(docRef, payload, { merge: true })
       .then(() => {
-        toast({ title: "Notice Published" })
+        toast({ title: editingNotice ? "Notice Updated" : "Notice Published" })
         setIsNoticeDialogOpen(false)
+        setEditingNotice(null)
         setNoticeForm({ title: '', description: '', isUrgent: false })
       })
       .catch(async (error) => {
         const permissionError = new FirestorePermissionError({
           path: docRef.path,
-          operation: 'create',
+          operation: editingNotice ? 'update' : 'create',
           requestResourceData: payload,
         } satisfies SecurityRuleContext);
         errorEmitter.emit('permission-error', permissionError);
@@ -483,6 +508,8 @@ export default function AdminPage() {
       setMaterialForm({ title: '', subject: '', semester: 'Semester 1', materialType: 'Notes', fileUrl: '', thumbnailUrl: '' })
       setIsMaterialDialogOpen(true)
     } else if (activeTab === 'notices') {
+      setEditingNotice(null)
+      setNoticeForm({ title: '', description: '', isUrgent: false })
       setIsNoticeDialogOpen(true)
     } else if (activeTab === 'exams') {
       setIsExamDialogOpen(true)
@@ -944,13 +971,23 @@ export default function AdminPage() {
                 </div>
                 <div className="grid gap-4">
                   {allNotices?.map(notice => (
-                    <Card key={notice.id} className="bg-background/50 rounded-xl md:rounded-2xl border-none p-4 md:p-6 border border-white/10">
-                      <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-bold text-base md:text-lg truncate max-w-[200px] md:max-w-none">{notice.title}</h4>
-                        <Badge variant={notice.isUrgent ? 'destructive' : 'default'} className="text-[8px] md:text-[10px] uppercase">{notice.isUrgent ? 'URGENT' : 'NORMAL'}</Badge>
+                    <Card key={notice.id} className="bg-background/50 rounded-xl md:rounded-2xl border-none p-4 md:p-6 border border-white/10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                      <div className="flex-1 space-y-2">
+                        <div className="flex justify-between items-start mb-2">
+                          <h4 className="font-bold text-base md:text-lg truncate max-w-[200px] md:max-w-none">{notice.title}</h4>
+                          <Badge variant={notice.isUrgent ? 'destructive' : 'default'} className="text-[8px] md:text-[10px] uppercase">{notice.isUrgent ? 'URGENT' : 'NORMAL'}</Badge>
+                        </div>
+                        <p className="text-xs md:text-sm text-muted-foreground line-clamp-2">{notice.description}</p>
+                        <p className="text-[8px] md:text-[10px] font-black uppercase text-primary/40 mt-3 md:mt-4">{format(new Date(notice.publishDate), 'PPP')}</p>
                       </div>
-                      <p className="text-xs md:text-sm text-muted-foreground line-clamp-2">{notice.description}</p>
-                      <p className="text-[8px] md:text-[10px] font-black uppercase text-primary/40 mt-3 md:mt-4">{format(new Date(notice.publishDate), 'PPP')}</p>
+                      <div className="flex gap-2">
+                        <Button variant="ghost" size="icon" className="h-9 w-9 text-primary hover:bg-primary/5 rounded-lg" onClick={() => handleEditNotice(notice)}>
+                          <Edit size={16} />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive hover:bg-destructive/5 rounded-lg" onClick={() => handleDeleteNotice(notice.id)}>
+                          <Trash2 size={16} />
+                        </Button>
+                      </div>
                     </Card>
                   ))}
                 </div>
@@ -1234,8 +1271,12 @@ export default function AdminPage() {
 
       <Dialog open={isNoticeDialogOpen} onOpenChange={setIsNoticeDialogOpen}>
         <DialogContent className="w-[95vw] rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 sm:max-w-lg">
-          <DialogHeader><DialogTitle className="text-xl md:text-2xl font-headline font-bold">Publish Notice</DialogTitle></DialogHeader>
-          <form onSubmit={handleCreateNotice} className="space-y-4 md:space-y-6 pt-4">
+          <DialogHeader>
+            <DialogTitle className="text-xl md:text-2xl font-headline font-bold">
+              {editingNotice ? 'Update Notice' : 'Publish Notice'}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSaveNotice} className="space-y-4 md:space-y-6 pt-4">
             <div className="space-y-2">
               <Label className="text-xs">Title</Label>
               <Input required placeholder="e.g. Assessment Schedule" value={noticeForm.title} onChange={e => setNoticeForm({...noticeForm, title: e.target.value})} className="h-10 md:h-12 rounded-xl text-sm" />
@@ -1248,7 +1289,11 @@ export default function AdminPage() {
               <Label className="font-bold text-xs md:text-sm">Urgent Priority</Label>
               <Switch checked={noticeForm.isUrgent} onCheckedChange={val => setNoticeForm({...noticeForm, isUrgent: val})} />
             </div>
-            <DialogFooter><Button type="submit" className="w-full h-10 md:h-12 rounded-xl font-bold">Publish</Button></DialogFooter>
+            <DialogFooter>
+              <Button type="submit" className="w-full h-10 md:h-12 rounded-xl font-bold">
+                {editingNotice ? 'Update' : 'Publish'} Bulletin
+              </Button>
+            </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
