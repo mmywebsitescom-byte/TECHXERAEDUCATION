@@ -15,7 +15,6 @@ import SplitText from '@/components/SplitText'
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase'
 import { doc } from 'firebase/firestore'
 
-// Custom SVGs for Tech Stack Icons
 const NextJsIcon = () => (
   <svg width="24" height="24" viewBox="0 0 128 128" fill="currentColor">
     <path d="M64 0C28.7 0 0 28.7 0 64s28.7 64 64 64c11.2 0 21.7-2.9 30.8-7.9L48.4 55.4v33.3h-9.2V40.1h9.2l40.3 52.3c6.1-7.7 9.7-17.4 9.7-28.4 0-24.8-20.2-45-45-45-2 0-3.9.1-5.8.4L84.8 35.8c2.9-.5 5.8-.8 8.9-.8 19.8 0 35.8 16 35.8 35.8 0 8.8-3.2 16.8-8.5 23l-3.3-2.6c4.2-5.4 6.8-12.2 6.8-19.6 0-17.1-13.9-31-31-31-1.4 0-2.8.1-4.2.3L44.8 35c2.4-.6 4.9-.9 7.5-.9 19.8 0 35.8 16 35.8 35.8 0 7.3-2.2 14.1-6 19.8l-1.4-1.8c3.1-4.9 4.9-10.7 4.9-16.9 0-17.1-13.9-31-31-31-1.3 0-2.5.1-3.7.2l41.5 53.9c13.7-10.3 22.7-26.6 22.7-45 0-35.3-28.7-64-64-64z"/>
@@ -81,7 +80,6 @@ export default function Home() {
     setMounted(true)
   }, [])
 
-  // Dynamic branding
   const settingsRef = useMemoFirebase(() => (db ? doc(db, 'settings', 'site-config') : null), [db])
   const { data: settings } = useDoc(settingsRef)
 
@@ -102,137 +100,54 @@ export default function Home() {
             transition={{ duration: 0.8, ease: "easeOut" }}
             className="max-w-7xl mx-auto text-center relative z-10"
           >
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.2 }}
-            >
+            <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.2 }}>
               <Badge variant="secondary" className="mb-6 py-1.5 px-5 bg-white/50 backdrop-blur-sm text-primary border-primary/20 font-bold text-xs rounded-full shadow-sm">
                 <Sparkles size={12} className="mr-2 text-yellow-500" /> REVOLUTIONIZING CAMPUS LIFE
               </Badge>
             </motion.div>
             
             <h1 className="font-headline text-5xl md:text-7xl lg:text-8xl font-bold mb-8 text-foreground leading-[0.95] tracking-tighter">
-              <SplitText 
-                text="The Digital Core of"
-                tag="span"
-                textAlign="center"
-                duration={0.5}
-                delay={20}
-              />
-              <br />
+              <SplitText text="The Digital Core of" tag="span" textAlign="center" duration={0.5} delay={20} /><br />
               <motion.span className="text-primary bg-clip-text">
-                <SplitText 
-                  text={siteName}
-                  tag="span"
-                  textAlign="center"
-                  duration={0.8}
-                  delay={40}
-                />
+                <SplitText text={siteName} tag="span" textAlign="center" duration={0.8} delay={40} />
               </motion.span>
             </h1>
             
-            <p className="max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground/80 mb-10 leading-relaxed font-medium">
-              {heroDesc}
-            </p>
+            <p className="max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground/80 mb-10 leading-relaxed font-medium">{heroDesc}</p>
             
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-16">
-              <Link href="/login">
-                <Button size="lg" className="h-16 px-10 bg-primary text-white hover:bg-primary/90 rounded-2xl text-lg font-bold shadow-2xl shadow-primary/40 transition-all hover:scale-105 active:scale-95">
-                  Get Started <ArrowRight className="ml-2" size={18} />
-                </Button>
-              </Link>
-              <Link href="/results">
-                <Button size="lg" variant="outline" className="h-16 px-10 border-2 border-primary/20 rounded-2xl text-lg font-bold hover:bg-white/50 backdrop-blur-sm transition-all">
-                  Check Results
-                </Button>
-              </Link>
+              <Link href="/login"><Button size="lg" className="h-16 px-10 bg-primary text-white hover:bg-primary/90 rounded-2xl text-lg font-bold shadow-2xl shadow-primary/40 transition-all hover:scale-105 active:scale-95">Get Started <ArrowRight className="ml-2" size={18} /></Button></Link>
+              <Link href="/results"><Button size="lg" variant="outline" className="h-16 px-10 border-2 border-primary/20 rounded-2xl text-lg font-bold hover:bg-white/50 backdrop-blur-sm transition-all">Check Results</Button></Link>
             </div>
 
-            {/* Depth-Enhanced Tech Marquee */}
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-              className="relative py-12 px-6 bg-white/10 backdrop-blur-md rounded-[3rem] border border-white/20 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.1)] overflow-hidden group"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-background via-transparent to-background z-10 opacity-60" />
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/40 mb-6 relative z-20">Engineered with Precision</p>
-              {mounted && (
-                <div className="relative z-0">
-                  <LogoLoop 
-                    logos={techStackLogos} 
-                    speed={25} 
-                    logoHeight={24} 
-                    gap={100} 
-                    fadeOut={false}
-                    scaleOnHover={true}
-                  />
-                </div>
-              )}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="relative py-12 px-6 bg-white/10 backdrop-blur-md rounded-[3rem] border border-white/20 shadow-xl overflow-hidden">
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/40 mb-6">Engineered with Precision</p>
+              {mounted && <LogoLoop logos={techStackLogos} speed={25} logoHeight={24} gap={100} fadeOut={false} scaleOnHover={true} />}
             </motion.div>
           </motion.div>
         </section>
 
         {/* Features Section */}
-        <section className="py-24 md:py-32 lg:py-40 px-6 bg-white/30">
+        <section className="py-24 px-6 bg-white/30">
           <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-32 space-y-4">
+            <div className="text-center mb-24 space-y-4">
               <h2 className="text-4xl md:text-5xl font-headline font-bold tracking-tight">Ecosystem Architecture</h2>
               <p className="text-muted-foreground text-lg max-w-2xl mx-auto font-medium">A multi-layered infrastructure designed for speed, security, and academic excellence.</p>
             </div>
             
-            <motion.div 
-              variants={container}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true, margin: "-50px" }}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mt-12"
-            >
+            <motion.div variants={container} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-50px" }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
               {[
-                {
-                  title: "Smart Resources",
-                  desc: "Advanced repository for lecture notes, research papers, and coding guides.",
-                  icon: <BookOpen className="text-primary" size={20} />,
-                  accent: "bg-primary/10"
-                },
-                {
-                  title: "Performance Tracking",
-                  desc: "Visualize your academic growth with real-time analytics and predictive grading.",
-                  icon: <Zap className="text-secondary" size={20} />,
-                  accent: "bg-secondary/10"
-                },
-                {
-                  title: "Instant Alerts",
-                  desc: "Priority notification system for exam schedules and critical campus updates.",
-                  icon: <ShieldCheck className="text-primary" size={20} />,
-                  accent: "bg-primary/10"
-                },
-                {
-                  title: "Verified Identity",
-                  desc: "Secure authentication framework ensuring student data integrity and academic sovereignty.",
-                  icon: <ShieldAlert className="text-secondary" size={20} />,
-                  accent: "bg-secondary/10"
-                },
-                {
-                  title: "Faculty Control",
-                  desc: "Comprehensive administrative suite for managing results, materials, and official bulletins.",
-                  icon: <Settings className="text-primary" size={20} />,
-                  accent: "bg-primary/10"
-                },
-                {
-                  title: "Adaptive Architecture",
-                  desc: "Glassmorphic, 3D-enhanced interface optimized for ultimate cross-platform responsiveness.",
-                  icon: <Layout className="text-secondary" size={20} />,
-                  accent: "bg-secondary/10"
-                }
+                { title: "Smart Resources", desc: "Advanced repository for lecture notes, research papers, and coding guides.", icon: <BookOpen className="text-primary" size={20} />, accent: "bg-primary/10" },
+                { title: "Performance Tracking", desc: "Visualize your academic growth with real-time analytics and predictive grading.", icon: <Zap className="text-secondary" size={20} />, accent: "bg-secondary/10" },
+                { title: "Instant Alerts", desc: "Priority notification system for exam schedules and critical campus updates.", icon: <ShieldCheck className="text-primary" size={20} />, accent: "bg-primary/10" },
+                { title: "Verified Identity", desc: "Secure authentication framework ensuring student data integrity.", icon: <ShieldAlert className="text-secondary" size={20} />, accent: "bg-secondary/10" },
+                { title: "Faculty Control", desc: "Comprehensive administrative suite for managing results and materials.", icon: <Settings className="text-primary" size={20} />, accent: "bg-primary/10" },
+                { title: "Adaptive UI", desc: "Glassmorphic interface optimized for ultimate responsiveness.", icon: <Layout className="text-secondary" size={20} />, accent: "bg-secondary/10" }
               ].map((feature, i) => (
                 <motion.div key={i} variants={item}>
                   <Card className="glass group hover:bg-white transition-all duration-500 border-none rounded-[2rem] overflow-hidden h-full shadow-sm hover:shadow-lg">
-                    <CardContent className="p-6">
-                      <div className={`mb-4 p-4 w-fit ${feature.accent} rounded-xl group-hover:scale-110 transition-transform duration-500`}>
-                        {feature.icon}
-                      </div>
+                    <CardContent className="p-8">
+                      <div className={`mb-6 p-4 w-fit ${feature.accent} rounded-xl group-hover:scale-110 transition-transform duration-500`}>{feature.icon}</div>
                       <h3 className="text-xl md:text-2xl font-headline font-bold mb-3 tracking-tight">{feature.title}</h3>
                       <p className="text-muted-foreground/80 leading-relaxed text-sm font-medium">{feature.desc}</p>
                     </CardContent>
@@ -243,27 +158,90 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Dynamic Team & Trust Section (Manageable from Admin) */}
+        {settings?.trustSectionEnabled !== false && (
+          <section className="py-32 relative overflow-hidden">
+            {/* Team Image Background Area */}
+            <div className="absolute top-0 inset-x-0 h-[500px] bg-[#fecba1] dark:bg-[#280905] -z-10 flex items-end justify-center overflow-hidden">
+              <motion.img 
+                initial={{ opacity: 0, y: 100 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 1, ease: "easeOut" }}
+                src={settings?.trustTeamImageUrl || "https://picsum.photos/seed/techteam/1200/600"} 
+                alt="Our Team"
+                className="w-full max-w-6xl object-contain object-bottom h-[450px]"
+              />
+            </div>
+
+            <div className="max-w-7xl mx-auto px-6 pt-[400px]">
+              {/* Floating Trust Card */}
+              <motion.div 
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="bg-white dark:bg-card shadow-[0_50px_100px_-20px_rgba(0,0,0,0.15)] rounded-[3rem] p-10 md:p-16 flex flex-col md:flex-row items-center gap-12 border border-border/40 max-w-5xl mx-auto"
+              >
+                {/* Score Circle */}
+                <div className="relative shrink-0 flex items-center justify-center">
+                  <svg className="w-40 h-40 transform -rotate-90">
+                    <circle className="text-muted/20" strokeWidth="12" stroke="currentColor" fill="transparent" r="70" cx="80" cy="80" />
+                    <circle 
+                      className="text-primary" 
+                      strokeWidth="12" 
+                      strokeDasharray={440} 
+                      strokeDashoffset={440 - (440 * (settings?.trustScore || 90)) / 100} 
+                      strokeLinecap="round" 
+                      stroke="currentColor" 
+                      fill="transparent" 
+                      r="70" cx="80" cy="80" 
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-4xl font-black font-headline">{settings?.trustScore || 90}%</span>
+                  </div>
+                </div>
+
+                <div className="space-y-6 flex-1 text-center md:text-left">
+                  <div className="space-y-2">
+                    <h3 className="text-3xl md:text-4xl font-headline font-bold text-foreground">Happiness Score</h3>
+                    <p className="text-primary font-bold italic text-base">based on {settings?.trustRatingsCount || '1,548'} ratings from our community</p>
+                  </div>
+                  <p className="text-muted-foreground text-lg leading-relaxed font-medium">
+                    {settings?.trustDescription || "Get help from our friendly supporters! Our support team answers your questions by email or directly from your campus hub."}
+                  </p>
+                </div>
+              </motion.div>
+
+              {/* Partner Logos Registry */}
+              <div className="mt-24 pt-16 border-t border-border/40">
+                <div className="flex flex-wrap items-center justify-center gap-16 md:gap-24 opacity-40 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-700">
+                  {settings?.trustPartnerLogos?.split(',').map((logo: string, idx: number) => (
+                    <img key={idx} src={logo.trim()} alt="Partner Logo" className="h-8 md:h-10 object-contain" />
+                  )) || (
+                    <>
+                      {/* Default Placeholders if none provided */}
+                      <div className="text-2xl font-black tracking-tighter">SAP</div>
+                      <div className="text-2xl font-black tracking-tighter">DECATHLON</div>
+                      <div className="text-2xl font-black tracking-tighter">TRIPADVISOR</div>
+                      <div className="text-2xl font-black tracking-tighter">UNIVERSITY</div>
+                      <div className="text-2xl font-black tracking-tighter">DHL</div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* Support CTA Section */}
         <section className="py-24 md:py-32 px-6">
           <div className="max-w-5xl mx-auto">
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              className="bg-primary rounded-[3rem] p-12 md:p-20 text-center text-white relative overflow-hidden shadow-2xl shadow-primary/30"
-            >
-              <div className="absolute top-0 right-0 p-10 opacity-10">
-                <LifeBuoy size={200} />
-              </div>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} className="bg-primary rounded-[3rem] p-12 md:p-20 text-center text-white relative overflow-hidden shadow-2xl">
+              <div className="absolute top-0 right-0 p-10 opacity-10"><LifeBuoy size={200} /></div>
               <h2 className="text-4xl md:text-6xl font-headline font-bold mb-6 tracking-tighter">Need Technical Support?</h2>
-              <p className="text-xl md:text-2xl text-white/80 mb-10 font-medium max-w-2xl mx-auto leading-relaxed">
-                Our support desk is ready to assist you with access issues, portal navigation, or any technical queries you may have.
-              </p>
-              <Link href="/support">
-                <Button size="lg" className="h-16 px-12 bg-white text-primary hover:bg-white/90 rounded-2xl text-lg font-bold transition-all hover:scale-105 active:scale-95 shadow-xl">
-                  Contact Support Hub <LifeBuoy className="ml-2" size={20} />
-                </Button>
-              </Link>
+              <p className="text-xl md:text-2xl text-white/80 mb-10 font-medium max-w-2xl mx-auto leading-relaxed">Our support desk is ready to assist you with access issues, portal navigation, or any technical queries.</p>
+              <Link href="/support"><Button size="lg" className="h-16 px-12 bg-white text-primary hover:bg-white/90 rounded-2xl text-lg font-bold transition-all hover:scale-105 shadow-xl">Contact Support Hub <LifeBuoy className="ml-2" size={20} /></Button></Link>
             </motion.div>
           </div>
         </section>
@@ -271,20 +249,14 @@ export default function Home() {
         {/* Stats Section */}
         <section className="py-24 md:py-32 bg-white/40 backdrop-blur-sm border-y border-white/20">
           <div className="max-w-7xl mx-auto px-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-12 md:gap-16 text-center">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-12 text-center">
               {[
                 { label: "Active Users", value: "5K+" },
                 { label: "Daily Queries", value: "12K+" },
                 { label: "Efficiency", value: "99%" },
                 { label: "Campus Support", value: "24/7" }
               ].map((stat, i) => (
-                <motion.div 
-                  key={i}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.1, type: "spring" }}
-                >
+                <motion.div key={i} initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.1, type: "spring" }}>
                   <p className="text-5xl md:text-6xl font-headline font-bold text-primary mb-2 tracking-tighter">{stat.value}</p>
                   <p className="text-muted-foreground uppercase text-xs font-bold tracking-[0.2em]">{stat.label}</p>
                 </motion.div>
@@ -297,82 +269,50 @@ export default function Home() {
       {/* Footer */}
       <footer className="py-20 px-6 border-t border-white/20 bg-white/10 backdrop-blur-md">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 text-muted-foreground">
-          {/* Brand Column */}
           <div className="lg:col-span-2 space-y-6">
             <Link href="/" className="flex items-center gap-4 group">
-              <TechXeraLogo 
-                className="w-16 h-16 shadow-lg shadow-primary/30" 
-                customUrl={settings?.logoUrl}
-              />
+              <TechXeraLogo className="w-16 h-16 shadow-lg shadow-primary/30" customUrl={settings?.logoUrl} />
               <span className="font-headline font-bold text-2xl text-foreground tracking-tight">{settings?.siteName || 'TechXera Campus'}</span>
             </Link>
-            <p className="text-sm font-medium leading-relaxed max-w-sm">
-              Your all-in-one high-performance campus engine. Empowering students with seamless digital access to academic excellence.
-            </p>
+            <p className="text-sm font-medium leading-relaxed max-w-sm">Your all-in-one high-performance campus engine. Empowering students with digital access to excellence.</p>
             <div className="flex gap-4 pt-4">
-              <Link href="https://github.com" target="_blank" className="p-2 bg-muted hover:bg-primary/10 hover:text-primary transition-all rounded-lg">
-                <Github size={18} />
-              </Link>
-              <Link href="https://www.instagram.com/techxera._nit/?hl=en" target="_blank" className="p-2 bg-muted hover:bg-primary/10 hover:text-primary transition-all rounded-lg">
-                <Instagram size={18} />
-              </Link>
-              <Link href="https://www.linkedin.com/company/techxera-nalanda" target="_blank" className="p-2 bg-muted hover:bg-primary/10 hover:text-primary transition-all rounded-lg">
-                <Linkedin size={18} />
-              </Link>
-              <Link href="mailto:support@techxera.edu" className="p-2 bg-muted hover:bg-primary/10 hover:text-primary transition-all rounded-lg">
-                <Mail size={18} />
-              </Link>
+              <Link href="#" className="p-2 bg-muted hover:bg-primary/10 hover:text-primary transition-all rounded-lg"><Github size={18} /></Link>
+              <Link href="#" className="p-2 bg-muted hover:bg-primary/10 hover:text-primary transition-all rounded-lg"><Instagram size={18} /></Link>
+              <Link href="#" className="p-2 bg-muted hover:bg-primary/10 hover:text-primary transition-all rounded-lg"><Linkedin size={18} /></Link>
             </div>
           </div>
-
-          {/* Portal Links */}
           <div className="space-y-6">
             <h4 className="font-headline font-bold text-foreground text-sm uppercase tracking-[0.2em]">Portal</h4>
             <ul className="space-y-4 text-xs font-bold uppercase tracking-widest">
-              <li><Link href="/dashboard" className="hover:text-primary transition-colors">Student Dashboard</Link></li>
-              <li><Link href="/results" className="hover:text-primary transition-colors">Academic Results</Link></li>
-              <li><Link href="/exams" className="hover:text-primary transition-colors">Exam Schedule</Link></li>
-              <li><Link href="/admin" className="hover:text-primary transition-colors">Admin Console</Link></li>
+              <li><Link href="/dashboard" className="hover:text-primary">Dashboard</Link></li>
+              <li><Link href="/results" className="hover:text-primary">Results</Link></li>
+              <li><Link href="/exams" className="hover:text-primary">Exams</Link></li>
+              <li><Link href="/admin" className="hover:text-primary">Admin</Link></li>
             </ul>
           </div>
-
-          {/* Resources Links */}
           <div className="space-y-6">
             <h4 className="font-headline font-bold text-foreground text-sm uppercase tracking-[0.2em]">Resources</h4>
             <ul className="space-y-4 text-xs font-bold uppercase tracking-widest">
-              <li><Link href="/resources" className="hover:text-primary transition-colors">Campus Repository</Link></li>
-              <li><Link href="/notices" className="hover:text-primary transition-colors">Official Notices</Link></li>
-              <li><Link href="/support" className="hover:text-primary transition-colors">Study Guides</Link></li>
-              <li><Link href="/resources" className="hover:text-primary transition-colors">Coding Library</Link></li>
+              <li><Link href="/resources" className="hover:text-primary">Repository</Link></li>
+              <li><Link href="/notices" className="hover:text-primary">Notices</Link></li>
+              <li><Link href="/support" className="hover:text-primary">Guides</Link></li>
             </ul>
           </div>
-
-          {/* Support Links */}
           <div className="space-y-6">
             <h4 className="font-headline font-bold text-foreground text-sm uppercase tracking-[0.2em]">Assistance</h4>
             <ul className="space-y-4 text-xs font-bold uppercase tracking-widest">
-              <li><Link href="/support" className="hover:text-primary transition-colors">Help Center</Link></li>
-              <li><Link href="/support" className="hover:text-primary transition-colors">Contact IT Hub</Link></li>
-              <li><Link href="/security" className="hover:text-primary transition-colors">Security Desk</Link></li>
-              <li><Link href="/privacy" className="hover:text-primary transition-colors">Student Privacy</Link></li>
+              <li><Link href="/support" className="hover:text-primary">Help Center</Link></li>
+              <li><Link href="/privacy" className="hover:text-primary">Privacy</Link></li>
+              <li><Link href="/security" className="hover:text-primary">Security</Link></li>
             </ul>
           </div>
         </div>
-
-        {/* Bottom Bar */}
         <div className="max-w-7xl mx-auto pt-16 mt-16 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="flex flex-col items-center md:items-start gap-2">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em]">
-              © 2025 {settings?.siteName || 'TechXera Campus'}. All Rights Reserved.
-            </p>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary/60">
-              Powered by <a href="https://logisaar.in" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">logisaar.in</a>
-            </p>
-          </div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em]">© 2025 {settings?.siteName || 'TechXera Campus'}. All Rights Reserved.</p>
           <div className="flex gap-10 text-[10px] font-bold uppercase tracking-[0.2em]">
-            <Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
-            <Link href="/security" className="hover:text-primary transition-colors">Security Protocols</Link>
-            <Link href="/support" className="hover:text-primary transition-colors">Terms of Service</Link>
+            <Link href="/privacy" className="hover:text-primary">Privacy Policy</Link>
+            <Link href="/security" className="hover:text-primary">Security</Link>
+            <Link href="/support" className="hover:text-primary">Terms</Link>
           </div>
         </div>
       </footer>

@@ -21,7 +21,8 @@ import {
   Plus, LifeBuoy, BookOpen, Camera, Trash2, 
   Loader2, CheckCircle2, AlertCircle, RefreshCw,
   Clock, Calendar as CalendarIcon, FileText, Edit,
-  ShieldCheck, Layout, ImageIcon, Globe, Send, XCircle
+  ShieldCheck, Layout, ImageIcon, Globe, Send, XCircle,
+  Heart, Sparkles
 } from 'lucide-react'
 import { useFirestore, useUser, useDoc, useMemoFirebase, useAuth, useCollection } from '@/firebase'
 import { collection, doc, setDoc, deleteDoc, query, orderBy, where, updateDoc, getDoc } from 'firebase/firestore'
@@ -40,10 +41,6 @@ import { cn } from '@/lib/utils'
 
 const AUTHORIZED_ADMIN_EMAIL = 'rraghabbarik@gmail.com'
 
-/**
- * StudentGradeAction - Specialized component to check for existing grades per student
- * to avoid collection group index requirements.
- */
 function StudentGradeAction({ student, examId, onEdit, db }: { student: any, examId: string, onEdit: (student: any, existingGrade: any) => void, db: any }) {
   const resultRef = useMemoFirebase(() => (db && student.id && examId ? doc(db, 'students', student.id, 'results', examId) : null), [db, student.id, examId]);
   const { data: existingGrade } = useDoc(resultRef);
@@ -73,7 +70,6 @@ export default function AdminPage() {
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null)
   const [scannedStudent, setScannedStudent] = useState<any | null>(null)
   
-  // Create Session State
   const [newSession, setNewSession] = useState({
     className: '',
     date: format(new Date(), 'yyyy-MM-dd'),
@@ -82,7 +78,6 @@ export default function AdminPage() {
     description: ''
   })
 
-  // Branding Form State
   const [brandingForm, setBrandingForm] = useState({
     siteName: '',
     logoUrl: '',
@@ -90,7 +85,15 @@ export default function AdminPage() {
     heroDescription: ''
   })
 
-  // Material Management State
+  const [landingPageForm, setLandingPageForm] = useState({
+    trustSectionEnabled: true,
+    trustTeamImageUrl: '',
+    trustScore: 90,
+    trustRatingsCount: '1,548',
+    trustDescription: 'Get help from our friendly supporters! Our support team answers your questions by email or directly from your student hub.',
+    trustPartnerLogos: ''
+  })
+
   const [isMaterialDialogOpen, setIsMaterialDialogOpen] = useState(false)
   const [editingMaterial, setEditingMaterial] = useState<any | null>(null)
   const [materialForm, setMaterialForm] = useState({
@@ -102,7 +105,6 @@ export default function AdminPage() {
     thumbnailUrl: ''
   })
 
-  // Notice Management State
   const [isNoticeDialogOpen, setIsNoticeDialogOpen] = useState(false)
   const [editingNotice, setEditingNotice] = useState<any | null>(null)
   const [noticeForm, setNoticeForm] = useState({
@@ -111,7 +113,6 @@ export default function AdminPage() {
     isUrgent: false
   })
 
-  // Exam Management State
   const [isExamDialogOpen, setIsExamDialogOpen] = useState(false)
   const [examForm, setExamForm] = useState({
     title: '',
@@ -120,7 +121,6 @@ export default function AdminPage() {
     status: 'upcoming' as 'upcoming' | 'active' | 'completed'
   })
 
-  // Grade Management State
   const [isGradeDialogOpen, setIsGradeDialogOpen] = useState(false)
   const [selectedStudentForGrade, setSelectedStudentForGrade] = useState<any | null>(null)
   const [gradeForm, setGradeForm] = useState({
@@ -154,7 +154,6 @@ export default function AdminPage() {
     }
   }, [user, isUserLoading, router, mounted, isAuthorizedAdmin, toast])
 
-  // Firebase Data Queries
   const settingsRef = useMemoFirebase(() => (db ? doc(db, 'settings', 'site-config') : null), [db])
   const { data: dbSettings } = useDoc(settingsRef)
 
@@ -165,6 +164,14 @@ export default function AdminPage() {
         logoUrl: dbSettings.logoUrl || '',
         faviconUrl: dbSettings.faviconUrl || '',
         heroDescription: dbSettings.heroDescription || ''
+      })
+      setLandingPageForm({
+        trustSectionEnabled: dbSettings.trustSectionEnabled ?? true,
+        trustTeamImageUrl: dbSettings.trustTeamImageUrl || '',
+        trustScore: dbSettings.trustScore || 90,
+        trustRatingsCount: dbSettings.trustRatingsCount || '1,548',
+        trustDescription: dbSettings.trustDescription || 'Get help from our friendly supporters! Our support team answers your questions by email or directly from your student hub.',
+        trustPartnerLogos: dbSettings.trustPartnerLogos || ''
       })
     }
   }, [dbSettings])
@@ -195,13 +202,12 @@ export default function AdminPage() {
     router.push('/');
   }
 
-  // Branding Handler
   const handleUpdateBranding = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!db) return
     const docRef = doc(db, 'settings', 'site-config')
     setDoc(docRef, brandingForm, { merge: true })
-      .then(() => toast({ title: "Branding Updated", description: "Campus identity settings have been synchronized." }))
+      .then(() => toast({ title: "Branding Updated" }))
       .catch(async (error) => {
         const permissionError = new FirestorePermissionError({
           path: docRef.path,
@@ -212,7 +218,22 @@ export default function AdminPage() {
       });
   }
 
-  // Attendance Handlers
+  const handleUpdateLandingPage = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!db) return
+    const docRef = doc(db, 'settings', 'site-config')
+    setDoc(docRef, landingPageForm, { merge: true })
+      .then(() => toast({ title: "Landing Page Updated", description: "Team & Trust section settings synchronized." }))
+      .catch(async (error) => {
+        const permissionError = new FirestorePermissionError({
+          path: docRef.path,
+          operation: 'update',
+          requestResourceData: landingPageForm,
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+      });
+  }
+
   const handleCreateSession = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!db) return
@@ -291,7 +312,7 @@ export default function AdminPage() {
 
   const handleDeleteStudent = async (studentId: string) => {
     if (!db) return
-    if (!confirm("Permanently delete this student record? This action cannot be undone.")) return
+    if (!confirm("Permanently delete this student record?")) return
     
     const docRef = doc(db, 'students', studentId)
     deleteDoc(docRef)
@@ -360,14 +381,7 @@ export default function AdminPage() {
         toast({ title: editingMaterial ? "Material Updated" : "Material Added" })
         setIsMaterialDialogOpen(false)
         setEditingMaterial(null)
-        setMaterialForm({
-          title: '',
-          subject: '',
-          semester: 'Semester 1',
-          materialType: 'Notes',
-          fileUrl: '',
-          thumbnailUrl: ''
-        })
+        setMaterialForm({ title: '', subject: '', semester: 'Semester 1', materialType: 'Notes', fileUrl: '', thumbnailUrl: '' })
       })
       .catch(async (error) => {
         const permissionError = new FirestorePermissionError({
@@ -455,7 +469,6 @@ export default function AdminPage() {
       })
   }
 
-  // Grade Management Logic
   const calculateGrade = (marks: number): string => {
     if (marks >= 90) return 'O';
     if (marks >= 80) return 'A+';
@@ -469,7 +482,6 @@ export default function AdminPage() {
 
   const handleUpdateGradeClick = (student: any, existingResult?: any) => {
     const selectedExam = allExams?.find(ex => ex.id === selectedExamCycle)
-    
     setSelectedStudentForGrade(student)
     setGradeForm({ 
       subject: existingResult?.subject || selectedExam?.title || '', 
@@ -486,7 +498,7 @@ export default function AdminPage() {
 
     const marksNum = parseInt(gradeForm.marks)
     if (isNaN(marksNum)) {
-      toast({ variant: "destructive", title: "Invalid Data", description: "Score must be a valid number." })
+      toast({ variant: "destructive", title: "Invalid Data" })
       return
     }
 
@@ -507,7 +519,6 @@ export default function AdminPage() {
     const resultDocRef = doc(db, 'students', selectedStudentForGrade.id, 'results', selectedExamCycle)
     const studentDocRef = doc(db, 'students', selectedStudentForGrade.id)
     
-    // Save the result
     setDoc(resultDocRef, payload, { merge: true })
       .catch(async (error) => {
         const permissionError = new FirestorePermissionError({
@@ -518,14 +529,10 @@ export default function AdminPage() {
         errorEmitter.emit('permission-error', permissionError);
       });
 
-    // Definitive verification: Auto-approve student when a result is added
     updateDoc(studentDocRef, { isApproved: true, status: 'approved' })
-      .catch(() => console.warn("Auto-approval failed during result entry."));
+      .catch(() => console.warn("Auto-approval failed."));
 
-    toast({ 
-      title: "Result Archived", 
-      description: `Academic record saved for ${selectedStudentForGrade.firstName} ${selectedStudentForGrade.lastName}. Account approved.` 
-    })
+    toast({ title: "Result Archived" })
     setIsGradeDialogOpen(false)
     setGradeForm({ subject: '', marks: '', grade: '', remark: '' })
   }
@@ -552,10 +559,9 @@ export default function AdminPage() {
     const recordId = `${scannedStudent.uid}_${selectedSessionId}`
     const attendanceRef = doc(db, 'attendance', recordId)
     
-    // Safety check for duplication
     const existing = await getDoc(attendanceRef)
     if (existing.exists()) {
-      toast({ title: "Already Logged", description: `${scannedStudent.name} has already been verified.` })
+      toast({ title: "Already Logged" })
       setScannedStudent(null)
       return
     }
@@ -576,7 +582,7 @@ export default function AdminPage() {
 
     setDoc(attendanceRef, payload)
       .then(() => {
-        toast({ title: "Presence Verified", description: `Attendance logged for ${scannedStudent.name}.` })
+        toast({ title: "Presence Verified" })
         setScannedStudent(null)
       })
       .catch(async (error) => {
@@ -589,7 +595,6 @@ export default function AdminPage() {
       });
   }
 
-  // Scanner Logic - Integrated Verification Flow
   useEffect(() => {
     let scanner: Html5QrcodeScanner | null = null;
     
@@ -624,13 +629,7 @@ export default function AdminPage() {
             scannerRef.current = scanner
           }, 600);
         } catch (err) {
-          console.error("Camera access denied:", err);
           setHasCameraPermission(false);
-          toast({
-            variant: "destructive",
-            title: "Access Denied",
-            description: "Camera permission is required to scan student identity codes."
-          });
         }
       }
 
@@ -643,7 +642,7 @@ export default function AdminPage() {
         }
       }
     }
-  }, [isScannerOpen, selectedSessionId, db, scannedStudent, toast])
+  }, [isScannerOpen, selectedSessionId, db, scannedStudent])
 
   const activeSession = sessions?.find(s => s.id === selectedSessionId)
 
@@ -706,6 +705,7 @@ export default function AdminPage() {
                 { id: 'exams', label: 'Exams', icon: <CalendarIcon size={16} /> },
                 { id: 'notices', label: 'Notices', icon: <Bell size={16} /> },
                 { id: 'repository', label: 'Repository', icon: <BookOpen size={16} /> },
+                { id: 'landing', label: 'Landing Page', icon: <Layout size={16} /> },
                 { id: 'branding', label: 'Branding', icon: <SettingsIcon size={16} /> },
               ].map((tab) => (
                 <TabsTrigger 
@@ -733,7 +733,6 @@ export default function AdminPage() {
                         {allExams?.map(exam => (
                           <SelectItem key={exam.id} value={exam.id} className="font-medium">{exam.title} - {exam.semester}</SelectItem>
                         ))}
-                        {allExams?.length === 0 && <p className="p-4 text-xs italic text-muted-foreground">No active exam sessions found.</p>}
                       </SelectContent>
                     </Select>
                   </div>
@@ -862,9 +861,6 @@ export default function AdminPage() {
                               <p className="text-[8px] md:text-[10px] text-muted-foreground font-bold uppercase">{format(new Date(record.timestamp), 'h:mm a')}</p>
                             </motion.div>
                           ))}
-                          {sessionAttendance?.length === 0 && (
-                            <div className="text-center py-16 md:py-20 text-muted-foreground italic text-sm">Waiting for scans...</div>
-                          )}
                         </div>
                       ) : (
                         <div className="h-[250px] md:h-[300px] flex flex-col items-center justify-center text-center gap-4 md:gap-6 text-muted-foreground opacity-50">
@@ -889,63 +885,31 @@ export default function AdminPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {allStudents && allStudents.length > 0 ? (
-                        allStudents.map(student => (
-                          <TableRow key={student.id} className="border-b border-border/10 hover:bg-primary/[0.02] transition-colors">
-                            <TableCell className="px-6 md:px-10 py-4 md:py-6">
-                              <p className="font-bold text-foreground text-sm md:text-base">{student.firstName} {student.lastName}</p>
-                            </TableCell>
-                            <TableCell className="py-4 md:py-6">
-                              <p className="text-muted-foreground font-medium uppercase text-[10px] md:text-xs">{student.studentId}</p>
-                            </TableCell>
-                            <TableCell className="py-4 md:py-6 text-center">
-                              <Badge className="bg-primary hover:bg-primary/90 text-white rounded-full px-3 md:px-4 py-0.5 md:py-1 lowercase font-bold text-[9px] md:text-[10px]">
-                                {student.status || (student.isApproved ? 'approved' : 'pending')}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="px-6 md:px-10 text-right">
-                              <div className="flex justify-end gap-1 md:gap-2">
-                                {!student.isApproved ? (
-                                  <Button 
-                                    variant="ghost" 
-                                    size="icon" 
-                                    className="h-8 w-8 md:h-10 md:w-10 text-green-500 hover:bg-green-50 rounded-xl"
-                                    onClick={() => handleApproveStudent(student.id)}
-                                  >
-                                    <CheckCircle size={18} />
-                                  </Button>
-                                ) : (
-                                  <Button 
-                                    variant="ghost" 
-                                    size="icon" 
-                                    className="h-8 w-8 md:h-10 md:w-10 text-orange-500 hover:bg-orange-50 rounded-xl"
-                                    onClick={() => handleRejectStudent(student.id)}
-                                  >
-                                    <XCircle size={18} />
-                                  </Button>
-                                )}
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
-                                  className="h-8 w-8 md:h-10 md:w-10 text-destructive hover:bg-destructive/5 rounded-xl"
-                                  onClick={() => handleDeleteStudent(student.id)}
-                                >
-                                  <Trash2 size={18} />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={4} className="h-60 md:h-80 text-center">
-                            <div className="flex flex-col items-center gap-4 opacity-40">
-                              <Users size={48} />
-                              <p className="text-muted-foreground italic font-medium text-sm">No registered students found.</p>
+                      {allStudents?.map(student => (
+                        <TableRow key={student.id} className="border-b border-border/10 hover:bg-primary/[0.02] transition-colors">
+                          <TableCell className="px-6 md:px-10 py-4 md:py-6">
+                            <p className="font-bold text-foreground text-sm md:text-base">{student.firstName} {student.lastName}</p>
+                          </TableCell>
+                          <TableCell className="py-4 md:py-6">
+                            <p className="text-muted-foreground font-medium uppercase text-[10px] md:text-xs">{student.studentId}</p>
+                          </TableCell>
+                          <TableCell className="py-4 md:py-6 text-center">
+                            <Badge className="bg-primary hover:bg-primary/90 text-white rounded-full px-3 md:px-4 py-0.5 md:py-1 lowercase font-bold text-[9px] md:text-[10px]">
+                              {student.status || (student.isApproved ? 'approved' : 'pending')}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="px-6 md:px-10 text-right">
+                            <div className="flex justify-end gap-1 md:gap-2">
+                              {!student.isApproved ? (
+                                <Button variant="ghost" size="icon" className="h-8 w-8 md:h-10 md:w-10 text-green-500 hover:bg-green-50 rounded-xl" onClick={() => handleApproveStudent(student.id)}><CheckCircle size={18} /></Button>
+                              ) : (
+                                <Button variant="ghost" size="icon" className="h-8 w-8 md:h-10 md:w-10 text-orange-500 hover:bg-orange-50 rounded-xl" onClick={() => handleRejectStudent(student.id)}><XCircle size={18} /></Button>
+                              )}
+                              <Button variant="ghost" size="icon" className="h-8 w-8 md:h-10 md:w-10 text-destructive hover:bg-destructive/5 rounded-xl" onClick={() => handleDeleteStudent(student.id)}><Trash2 size={18} /></Button>
                             </div>
                           </TableCell>
                         </TableRow>
-                      )}
+                      ))}
                     </TableBody>
                   </Table>
                 </div>
@@ -973,9 +937,7 @@ export default function AdminPage() {
               </TabsContent>
 
               <TabsContent value="exams" className="mt-0 space-y-6 md:space-y-8">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-xl md:text-2xl font-headline font-bold">Academic Calendar</h3>
-                </div>
+                <h3 className="text-xl md:text-2xl font-headline font-bold">Academic Calendar</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                   {allExams?.map(exam => (
                     <Card key={exam.id} className="p-4 md:p-6 bg-background/50 rounded-xl md:rounded-2xl border border-white/10 space-y-3 md:space-y-4">
@@ -993,9 +955,7 @@ export default function AdminPage() {
               </TabsContent>
 
               <TabsContent value="notices" className="mt-0 space-y-6 md:space-y-8">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-xl md:text-2xl font-headline font-bold">Official Bulletins</h3>
-                </div>
+                <h3 className="text-xl md:text-2xl font-headline font-bold">Official Bulletins</h3>
                 <div className="grid gap-4">
                   {allNotices?.map(notice => (
                     <Card key={notice.id} className="bg-background/50 rounded-xl md:rounded-2xl border-none p-4 md:p-6 border border-white/10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -1008,12 +968,8 @@ export default function AdminPage() {
                         <p className="text-[8px] md:text-[10px] font-black uppercase text-primary/40 mt-3 md:mt-4">{format(new Date(notice.publishDate), 'PPP')}</p>
                       </div>
                       <div className="flex gap-2">
-                        <Button variant="ghost" size="icon" className="h-9 w-9 text-primary hover:bg-primary/5 rounded-lg" onClick={() => handleEditNotice(notice)}>
-                          <Edit size={16} />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive hover:bg-destructive/5 rounded-lg" onClick={() => handleDeleteNotice(notice.id)}>
-                          <Trash2 size={16} />
-                        </Button>
+                        <Button variant="ghost" size="icon" className="h-9 w-9 text-primary hover:bg-primary/5 rounded-lg" onClick={() => handleEditNotice(notice)}><Edit size={16} /></Button>
+                        <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive hover:bg-destructive/5 rounded-lg" onClick={() => handleDeleteNotice(notice.id)}><Trash2 size={16} /></Button>
                       </div>
                     </Card>
                   ))}
@@ -1032,59 +988,99 @@ export default function AdminPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {allMaterials && allMaterials.length > 0 ? (
-                        allMaterials.map(material => (
-                          <TableRow key={material.id} className="border-b border-border/10 hover:bg-primary/[0.02] transition-colors">
-                            <TableCell className="px-6 md:px-10 py-4 md:py-6">
-                              <p className="font-bold text-foreground text-sm md:text-base truncate max-w-[150px] md:max-w-none">{material.title}</p>
-                            </TableCell>
-                            <TableCell className="py-4 md:py-6">
-                              <p className="text-muted-foreground uppercase font-medium text-[10px] md:text-xs">{material.subject}</p>
-                            </TableCell>
-                            <TableCell className="py-4 md:py-6">
-                              <Badge variant="outline" className="rounded-full bg-white dark:bg-black/20 text-[9px] md:text-xs px-2 md:px-4 border-border/40 font-medium whitespace-nowrap">
-                                {material.materialType || 'Notes'}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="px-6 md:px-10 text-right">
-                              <div className="flex justify-end gap-1 md:gap-2">
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
-                                  className="h-8 w-8 md:h-10 md:w-10 text-primary hover:bg-primary/5 rounded-xl"
-                                  onClick={() => handleEditMaterial(material)}
-                                >
-                                  <Edit size={18} />
-                                </Button>
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
-                                  className="h-8 w-8 md:h-10 md:w-10 text-destructive hover:bg-destructive/5 rounded-xl"
-                                  onClick={() => handleDeleteMaterial(material.id)}
-                                >
-                                  <Trash2 size={18} />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={4} className="h-60 md:h-80 text-center">
-                            <div className="flex flex-col items-center gap-4 opacity-40">
-                              <BookOpen size={48} />
-                              <p className="text-muted-foreground italic font-medium text-sm">No materials found.</p>
+                      {allMaterials?.map(material => (
+                        <TableRow key={material.id} className="border-b border-border/10 hover:bg-primary/[0.02] transition-colors">
+                          <TableCell className="px-6 md:px-10 py-4 md:py-6"><p className="font-bold text-foreground text-sm md:text-base truncate max-w-[150px] md:max-w-none">{material.title}</p></TableCell>
+                          <TableCell className="py-4 md:py-6"><p className="text-muted-foreground uppercase font-medium text-[10px] md:text-xs">{material.subject}</p></TableCell>
+                          <TableCell className="py-4 md:py-6"><Badge variant="outline" className="rounded-full text-[9px] md:text-xs px-2 md:px-4">{material.materialType || 'Notes'}</Badge></TableCell>
+                          <TableCell className="px-6 md:px-10 text-right">
+                            <div className="flex justify-end gap-1 md:gap-2">
+                              <Button variant="ghost" size="icon" className="h-8 w-8 md:h-10 md:w-10 text-primary hover:bg-primary/5 rounded-xl" onClick={() => handleEditMaterial(material)}><Edit size={18} /></Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 md:h-10 md:w-10 text-destructive hover:bg-destructive/5 rounded-xl" onClick={() => handleDeleteMaterial(material.id)}><Trash2 size={18} /></Button>
                             </div>
                           </TableCell>
                         </TableRow>
-                      )}
+                      ))}
                     </TableBody>
                   </Table>
                 </div>
               </TabsContent>
 
+              <TabsContent value="landing" className="mt-0">
+                <form onSubmit={handleUpdateLandingPage} className="max-w-4xl space-y-10">
+                  <div className="space-y-8">
+                    <div className="flex items-center justify-between p-6 bg-primary/5 rounded-3xl border border-primary/10">
+                      <div className="space-y-1">
+                        <Label className="text-lg font-bold">Team & Trust Section</Label>
+                        <p className="text-sm text-muted-foreground">Enable the team showcase and happiness score module.</p>
+                      </div>
+                      <Switch 
+                        checked={landingPageForm.trustSectionEnabled} 
+                        onCheckedChange={val => setLandingPageForm({...landingPageForm, trustSectionEnabled: val})} 
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div className="space-y-3">
+                        <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2"><ImageIcon size={14} /> Team Image URL</Label>
+                        <Input 
+                          value={landingPageForm.trustTeamImageUrl} 
+                          onChange={e => setLandingPageForm({...landingPageForm, trustTeamImageUrl: e.target.value})}
+                          placeholder="https://..."
+                          className="h-12 rounded-2xl bg-background/50" 
+                        />
+                      </div>
+                      <div className="space-y-3">
+                        <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2"><Heart size={14} /> Happiness Score (%)</Label>
+                        <Input 
+                          type="number"
+                          max="100"
+                          min="0"
+                          value={landingPageForm.trustScore} 
+                          onChange={e => setLandingPageForm({...landingPageForm, trustScore: parseInt(e.target.value)})}
+                          className="h-12 rounded-2xl bg-background/50" 
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Ratings Subtext</Label>
+                      <Input 
+                        value={landingPageForm.trustRatingsCount} 
+                        onChange={e => setLandingPageForm({...landingPageForm, trustRatingsCount: e.target.value})}
+                        placeholder="e.g. based on 1,548 ratings..."
+                        className="h-12 rounded-2xl bg-background/50" 
+                      />
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Section Description</Label>
+                      <Textarea 
+                        value={landingPageForm.trustDescription} 
+                        onChange={e => setLandingPageForm({...landingPageForm, trustDescription: e.target.value})}
+                        className="min-h-[120px] rounded-3xl bg-background/50 p-6" 
+                      />
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Partner Logo URLs (Comma Separated)</Label>
+                      <Textarea 
+                        value={landingPageForm.trustPartnerLogos} 
+                        onChange={e => setLandingPageForm({...landingPageForm, trustPartnerLogos: e.target.value})}
+                        placeholder="URL1, URL2, URL3..."
+                        className="min-h-[100px] rounded-3xl bg-background/50 p-6 text-xs" 
+                      />
+                    </div>
+                  </div>
+
+                  <Button type="submit" className="w-full md:w-auto h-14 px-12 bg-primary text-white hover:bg-primary/90 rounded-2xl text-lg font-bold shadow-xl shadow-primary/20">
+                    Update Landing Page <Send className="ml-3" size={18} />
+                  </Button>
+                </form>
+              </TabsContent>
+
               <TabsContent value="branding" className="mt-0">
-                <form onSubmit={handleUpdateBranding} className="max-w-4xl space-y-8 md:space-y-10">
+                <form onSubmit={handleUpdateBranding} className="max-w-4xl space-y-10">
                   <div className="space-y-6">
                     <div className="space-y-3">
                       <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Portal Name</Label>
@@ -1092,31 +1088,27 @@ export default function AdminPage() {
                         value={brandingForm.siteName} 
                         onChange={e => setBrandingForm({...brandingForm, siteName: e.target.value})}
                         placeholder="e.g. TechXera"
-                        className="h-12 md:h-14 rounded-2xl bg-background/50 border-none ring-1 ring-border focus-visible:ring-primary text-base md:text-lg font-bold px-4 md:px-6 shadow-sm" 
+                        className="h-14 rounded-2xl bg-background/50 border-none ring-1 ring-border focus-visible:ring-primary text-lg font-bold px-6" 
                       />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                       <div className="space-y-3">
-                        <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                          <ImageIcon size={14} /> Website Logo URL
-                        </Label>
+                        <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2"><ImageIcon size={14} /> Logo URL</Label>
                         <Input 
                           value={brandingForm.logoUrl} 
                           onChange={e => setBrandingForm({...brandingForm, logoUrl: e.target.value})}
                           placeholder="https://..."
-                          className="h-12 md:h-14 rounded-2xl bg-background/50 border-none ring-1 ring-border focus-visible:ring-primary text-xs md:text-sm font-medium px-4 md:px-6 shadow-sm" 
+                          className="h-14 rounded-2xl bg-background/50" 
                         />
                       </div>
                       <div className="space-y-3">
-                        <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                          <Globe size={14} /> Favicon URL
-                        </Label>
+                        <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2"><Globe size={14} /> Favicon URL</Label>
                         <Input 
                           value={brandingForm.faviconUrl} 
                           onChange={e => setBrandingForm({...brandingForm, faviconUrl: e.target.value})}
                           placeholder="https://..."
-                          className="h-12 md:h-14 rounded-2xl bg-background/50 border-none ring-1 ring-border focus-visible:ring-primary text-xs md:text-sm font-medium px-4 md:px-6 shadow-sm" 
+                          className="h-14 rounded-2xl bg-background/50" 
                         />
                       </div>
                     </div>
@@ -1126,13 +1118,12 @@ export default function AdminPage() {
                       <Textarea 
                         value={brandingForm.heroDescription} 
                         onChange={e => setBrandingForm({...brandingForm, heroDescription: e.target.value})}
-                        placeholder="A high-performance student portal..."
-                        className="min-h-[150px] md:min-h-[180px] rounded-[1.5rem] md:rounded-3xl bg-background/50 border-none ring-1 ring-border focus-visible:ring-primary p-4 md:p-6 text-xs md:text-sm leading-relaxed shadow-sm" 
+                        className="min-h-[180px] rounded-3xl bg-background/50 p-6 text-sm leading-relaxed" 
                       />
                     </div>
                   </div>
 
-                  <Button type="submit" className="w-full md:w-auto h-12 md:h-14 px-8 md:px-12 bg-primary text-white hover:bg-primary/90 rounded-2xl text-base md:text-lg font-bold shadow-xl shadow-primary/20 transition-all hover:scale-105 active:scale-95">
+                  <Button type="submit" className="w-full md:w-auto h-14 px-12 bg-primary text-white hover:bg-primary/90 rounded-2xl text-lg font-bold shadow-xl shadow-primary/20">
                     Update Branding <Send className="ml-3" size={18} />
                   </Button>
                 </form>
@@ -1143,84 +1134,37 @@ export default function AdminPage() {
         </Tabs>
       </main>
 
-      <Dialog open={isScannerOpen} onOpenChange={(open) => {
-        setIsScannerOpen(open);
-        if (!open) setScannedStudent(null);
-      }}>
+      <Dialog open={isScannerOpen} onOpenChange={(open) => { setIsScannerOpen(open); if (!open) setScannedStudent(null); }}>
         <DialogContent className="sm:max-w-md w-[95vw] rounded-[2rem] md:rounded-[3rem] p-6 md:p-10 overflow-hidden">
           <DialogHeader className="text-center">
-            <DialogTitle className="text-xl md:text-2xl font-headline font-bold mb-1 md:mb-2 truncate">
-              {scannedStudent ? 'Verify Student Details' : `Scanner: ${activeSession?.className}`}
-            </DialogTitle>
-            <DialogDescription className="text-muted-foreground font-medium text-center text-xs md:text-sm">
-              {scannedStudent ? 'Review student credentials before logging attendance.' : 'Align student identity QR within the frame'}
-            </DialogDescription>
+            <DialogTitle className="text-xl md:text-2xl font-headline font-bold mb-1 truncate">{scannedStudent ? 'Verify Student Details' : `Scanner: ${activeSession?.className}`}</DialogTitle>
+            <DialogDescription className="text-muted-foreground font-medium text-center text-xs md:text-sm">{scannedStudent ? 'Review credentials before logging attendance.' : 'Align student identity QR within the frame'}</DialogDescription>
           </DialogHeader>
           
-          <div className="flex flex-col items-center gap-6 md:gap-8 py-4 md:py-6">
+          <div className="flex flex-col items-center gap-6 md:gap-8 py-4">
             {!scannedStudent ? (
               <>
-                {hasCameraPermission === false && (
-                  <Alert variant="destructive" className="rounded-xl md:rounded-2xl border-2">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Camera Required</AlertTitle>
-                    <AlertDescription className="text-[10px] md:text-sm">
-                      Access denied. Please update browser settings.
-                    </AlertDescription>
-                  </Alert>
-                )}
-                
                 <div className="relative w-full">
                   <div id="admin-attendance-scan-reader" className="w-full rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden border-4 border-primary/20 bg-muted/20 min-h-[250px] md:min-h-[300px]" />
-                  {hasCameraPermission === null && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/50 backdrop-blur-sm rounded-[1.5rem] md:rounded-[2.5rem] p-6 text-center">
-                      <Camera className="animate-pulse text-primary mb-4" size={48} />
-                      <p className="font-bold text-[10px] md:text-sm">Requesting Camera Access...</p>
-                    </div>
-                  )}
                 </div>
-
-                <div className="p-4 md:p-5 bg-primary/5 rounded-xl md:rounded-2xl w-full flex items-center gap-3 md:gap-4 text-[9px] md:text-xs text-primary border border-primary/20">
+                <div className="p-4 md:p-5 bg-primary/5 rounded-xl md:rounded-2xl w-full flex items-center gap-3 text-[9px] md:text-xs text-primary border border-primary/20">
                   <ShieldCheck size={20} className="shrink-0" />
                   <p className="font-medium leading-relaxed">Secure Admin Hub. Instant verification enabled.</p>
                 </div>
-                <Button onClick={() => setIsScannerOpen(false)} variant="outline" className="w-full h-10 md:h-12 rounded-xl font-bold text-xs">
-                  Terminate Scanner
-                </Button>
+                <Button onClick={() => setIsScannerOpen(false)} variant="outline" className="w-full h-10 md:h-12 rounded-xl font-bold text-xs">Terminate Scanner</Button>
               </>
             ) : (
               <div className="w-full space-y-8 animate-in fade-in zoom-in duration-300">
                 <div className="flex flex-col items-center text-center space-y-4">
-                  <div className="w-24 h-24 rounded-[2rem] bg-primary/10 flex items-center justify-center text-primary shadow-inner">
-                    <Users size={48} />
-                  </div>
+                  <div className="w-24 h-24 rounded-[2rem] bg-primary/10 flex items-center justify-center text-primary shadow-inner"><Users size={48} /></div>
                   <div className="space-y-1">
                     <h3 className="text-2xl font-headline font-bold text-foreground">{scannedStudent.name}</h3>
-                    <div className="flex flex-col items-center gap-1">
-                      <p className="text-primary font-black uppercase tracking-[0.2em] text-[10px]">Campus Identity Token</p>
-                      <p className="text-muted-foreground font-bold text-xs">ROLL NO: {scannedStudent.studentId}</p>
-                    </div>
+                    <p className="text-muted-foreground font-bold text-xs">ROLL NO: {scannedStudent.studentId}</p>
                   </div>
                 </div>
-
-                <div className="p-6 bg-muted/30 rounded-[2rem] border border-border/40 space-y-4">
-                  <div className="flex justify-between items-center text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                    <span>Target Session</span>
-                    <span className="text-foreground font-black">{activeSession?.className}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                    <span>Identity Status</span>
-                    <Badge className="bg-green-500/10 text-green-600 border-none font-bold">Verified Token</Badge>
-                  </div>
-                </div>
-
                 <div className="grid gap-4">
-                  <Button onClick={handleConfirmAttendance} className="w-full h-14 rounded-2xl bg-primary text-white font-bold text-lg shadow-xl shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95">
-                    <CheckCircle2 className="mr-2" /> Confirm Attendance
-                  </Button>
-                  <Button onClick={() => setScannedStudent(null)} variant="ghost" className="w-full h-12 rounded-xl font-bold text-muted-foreground">
-                    Cancel & Rescan
-                  </Button>
+                  <Button onClick={handleConfirmAttendance} className="w-full h-14 rounded-2xl bg-primary text-white font-bold text-lg shadow-xl shadow-primary/20 hover:bg-primary/90">Confirm Attendance</Button>
+                  <Button onClick={() => setScannedStudent(null)} variant="ghost" className="w-full h-12 rounded-xl font-bold text-muted-foreground">Cancel & Rescan</Button>
                 </div>
               </div>
             )}
@@ -1232,48 +1176,27 @@ export default function AdminPage() {
         <DialogContent className="w-[95vw] rounded-[2rem] md:rounded-[3rem] p-6 md:p-10">
           <DialogHeader><DialogTitle className="text-xl md:text-2xl font-headline font-bold">Initialize Class</DialogTitle></DialogHeader>
           <form onSubmit={handleCreateSession} className="space-y-4 md:space-y-6 pt-4">
-            <div className="space-y-2">
-              <Label className="text-xs">Module Name</Label>
-              <Input required placeholder="e.g. Advanced AI" value={newSession.className} onChange={e => setNewSession({...newSession, className: e.target.value})} className="h-10 md:h-12 rounded-xl text-sm" />
-            </div>
+            <div className="space-y-2"><Label className="text-xs">Module Name</Label><Input required placeholder="e.g. Advanced AI" value={newSession.className} onChange={e => setNewSession({...newSession, className: e.target.value})} className="h-12 rounded-xl text-sm" /></div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-xs">Date</Label>
-                <Input type="date" required value={newSession.date} onChange={e => setNewSession({...newSession, date: e.target.value})} className="h-10 md:h-12 rounded-xl text-xs" />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs">Start Time</Label>
-                <Input type="time" required value={newSession.startTime} onChange={e => setNewSession({...newSession, startTime: e.target.value})} className="h-10 md:h-12 rounded-xl text-xs" />
-              </div>
+              <div className="space-y-2"><Label className="text-xs">Date</Label><Input type="date" required value={newSession.date} onChange={e => setNewSession({...newSession, date: e.target.value})} className="h-12 rounded-xl text-xs" /></div>
+              <div className="space-y-2"><Label className="text-xs">Start Time</Label><Input type="time" required value={newSession.startTime} onChange={e => setNewSession({...newSession, startTime: e.target.value})} className="h-12 rounded-xl text-xs" /></div>
             </div>
-            <DialogFooter>
-              <Button type="submit" className="w-full h-10 md:h-12 rounded-xl font-bold text-base md:text-lg">Initialize Session</Button>
-            </DialogFooter>
+            <DialogFooter><Button type="submit" className="w-full h-12 rounded-xl font-bold text-base md:text-lg">Initialize Session</Button></DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
       <Dialog open={isMaterialDialogOpen} onOpenChange={setIsMaterialDialogOpen}>
         <DialogContent className="w-[95vw] rounded-[2rem] md:rounded-[3rem] p-6 md:p-10 sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="text-xl md:text-2xl font-headline font-bold">
-              {editingMaterial ? 'Update Material' : 'New Study Material'}
-            </DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle className="text-xl md:text-2xl font-headline font-bold">{editingMaterial ? 'Update Material' : 'New Study Material'}</DialogTitle></DialogHeader>
           <form onSubmit={handleSaveMaterial} className="space-y-4 md:space-y-6 pt-4">
-            <div className="space-y-2">
-              <Label className="text-xs">Title</Label>
-              <Input required placeholder="e.g. Intro to Neural Networks" value={materialForm.title} onChange={e => setMaterialForm({...materialForm, title: e.target.value})} className="h-10 md:h-12 rounded-xl text-sm" />
-            </div>
+            <div className="space-y-2"><Label className="text-xs">Title</Label><Input required value={materialForm.title} onChange={e => setMaterialForm({...materialForm, title: e.target.value})} className="h-12 rounded-xl text-sm" /></div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-xs">Subject</Label>
-                <Input required placeholder="e.g. AI" value={materialForm.subject} onChange={e => setMaterialForm({...materialForm, subject: e.target.value})} className="h-10 md:h-12 rounded-xl text-sm" />
-              </div>
+              <div className="space-y-2"><Label className="text-xs">Subject</Label><Input required value={materialForm.subject} onChange={e => setMaterialForm({...materialForm, subject: e.target.value})} className="h-12 rounded-xl text-sm" /></div>
               <div className="space-y-2">
                 <Label className="text-xs">Type</Label>
                 <Select value={materialForm.materialType} onValueChange={val => setMaterialForm({...materialForm, materialType: val})}>
-                  <SelectTrigger className="h-10 md:h-12 rounded-xl text-xs"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-12 rounded-xl text-xs"><SelectValue /></SelectTrigger>
                   <SelectContent className="rounded-xl">
                     <SelectItem value="Notes">Notes</SelectItem>
                     <SelectItem value="Assignment">Assignment</SelectItem>
@@ -1283,44 +1206,20 @@ export default function AdminPage() {
                 </Select>
               </div>
             </div>
-            <div className="space-y-2">
-              <Label className="text-xs">File URL</Label>
-              <Input required placeholder="https://..." value={materialForm.fileUrl} onChange={e => setMaterialForm({...materialForm, fileUrl: e.target.value})} className="h-10 md:h-12 rounded-xl text-xs" />
-            </div>
-            <DialogFooter>
-              <Button type="submit" className="w-full h-10 md:h-12 rounded-xl font-bold text-base md:text-lg">
-                {editingMaterial ? 'Update' : 'Publish'} Material
-              </Button>
-            </DialogFooter>
+            <div className="space-y-2"><Label className="text-xs">File URL</Label><Input required value={materialForm.fileUrl} onChange={e => setMaterialForm({...materialForm, fileUrl: e.target.value})} className="h-12 rounded-xl text-xs" /></div>
+            <DialogFooter><Button type="submit" className="w-full h-12 rounded-xl font-bold text-base md:text-lg">{editingMaterial ? 'Update' : 'Publish'} Material</Button></DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
       <Dialog open={isNoticeDialogOpen} onOpenChange={setIsNoticeDialogOpen}>
         <DialogContent className="w-[95vw] rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="text-xl md:text-2xl font-headline font-bold">
-              {editingNotice ? 'Update Notice' : 'Publish Notice'}
-            </DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle className="text-xl md:text-2xl font-headline font-bold">{editingNotice ? 'Update Notice' : 'Publish Notice'}</DialogTitle></DialogHeader>
           <form onSubmit={handleSaveNotice} className="space-y-4 md:space-y-6 pt-4">
-            <div className="space-y-2">
-              <Label className="text-xs">Title</Label>
-              <Input required placeholder="e.g. Assessment Schedule" value={noticeForm.title} onChange={e => setNoticeForm({...noticeForm, title: e.target.value})} className="h-10 md:h-12 rounded-xl text-sm" />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs">Content</Label>
-              <Textarea required placeholder="Details..." value={noticeForm.description} onChange={e => setNoticeForm({...noticeForm, description: e.target.value})} className="min-h-[100px] md:min-h-[120px] rounded-xl text-sm" />
-            </div>
-            <div className="flex items-center justify-between p-3 md:p-4 bg-muted/20 rounded-xl md:rounded-2xl">
-              <Label className="font-bold text-xs md:text-sm">Urgent Priority</Label>
-              <Switch checked={noticeForm.isUrgent} onCheckedChange={val => setNoticeForm({...noticeForm, isUrgent: val})} />
-            </div>
-            <DialogFooter>
-              <Button type="submit" className="w-full h-10 md:h-12 rounded-xl font-bold">
-                {editingNotice ? 'Update' : 'Publish'} Bulletin
-              </Button>
-            </DialogFooter>
+            <div className="space-y-2"><Label className="text-xs">Title</Label><Input required value={noticeForm.title} onChange={e => setNoticeForm({...noticeForm, title: e.target.value})} className="h-12 rounded-xl text-sm" /></div>
+            <div className="space-y-2"><Label className="text-xs">Content</Label><Textarea required value={noticeForm.description} onChange={e => setNoticeForm({...noticeForm, description: e.target.value})} className="min-h-[120px] rounded-xl text-sm" /></div>
+            <div className="flex items-center justify-between p-4 bg-muted/20 rounded-2xl"><Label className="font-bold text-sm">Urgent Priority</Label><Switch checked={noticeForm.isUrgent} onCheckedChange={val => setNoticeForm({...noticeForm, isUrgent: val})} /></div>
+            <DialogFooter><Button type="submit" className="w-full h-12 rounded-xl font-bold">{editingNotice ? 'Update' : 'Publish'} Bulletin</Button></DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
@@ -1329,15 +1228,12 @@ export default function AdminPage() {
         <DialogContent className="w-[95vw] rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 sm:max-w-lg">
           <DialogHeader><DialogTitle className="text-xl md:text-2xl font-headline font-bold">Schedule Exam</DialogTitle></DialogHeader>
           <form onSubmit={handleCreateExam} className="space-y-4 md:space-y-6 pt-4">
-            <div className="space-y-2">
-              <Label className="text-xs">Exam Title</Label>
-              <Input required placeholder="e.g. Mid-Term" value={examForm.title} onChange={e => setExamForm({...examForm, title: e.target.value})} className="h-10 md:h-12 rounded-xl text-sm" />
-            </div>
+            <div className="space-y-2"><Label className="text-xs">Exam Title</Label><Input required value={examForm.title} onChange={e => setExamForm({...examForm, title: e.target.value})} className="h-12 rounded-xl text-sm" /></div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-xs">Semester</Label>
                 <Select value={examForm.semester} onValueChange={val => setExamForm({...examForm, semester: val})}>
-                  <SelectTrigger className="h-10 md:h-12 rounded-xl text-xs"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-12 rounded-xl text-xs"><SelectValue /></SelectTrigger>
                   <SelectContent className="rounded-xl">
                     <SelectItem value="Semester 1">Semester 1</SelectItem>
                     <SelectItem value="Semester 2">Semester 2</SelectItem>
@@ -1346,12 +1242,9 @@ export default function AdminPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label className="text-xs">Date</Label>
-                <Input type="date" required value={examForm.examDate} onChange={e => setExamForm({...examForm, examDate: e.target.value})} className="h-10 md:h-12 rounded-xl text-xs" />
-              </div>
+              <div className="space-y-2"><Label className="text-xs">Date</Label><Input type="date" required value={examForm.examDate} onChange={e => setExamForm({...examForm, examDate: e.target.value})} className="h-12 rounded-xl text-xs" /></div>
             </div>
-            <DialogFooter><Button type="submit" className="w-full h-10 md:h-12 rounded-xl font-bold">Create Schedule</Button></DialogFooter>
+            <DialogFooter><Button type="submit" className="w-full h-12 rounded-xl font-bold">Create Schedule</Button></DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
@@ -1360,64 +1253,32 @@ export default function AdminPage() {
         <DialogContent className="w-[95vw] rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-xl md:text-2xl font-headline font-bold">Enter Academic Score</DialogTitle>
-            <DialogDescription className="text-[10px] md:text-sm">
-              Record evaluation for {selectedStudentForGrade?.firstName} {selectedStudentForGrade?.lastName}.
-            </DialogDescription>
+            <DialogDescription className="text-[10px] md:text-sm">Record evaluation for {selectedStudentForGrade?.firstName} {selectedStudentForGrade?.lastName}.</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSaveGrade} className="space-y-4 md:space-y-6 pt-4">
-            <div className="space-y-2">
-              <Label className="text-xs">Subject / Paper</Label>
-              <Input 
-                required 
-                placeholder="e.g. Physics" 
-                value={gradeForm.subject} 
-                onChange={e => setGradeForm({...gradeForm, subject: e.target.value})}
-                className="h-10 md:h-12 rounded-xl text-sm" 
-              />
-            </div>
+            <div className="space-y-2"><Label className="text-xs">Subject / Paper</Label><Input required value={gradeForm.subject} onChange={e => setGradeForm({...gradeForm, subject: e.target.value})} className="h-12 rounded-xl text-sm" /></div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-xs">Marks (%)</Label>
-                <Input 
-                  required 
-                  type="number" 
-                  max="100" 
-                  min="0"
-                  placeholder="85" 
-                  value={gradeForm.marks} 
-                  onChange={e => {
-                    const val = e.target.value;
-                    const marksVal = parseInt(val);
-                    const grade = isNaN(marksVal) ? '' : calculateGrade(marksVal);
-                    setGradeForm({...gradeForm, marks: val, grade: grade});
-                  }}
-                  className="h-10 md:h-12 rounded-xl text-sm" 
-                />
+                <Input required type="number" max="100" min="0" value={gradeForm.marks} onChange={e => {
+                  const val = e.target.value;
+                  const marksVal = parseInt(val);
+                  const grade = isNaN(marksVal) ? '' : calculateGrade(marksVal);
+                  setGradeForm({...gradeForm, marks: val, grade: grade});
+                }} className="h-12 rounded-xl text-sm" />
               </div>
               <div className="space-y-2">
                 <Label className="text-xs">Letter Grade</Label>
                 <Select value={gradeForm.grade} onValueChange={val => setGradeForm({...gradeForm, grade: val})}>
-                  <SelectTrigger className="h-10 md:h-12 rounded-xl text-sm">
-                    <SelectValue placeholder="Grade" />
-                  </SelectTrigger>
+                  <SelectTrigger className="h-12 rounded-xl text-sm"><SelectValue placeholder="Grade" /></SelectTrigger>
                   <SelectContent className="rounded-xl">
-                    {['O', 'A+', 'A', 'B+', 'B', 'C', 'P', 'F'].map(g => (
-                      <SelectItem key={g} value={g}>{g}</SelectItem>
-                    ))}
+                    {['O', 'A+', 'A', 'B+', 'B', 'C', 'P', 'F'].map(g => (<SelectItem key={g} value={g}>{g}</SelectItem>))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
-            <div className="space-y-2">
-              <Label className="text-xs">Teacher's Remark</Label>
-              <Textarea 
-                placeholder="e.g. Excellent performance in practicals." 
-                value={gradeForm.remark} 
-                onChange={e => setGradeForm({...gradeForm, remark: e.target.value})}
-                className="h-20 rounded-xl text-sm resize-none" 
-              />
-            </div>
-            <DialogFooter><Button type="submit" className="w-full h-10 md:h-12 rounded-xl font-bold">Save Result</Button></DialogFooter>
+            <div className="space-y-2"><Label className="text-xs">Teacher's Remark</Label><Textarea value={gradeForm.remark} onChange={e => setGradeForm({...gradeForm, remark: e.target.value})} className="h-24 rounded-xl text-sm resize-none" /></div>
+            <DialogFooter><Button type="submit" className="w-full h-12 rounded-xl font-bold">Save Result</Button></DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
