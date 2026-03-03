@@ -82,7 +82,7 @@ export default function Home() {
   })
 
   // Calculate parallax movement for the trust card
-  const cardY = useTransform(scrollYProgress, [0.2, 0.8], [100, -100])
+  const cardY = useTransform(scrollYProgress, [0.2, 0.8], [150, -150])
 
   useEffect(() => {
     setMounted(true)
@@ -184,7 +184,7 @@ export default function Home() {
               />
             </div>
 
-            <div className="max-w-7xl mx-auto px-6 pt-[280px]">
+            <div className="max-w-7xl mx-auto px-6 pt-[350px]">
               {/* Floating Trust Card with Parallax Animation */}
               <motion.div 
                 style={{ y: cardY }}
@@ -222,19 +222,19 @@ export default function Home() {
               </motion.div>
 
               {/* Partner Logos Registry */}
-              <div className="mt-24 pt-16 border-t border-border/40">
+              <div className="mt-32 pt-20 border-t border-border/40">
                 <div className="flex flex-wrap items-center justify-center gap-16 md:gap-24 opacity-40 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-700">
                   {partnerLogos.length > 0 ? (
                     partnerLogos.map((logo: string, idx: number) => (
-                      <img key={idx} src={logo} alt="Partner Logo" className="h-8 md:h-10 object-contain" />
+                      <img key={idx} src={logo} alt="Partner Logo" className="h-12 md:h-16 lg:h-20 object-contain" />
                     ))
                   ) : (
                     <>
-                      <div className="text-2xl font-black tracking-tighter">SAP</div>
-                      <div className="text-2xl font-black tracking-tighter">DECATHLON</div>
-                      <div className="text-2xl font-black tracking-tighter">TRIPADVISOR</div>
-                      <div className="text-2xl font-black tracking-tighter">UNIVERSITY</div>
-                      <div className="text-2xl font-black tracking-tighter">DHL</div>
+                      <div className="text-3xl md:text-5xl font-black tracking-tighter">SAP</div>
+                      <div className="text-3xl md:text-5xl font-black tracking-tighter">DECATHLON</div>
+                      <div className="text-3xl md:text-5xl font-black tracking-tighter">TRIPADVISOR</div>
+                      <div className="text-3xl md:text-5xl font-black tracking-tighter">UNIVERSITY</div>
+                      <div className="text-3xl md:text-5xl font-black tracking-tighter">DHL</div>
                     </>
                   )}
                 </div>
