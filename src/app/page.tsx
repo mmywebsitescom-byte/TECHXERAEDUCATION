@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useEffect, useState, useRef } from 'react'
@@ -81,9 +82,7 @@ export default function Home() {
     offset: ["start end", "end start"]
   })
 
-  // Calculate parallax movement for the trust card
-  // Start shifting up as soon as it enters the view
-  const cardY = useTransform(scrollYProgress, [0.1, 0.9], [300, -250])
+  const cardY = useTransform(scrollYProgress, [0.1, 0.9], [250, -200])
 
   useEffect(() => {
     setMounted(true)
@@ -171,9 +170,9 @@ export default function Home() {
 
         {/* Dynamic Team & Trust Section (Manageable from Admin) */}
         {settings?.trustSectionEnabled !== false && (
-          <section ref={trustSectionRef} className="py-24 relative overflow-hidden">
+          <section ref={trustSectionRef} className="py-16 relative overflow-hidden">
             {/* Team Image Background Area */}
-            <div className="absolute top-0 inset-x-0 h-[500px] bg-[#fecba1] dark:bg-[#280905] -z-10 flex items-end justify-center overflow-hidden">
+            <div className="absolute top-0 inset-x-0 h-[400px] bg-[#fecba1] dark:bg-[#280905] -z-10 flex items-end justify-center overflow-hidden">
               <motion.img 
                 initial={{ opacity: 0, y: 80 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -181,11 +180,11 @@ export default function Home() {
                 transition={{ duration: 1, ease: "easeOut" }}
                 src={settings?.trustTeamImageUrl || "https://picsum.photos/seed/techteam/1400/600"} 
                 alt="Our Team"
-                className="w-full max-w-7xl object-contain object-bottom h-[450px]"
+                className="w-full max-w-7xl object-contain object-bottom h-[350px]"
               />
             </div>
 
-            <div className="max-w-7xl mx-auto px-6 pt-[450px]">
+            <div className="max-w-7xl mx-auto px-6 pt-[350px]">
               {/* Floating Trust Card with Scroll Parallax */}
               <motion.div 
                 style={{ y: cardY }}
@@ -223,8 +222,8 @@ export default function Home() {
               </motion.div>
 
               {/* Partner Logos Registry */}
-              <div className="mt-32 pt-20 border-t border-border/40">
-                <div className="flex flex-wrap items-center justify-center gap-16 md:gap-32 opacity-40 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-700">
+              <div className="mt-16 pt-12 border-t border-border/40">
+                <div className="flex flex-wrap items-center justify-center gap-12 md:gap-24 opacity-40 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-700">
                   {partnerLogos.length > 0 ? (
                     partnerLogos.map((logo: string, idx: number) => (
                       <img key={idx} src={logo} alt="Partner Logo" className="h-16 md:h-24 lg:h-32 object-contain" />
@@ -245,7 +244,7 @@ export default function Home() {
         )}
 
         {/* Support CTA Section */}
-        <section className="py-24 md:py-32 px-6">
+        <section className="py-16 md:py-24 px-6">
           <div className="max-w-5xl mx-auto">
             <motion.div initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} className="bg-primary rounded-[3rem] p-12 md:p-20 text-center text-white relative overflow-hidden shadow-2xl">
               <div className="absolute top-0 right-0 p-10 opacity-10"><LifeBuoy size={200} /></div>
