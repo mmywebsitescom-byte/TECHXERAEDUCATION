@@ -6,9 +6,9 @@ import { useFirestore, useDoc, useMemoFirebase } from '@/firebase'
 import { doc } from 'firebase/firestore'
 
 /**
- * DynamicFavicon - Force-synchronizes the browser tab icon with settings from Firestore.
- * This component aggressively finds all existing icon links and replaces them to ensure
- * custom branding overrides any default framework or host icons.
+ * DynamicFavicon - Aggressively synchronizes the browser tab icon.
+ * Uses a combination of immediate application, interval polling, and MutationObserver
+ * to ensure custom branding is never overwritten by framework defaults.
  */
 export default function DynamicFavicon() {
   const db = useFirestore()
@@ -16,8 +16,9 @@ export default function DynamicFavicon() {
   const { data: settings } = useDoc(settingsRef)
 
   useEffect(() => {
-    // The specific primary icon provided by the user
+    // The primary default icon URL
     const primaryIconUrl = 'https://i.postimg.cc/MZg1CbGc/1441541546-(1)-Photoroom.png';
+    
     // Use admin override if present, otherwise fall back to primary
     const targetUrl = settings?.faviconUrl || settings?.logoUrl || primaryIconUrl;
 
@@ -32,15 +33,19 @@ export default function DynamicFavicon() {
       const existingLinks = document.querySelectorAll(selectors.join(','));
       
       // Use cache-busting timestamp to force immediate browser refresh
-      const dynamicHref = `${targetUrl}${targetUrl.includes('?') ? '&' : '?'}cache=${Date.now()}`;
+      // Using 'v=' instead of 'cache=' for standard browser compatibility
+      const dynamicHref = `${targetUrl}${targetUrl.includes('?') ? '&' : '?'}v=${Date.now()}`;
 
       if (existingLinks.length > 0) {
         // Claim every existing tag to prevent default icons from showing
         existingLinks.forEach(link => {
-          (link as HTMLLinkElement).href = dynamicHref;
+          const l = link as HTMLLinkElement;
+          if (l.href !== dynamicHref) {
+            l.href = dynamicHref;
+          }
         });
       } else {
-        // Create a new primary icon if none exist
+        // Create a new primary icon if none exist (should not happen with Next.js but safe to have)
         const newLink = document.createElement('link');
         newLink.rel = 'icon';
         newLink.href = dynamicHref;
@@ -51,11 +56,30 @@ export default function DynamicFavicon() {
     // Execute immediately on mount/update
     applyIcon();
 
-    // Redundancy check: Some frameworks re-inject icons after the initial render.
-    // We do a delayed check to ensure our custom icon stays at the top.
-    const timer = setTimeout(applyIcon, 1500);
+    // 1. Polling fallback: Check every 3 seconds to ensure icon persistence
+    const pollingInterval = setInterval(applyIcon, 3000);
+
+    // 2. MutationObserver: Watch the <head> for any external attempts to modify icons
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.type === 'childList' || mutation.type === 'attributes') {
+          // If elements are added/removed or attributes changed in head, re-verify icon
+          applyIcon();
+        }
+      }
+    });
+
+    observer.observe(document.head, { 
+      childList: true, 
+      subtree: true, 
+      attributes: true,
+      attributeFilter: ['href', 'rel'] 
+    });
     
-    return () => clearTimeout(timer);
+    return () => {
+      clearInterval(pollingInterval);
+      observer.disconnect();
+    };
 
   }, [settings?.faviconUrl, settings?.logoUrl])
 
