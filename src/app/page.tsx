@@ -6,7 +6,7 @@ import TechBackground from '@/components/TechBackground'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { ArrowRight, BookOpen, GraduationCap, ShieldCheck, Zap, Sparkles, Cpu, LifeBuoy, Github, Instagram, Linkedin, Mail, ShieldAlert, Settings, Layout } from 'lucide-react'
+import { ArrowRight, BookOpen, GraduationCap, ShieldCheck, Zap, Sparkles, Cpu, LifeBuoy, Github, Instagram, Linkedin, Mail, ShieldAlert, Settings, Layout, Heart } from 'lucide-react'
 import Link from 'next/link'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import LogoLoop, { type LogoItem } from '@/components/LogoLoop'
@@ -82,7 +82,8 @@ export default function Home() {
   })
 
   // Calculate parallax movement for the trust card
-  const cardY = useTransform(scrollYProgress, [0.2, 0.8], [150, -150])
+  // Start shifting up as soon as it enters the view
+  const cardY = useTransform(scrollYProgress, [0.1, 0.9], [300, -250])
 
   useEffect(() => {
     setMounted(true)
@@ -184,11 +185,11 @@ export default function Home() {
               />
             </div>
 
-            <div className="max-w-7xl mx-auto px-6 pt-[350px]">
-              {/* Floating Trust Card with Parallax Animation */}
+            <div className="max-w-7xl mx-auto px-6 pt-[450px]">
+              {/* Floating Trust Card with Scroll Parallax */}
               <motion.div 
                 style={{ y: cardY }}
-                className="bg-white dark:bg-card shadow-[0_50px_100px_-20px_rgba(0,0,0,0.15)] rounded-[3rem] p-10 md:p-16 flex flex-col md:flex-row items-center gap-12 border border-border/40 max-w-5xl mx-auto"
+                className="bg-white dark:bg-card shadow-[0_50px_100px_-20px_rgba(0,0,0,0.15)] rounded-[3rem] p-10 md:p-16 flex flex-col md:flex-row items-center gap-12 border border-border/40 max-w-5xl mx-auto relative z-20"
               >
                 {/* Score Circle */}
                 <div className="relative shrink-0 flex items-center justify-center">
@@ -223,18 +224,18 @@ export default function Home() {
 
               {/* Partner Logos Registry */}
               <div className="mt-32 pt-20 border-t border-border/40">
-                <div className="flex flex-wrap items-center justify-center gap-16 md:gap-24 opacity-40 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-700">
+                <div className="flex flex-wrap items-center justify-center gap-16 md:gap-32 opacity-40 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-700">
                   {partnerLogos.length > 0 ? (
                     partnerLogos.map((logo: string, idx: number) => (
-                      <img key={idx} src={logo} alt="Partner Logo" className="h-12 md:h-16 lg:h-20 object-contain" />
+                      <img key={idx} src={logo} alt="Partner Logo" className="h-16 md:h-24 lg:h-32 object-contain" />
                     ))
                   ) : (
                     <>
-                      <div className="text-3xl md:text-5xl font-black tracking-tighter">SAP</div>
-                      <div className="text-3xl md:text-5xl font-black tracking-tighter">DECATHLON</div>
-                      <div className="text-3xl md:text-5xl font-black tracking-tighter">TRIPADVISOR</div>
-                      <div className="text-3xl md:text-5xl font-black tracking-tighter">UNIVERSITY</div>
-                      <div className="text-3xl md:text-5xl font-black tracking-tighter">DHL</div>
+                      <div className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter">SAP</div>
+                      <div className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter">DECATHLON</div>
+                      <div className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter">TRIPADVISOR</div>
+                      <div className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter">UNIVERSITY</div>
+                      <div className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter">DHL</div>
                     </>
                   )}
                 </div>
@@ -317,7 +318,10 @@ export default function Home() {
           </div>
         </div>
         <div className="max-w-7xl mx-auto pt-16 mt-16 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-8">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em]">© 2025 {settings?.siteName || 'TechXera Campus'}. All Rights Reserved.</p>
+          <div className="flex flex-col items-center md:items-start gap-2">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em]">© 2025 {settings?.siteName || 'TechXera Campus'}. All Rights Reserved.</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60">Powered by <a href="https://logisaar.in" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">logisaar.in</a></p>
+          </div>
           <div className="flex gap-10 text-[10px] font-bold uppercase tracking-[0.2em]">
             <Link href="/privacy" className="hover:text-primary">Privacy Policy</Link>
             <Link href="/security" className="hover:text-primary">Security</Link>
