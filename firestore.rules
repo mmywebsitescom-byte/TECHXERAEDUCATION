@@ -8,20 +8,21 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isSignedIn() && (request.auth.token.email == 'rraghabbarik@gmail.com');
+      return isSignedIn() && (request.auth.token.email.lower() == 'rraghabbarik@gmail.com');
+    }
+
+    // Results collection group rule - Critical for Admin dashboard queries
+    match /{path=**}/results/{resultId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
     }
 
     match /students/{studentUid} {
       allow get: if true;
-      allow list: if isSignedIn(); // Allow authenticated users to perform lookup queries
-      allow create: if isSignedIn() && request.auth.uid == studentUid || isAdmin();
-      allow update: if isSignedIn() && request.auth.uid == studentUid || isAdmin();
+      allow list: if isSignedIn(); // Allow authenticated students to perform lookup queries
+      allow create: if (isSignedIn() && request.auth.uid == studentUid) || isAdmin();
+      allow update: if (isSignedIn() && request.auth.uid == studentUid) || isAdmin();
       allow delete: if isAdmin();
-
-      match /results/{resultId} {
-        allow read: if true;
-        allow write: if isAdmin();
-      }
     }
 
     match /sessions/{sessionId} {
