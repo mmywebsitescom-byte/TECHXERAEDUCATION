@@ -6,9 +6,9 @@ import { useFirestore, useDoc, useMemoFirebase } from '@/firebase'
 import { doc } from 'firebase/firestore'
 
 /**
- * DynamicFavicon - Synchronizes the browser tab icon with settings from Firestore.
- * This component finds all existing icon links and replaces them to ensure
- * dynamic branding works instantly without browser cache issues.
+ * DynamicFavicon - Force-synchronizes the browser tab icon with settings from Firestore.
+ * This component aggressively finds all existing icon links and replaces them to ensure
+ * custom branding overrides any default framework or host icons.
  */
 export default function DynamicFavicon() {
   const db = useFirestore()
@@ -16,36 +16,46 @@ export default function DynamicFavicon() {
   const { data: settings } = useDoc(settingsRef)
 
   useEffect(() => {
-    // Only proceed if a dynamic override exists in the database
-    const iconUrl = settings?.faviconUrl || settings?.logoUrl;
-    if (!iconUrl) return;
+    // The specific primary icon provided by the user
+    const primaryIconUrl = 'https://i.postimg.cc/MZg1CbGc/1441541546-(1)-Photoroom.png';
+    // Use admin override if present, otherwise fall back to primary
+    const targetUrl = settings?.faviconUrl || settings?.logoUrl || primaryIconUrl;
 
-    /**
-     * Finds and replaces all instances of a specific relation link.
-     */
-    const updateIconTags = (rel: string) => {
-      const selector = `link[rel*="${rel}"]`;
-      const existingLinks = document.querySelectorAll(selector);
+    const applyIcon = () => {
+      // Selectors for all common favicon and touch icon variants
+      const selectors = [
+        'link[rel*="icon"]',
+        'link[rel="apple-touch-icon"]',
+        'link[rel="shortcut icon"]'
+      ];
       
-      // Use cache-busting timestamp to force immediate refresh
-      const dynamicHref = `${iconUrl}${iconUrl.includes('?') ? '&' : '?'}t=${Date.now()}`;
+      const existingLinks = document.querySelectorAll(selectors.join(','));
+      
+      // Use cache-busting timestamp to force immediate browser refresh
+      const dynamicHref = `${targetUrl}${targetUrl.includes('?') ? '&' : '?'}cache=${Date.now()}`;
 
       if (existingLinks.length > 0) {
+        // Claim every existing tag to prevent default icons from showing
         existingLinks.forEach(link => {
           (link as HTMLLinkElement).href = dynamicHref;
         });
       } else {
+        // Create a new primary icon if none exist
         const newLink = document.createElement('link');
-        newLink.rel = rel;
+        newLink.rel = 'icon';
         newLink.href = dynamicHref;
         document.head.appendChild(newLink);
       }
     };
 
-    // Synchronize all standard icon types
-    updateIconTags('icon');
-    updateIconTags('apple-touch-icon');
-    updateIconTags('shortcut icon');
+    // Execute immediately on mount/update
+    applyIcon();
+
+    // Redundancy check: Some frameworks re-inject icons after the initial render.
+    // We do a delayed check to ensure our custom icon stays at the top.
+    const timer = setTimeout(applyIcon, 1500);
+    
+    return () => clearTimeout(timer);
 
   }, [settings?.faviconUrl, settings?.logoUrl])
 

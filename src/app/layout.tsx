@@ -11,7 +11,9 @@ export const metadata: Metadata = {
   description: 'A modern campus portal for tech-forward students.',
   manifest: '/manifest.json',
   icons: {
-    icon: 'https://i.postimg.cc/MZg1CbGc/1441541546-(1)-Photoroom.png',
+    icon: [
+      { url: 'https://i.postimg.cc/MZg1CbGc/1441541546-(1)-Photoroom.png', sizes: 'any' }
+    ],
     shortcut: 'https://i.postimg.cc/MZg1CbGc/1441541546-(1)-Photoroom.png',
     apple: 'https://i.postimg.cc/MZg1CbGc/1441541546-(1)-Photoroom.png',
   },
