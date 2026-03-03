@@ -184,7 +184,7 @@ export default function Home() {
               />
             </div>
 
-            <div className="max-w-7xl mx-auto px-6 pt-[180px]">
+            <div className="max-w-7xl mx-auto px-6 pt-[280px]">
               {/* Floating Trust Card with Parallax Animation */}
               <motion.div 
                 style={{ y: cardY }}
@@ -230,7 +230,6 @@ export default function Home() {
                     ))
                   ) : (
                     <>
-                      {/* Default Placeholders if none provided */}
                       <div className="text-2xl font-black tracking-tighter">SAP</div>
                       <div className="text-2xl font-black tracking-tighter">DECATHLON</div>
                       <div className="text-2xl font-black tracking-tighter">TRIPADVISOR</div>
