@@ -24,7 +24,7 @@ import {
   ShieldCheck, Layout, ImageIcon, Globe, Send, XCircle
 } from 'lucide-react'
 import { useFirestore, useUser, useDoc, useMemoFirebase, useAuth, useCollection } from '@/firebase'
-import { collection, doc, setDoc, deleteDoc, query, orderBy, where, updateDoc, getDoc } from 'firebase/firestore'
+import { collection, doc, setDoc, deleteDoc, query, orderBy, where, updateDoc, getDoc, collectionGroup } from 'firebase/firestore'
 import { signOut } from 'firebase/auth'
 import { useToast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
@@ -157,6 +157,10 @@ export default function AdminPage() {
 
   const examsQuery = useMemoFirebase(() => (db && isAuthorizedAdmin ? query(collection(db, 'exams'), orderBy('examDate', 'desc')) : null), [db, isAuthorizedAdmin])
   const { data: allExams } = useCollection(examsQuery)
+
+  // Fetch results for the selected exam cycle to show "Edit" vs "Update"
+  const cycleResultsQuery = useMemoFirebase(() => (db && selectedExamCycle && isAuthorizedAdmin ? query(collectionGroup(db, 'results'), where('examId', '==', selectedExamCycle)) : null), [db, selectedExamCycle, isAuthorizedAdmin])
+  const { data: cycleResults } = useCollection(cycleResultsQuery)
 
   const supportQuery = useMemoFirebase(() => (db && isAuthorizedAdmin ? query(collection(db, 'support_inquiries'), orderBy('timestamp', 'desc')) : null), [db, isAuthorizedAdmin])
   const { data: supportInquiries } = useCollection(supportQuery)
@@ -446,12 +450,14 @@ export default function AdminPage() {
 
   const handleUpdateGradeClick = (student: any) => {
     const selectedExam = allExams?.find(ex => ex.id === selectedExamCycle)
+    const existingResult = cycleResults?.find(r => r.studentUid === student.id)
+    
     setSelectedStudentForGrade(student)
     setGradeForm({ 
-      subject: selectedExam?.title || '', 
-      marks: '', 
-      grade: '',
-      remark: ''
+      subject: existingResult?.subject || selectedExam?.title || '', 
+      marks: existingResult?.marks?.toString() || '', 
+      grade: existingResult?.grade || '',
+      remark: existingResult?.remark || ''
     })
     setIsGradeDialogOpen(true)
   }
@@ -476,7 +482,8 @@ export default function AdminPage() {
       examTitle: exam?.title || 'Assessment',
       semester: exam?.semester || selectedStudentForGrade.currentSemester || 'Semester 1',
       examDate: exam?.examDate || new Date().toISOString(),
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      studentUid: selectedStudentForGrade.id // Added for easier collection group querying
     }
 
     const resultDocRef = doc(db, 'students', selectedStudentForGrade.id, 'results', selectedExamCycle)
@@ -724,26 +731,33 @@ export default function AdminPage() {
                       </TableHeader>
                       <TableBody>
                         {selectedExamCycle ? (
-                          allStudents?.map(student => (
-                            <TableRow key={student.id} className="border-b border-border/10 hover:bg-primary/[0.02] transition-colors">
-                              <TableCell className="px-6 md:px-10 py-4 md:py-6">
-                                <div className="flex items-center gap-3 md:gap-4">
-                                  <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary text-xs md:text-base">{student.firstName[0]}</div>
-                                  <p className="font-bold text-sm md:text-base">{student.firstName} {student.lastName}</p>
-                                </div>
-                              </TableCell>
-                              <TableCell className="text-center font-black text-primary/60 text-[10px] md:text-xs">{student.studentId}</TableCell>
-                              <TableCell className="px-6 md:px-10 text-right">
-                                <Button 
-                                  onClick={() => handleUpdateGradeClick(student)}
-                                  variant="ghost" 
-                                  className="h-8 md:h-10 px-2 md:px-4 rounded-xl font-bold text-[9px] md:text-xs gap-2"
-                                >
-                                  <Edit size={14} /> Update Grade
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))
+                          allStudents?.map(student => {
+                            const existingGrade = cycleResults?.find(r => r.studentUid === student.id);
+                            return (
+                              <TableRow key={student.id} className="border-b border-border/10 hover:bg-primary/[0.02] transition-colors">
+                                <TableCell className="px-6 md:px-10 py-4 md:py-6">
+                                  <div className="flex items-center gap-3 md:gap-4">
+                                    <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary text-xs md:text-base">{student.firstName[0]}</div>
+                                    <p className="font-bold text-sm md:text-base">{student.firstName} {student.lastName}</p>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-center font-black text-primary/60 text-[10px] md:text-xs">{student.studentId}</TableCell>
+                                <TableCell className="px-6 md:px-10 text-right">
+                                  <Button 
+                                    onClick={() => handleUpdateGradeClick(student)}
+                                    variant="ghost" 
+                                    className={cn(
+                                      "h-8 md:h-10 px-2 md:px-4 rounded-xl font-bold text-[9px] md:text-xs gap-2",
+                                      existingGrade ? "text-primary bg-primary/5 hover:bg-primary/10" : ""
+                                    )}
+                                  >
+                                    <Edit size={14} /> 
+                                    {existingGrade ? "Edit Grade" : "Update Grade"}
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            )
+                          })
                         ) : (
                           <TableRow>
                             <TableCell colSpan={3} className="h-60 md:h-80 text-center">
@@ -1205,7 +1219,7 @@ export default function AdminPage() {
       </Dialog>
 
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="w-[95vw] rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10">
+        <DialogContent className="w-[95vw] rounded-[2rem] md:rounded-[3rem] p-6 md:p-10">
           <DialogHeader><DialogTitle className="text-xl md:text-2xl font-headline font-bold">Initialize Class</DialogTitle></DialogHeader>
           <form onSubmit={handleCreateSession} className="space-y-4 md:space-y-6 pt-4">
             <div className="space-y-2">
@@ -1230,7 +1244,7 @@ export default function AdminPage() {
       </Dialog>
 
       <Dialog open={isMaterialDialogOpen} onOpenChange={setIsMaterialDialogOpen}>
-        <DialogContent className="w-[95vw] rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 sm:max-w-lg">
+        <DialogContent className="w-[95vw] rounded-[2rem] md:rounded-[3rem] p-6 md:p-10 sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-xl md:text-2xl font-headline font-bold">
               {editingMaterial ? 'Update Material' : 'New Study Material'}
