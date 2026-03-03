@@ -21,7 +21,8 @@ import {
   Plus, LifeBuoy, BookOpen, Camera, Trash2, 
   Loader2, CheckCircle2, AlertCircle, RefreshCw,
   Clock, Calendar as CalendarIcon, FileText, Edit,
-  ShieldCheck, Layout, ImageIcon, Globe, Send, XCircle
+  ShieldCheck, Layout, ImageIcon, Globe, Send, XCircle,
+  CheckCircle as ConfirmIcon
 } from 'lucide-react'
 import { useFirestore, useUser, useDoc, useMemoFirebase, useAuth, useCollection } from '@/firebase'
 import { collection, doc, setDoc, deleteDoc, query, orderBy, where, updateDoc, getDoc } from 'firebase/firestore'
@@ -48,6 +49,7 @@ export default function AdminPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [selectedExamCycle, setSelectedExamCycle] = useState<string | null>(null)
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null)
+  const [scannedStudent, setScannedStudent] = useState<any | null>(null)
   
   // Create Session State
   const [newSession, setNewSession] = useState({
@@ -331,7 +333,7 @@ export default function AdminPage() {
     const docRef = doc(db, 'studyMaterials', id)
     setDoc(docRef, payload, { merge: true })
       .then(() => {
-        toast({ title: font-black ? "Material Updated" : "Material Added" })
+        toast({ title: editingMaterial ? "Material Updated" : "Material Added" })
         setIsMaterialDialogOpen(false)
         setEditingMaterial(null)
         setMaterialForm({
@@ -484,11 +486,55 @@ export default function AdminPage() {
     }
   }
 
-  // Scanner Logic - Integrated Real-Time Synchronization with Permission Flow
+  const handleConfirmAttendance = async () => {
+    if (!db || !selectedSessionId || !scannedStudent) return
+
+    const recordId = `${scannedStudent.uid}_${selectedSessionId}`
+    const attendanceRef = doc(db, 'attendance', recordId)
+    
+    // Safety check for duplication
+    const existing = await getDoc(attendanceRef)
+    if (existing.exists()) {
+      toast({ title: "Already Logged", description: `${scannedStudent.name} has already been verified.` })
+      setScannedStudent(null)
+      return
+    }
+
+    const sessionDoc = await getDoc(doc(db, 'sessions', selectedSessionId));
+    const dynamicToken = sessionDoc.exists() ? sessionDoc.data().dynamicToken : '';
+
+    const payload = {
+      id: recordId,
+      sessionId: selectedSessionId,
+      studentUid: scannedStudent.uid,
+      studentId: scannedStudent.studentId,
+      studentName: scannedStudent.name,
+      timestamp: new Date().toISOString(),
+      status: 'present',
+      tokenUsed: dynamicToken
+    };
+
+    setDoc(attendanceRef, payload)
+      .then(() => {
+        toast({ title: "Presence Verified", description: `Attendance logged for ${scannedStudent.name}.` })
+        setScannedStudent(null)
+      })
+      .catch(async (error) => {
+        const permissionError = new FirestorePermissionError({
+          path: attendanceRef.path,
+          operation: 'create',
+          requestResourceData: payload,
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+      });
+  }
+
+  // Scanner Logic - Integrated Verification Flow
   useEffect(() => {
     let scanner: Html5QrcodeScanner | null = null;
     
-    if (isScannerOpen && selectedSessionId && db) {
+    // Only run scanner if open, session selected, and NO student details being reviewed
+    if (isScannerOpen && selectedSessionId && db && !scannedStudent) {
       const initScanner = async () => {
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -505,47 +551,13 @@ export default function AdminPage() {
               false
             );
 
-            const onScanSuccess = async (decodedText: string) => {
+            const onScanSuccess = (decodedText: string) => {
               try {
                 const studentData = JSON.parse(decodedText)
                 if (studentData.type !== 'techxera-student-id') return
-
-                const recordId = `${studentData.uid}_${selectedSessionId}`
-                const attendanceRef = doc(db, 'attendance', recordId)
                 
-                const existing = await getDoc(attendanceRef)
-                if (existing.exists()) {
-                  toast({ title: "Already Logged", description: `${studentData.name} has already been verified.` })
-                  return
-                }
-
-                const sessionDoc = await getDoc(doc(db, 'sessions', selectedSessionId));
-                const dynamicToken = sessionDoc.exists() ? sessionDoc.data().dynamicToken : '';
-
-                const payload = {
-                  id: recordId,
-                  sessionId: selectedSessionId,
-                  studentUid: studentData.uid,
-                  studentId: studentData.studentId,
-                  studentName: studentData.name,
-                  timestamp: new Date().toISOString(),
-                  status: 'present',
-                  tokenUsed: dynamicToken
-                };
-
-                setDoc(attendanceRef, payload)
-                  .then(() => {
-                    toast({ title: "Presence Verified", description: `Student: ${studentData.name} marked as present.` })
-                  })
-                  .catch(async (error) => {
-                    const permissionError = new FirestorePermissionError({
-                      path: attendanceRef.path,
-                      operation: 'create',
-                      requestResourceData: payload,
-                    } satisfies SecurityRuleContext);
-                    errorEmitter.emit('permission-error', permissionError);
-                  });
-
+                // Pause scanner and show verification UI
+                setScannedStudent(studentData);
               } catch (err) {
                 console.warn("QR parsing failed:", err)
               }
@@ -574,7 +586,7 @@ export default function AdminPage() {
         }
       }
     }
-  }, [isScannerOpen, selectedSessionId, db, toast])
+  }, [isScannerOpen, selectedSessionId, db, scannedStudent, toast])
 
   const activeSession = sessions?.find(s => s.id === selectedSessionId)
 
@@ -890,7 +902,7 @@ export default function AdminPage() {
                     <Card key={inquiry.id} className="bg-background/50 rounded-xl md:rounded-2xl border-none p-4 md:p-6 flex flex-col md:flex-row justify-between gap-4 md:gap-6 border border-white/10">
                       <div className="space-y-2">
                         <div className="flex items-center gap-3">
-                          <Badge className={cn(inquiry.status === 'pending' ? 'bg-orange-500' : 'bg-green-500', "text-[9px]")}>{inquiry.status}</Badge>
+                          <Badge className={cn(inquiry.status === 'pending' ? 'bg-orange-500' : 'bg-green-500')}>{inquiry.status}</Badge>
                           <h4 className="font-bold text-base md:text-lg truncate max-w-[200px] md:max-w-none">{inquiry.subject}</h4>
                         </div>
                         <p className="text-xs md:text-sm text-muted-foreground line-clamp-2">{inquiry.message}</p>
@@ -1065,42 +1077,87 @@ export default function AdminPage() {
         </Tabs>
       </main>
 
-      <Dialog open={isScannerOpen} onOpenChange={setIsScannerOpen}>
+      <Dialog open={isScannerOpen} onOpenChange={(open) => {
+        setIsScannerOpen(open);
+        if (!open) setScannedStudent(null);
+      }}>
         <DialogContent className="sm:max-w-md w-[95vw] rounded-[2rem] md:rounded-[3rem] p-6 md:p-10 overflow-hidden">
           <DialogHeader className="text-center">
-            <DialogTitle className="text-xl md:text-2xl font-headline font-bold mb-1 md:mb-2 truncate">Scanner: {activeSession?.className}</DialogTitle>
+            <DialogTitle className="text-xl md:text-2xl font-headline font-bold mb-1 md:mb-2 truncate">
+              {scannedStudent ? 'Verify Student Details' : `Scanner: ${activeSession?.className}`}
+            </DialogTitle>
             <DialogDescription className="text-muted-foreground font-medium text-center text-xs md:text-sm">
-              Align student identity QR within the frame
+              {scannedStudent ? 'Review student credentials before logging attendance.' : 'Align student identity QR within the frame'}
             </DialogDescription>
           </DialogHeader>
+          
           <div className="flex flex-col items-center gap-6 md:gap-8 py-4 md:py-6">
-            {hasCameraPermission === false && (
-              <Alert variant="destructive" className="rounded-xl md:rounded-2xl border-2">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Camera Required</AlertTitle>
-                <AlertDescription className="text-[10px] md:text-sm">
-                  Access denied. Please update browser settings.
-                </AlertDescription>
-              </Alert>
-            )}
-            
-            <div className="relative w-full">
-              <div id="admin-attendance-scan-reader" className="w-full rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden border-4 border-primary/20 bg-muted/20 min-h-[250px] md:min-h-[300px]" />
-              {hasCameraPermission === null && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/50 backdrop-blur-sm rounded-[1.5rem] md:rounded-[2.5rem] p-6 text-center">
-                  <Camera className="animate-pulse text-primary mb-4" size={48} />
-                  <p className="font-bold text-[10px] md:text-sm">Requesting Camera Access...</p>
+            {!scannedStudent ? (
+              <>
+                {hasCameraPermission === false && (
+                  <Alert variant="destructive" className="rounded-xl md:rounded-2xl border-2">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Camera Required</AlertTitle>
+                    <AlertDescription className="text-[10px] md:text-sm">
+                      Access denied. Please update browser settings.
+                    </AlertDescription>
+                  </Alert>
+                )}
+                
+                <div className="relative w-full">
+                  <div id="admin-attendance-scan-reader" className="w-full rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden border-4 border-primary/20 bg-muted/20 min-h-[250px] md:min-h-[300px]" />
+                  {hasCameraPermission === null && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/50 backdrop-blur-sm rounded-[1.5rem] md:rounded-[2.5rem] p-6 text-center">
+                      <Camera className="animate-pulse text-primary mb-4" size={48} />
+                      <p className="font-bold text-[10px] md:text-sm">Requesting Camera Access...</p>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
 
-            <div className="p-4 md:p-5 bg-primary/5 rounded-xl md:rounded-2xl w-full flex items-center gap-3 md:gap-4 text-[9px] md:text-xs text-primary border border-primary/20">
-              <ShieldCheck size={20} className="shrink-0" />
-              <p className="font-medium leading-relaxed">Secure Admin Hub. Instant verification enabled.</p>
-            </div>
-            <Button onClick={() => setIsScannerOpen(false)} variant="outline" className="w-full h-10 md:h-12 rounded-xl font-bold text-xs">
-              Terminate Scanner
-            </Button>
+                <div className="p-4 md:p-5 bg-primary/5 rounded-xl md:rounded-2xl w-full flex items-center gap-3 md:gap-4 text-[9px] md:text-xs text-primary border border-primary/20">
+                  <ShieldCheck size={20} className="shrink-0" />
+                  <p className="font-medium leading-relaxed">Secure Admin Hub. Instant verification enabled.</p>
+                </div>
+                <Button onClick={() => setIsScannerOpen(false)} variant="outline" className="w-full h-10 md:h-12 rounded-xl font-bold text-xs">
+                  Terminate Scanner
+                </Button>
+              </>
+            ) : (
+              <div className="w-full space-y-8 animate-in fade-in zoom-in duration-300">
+                <div className="flex flex-col items-center text-center space-y-4">
+                  <div className="w-24 h-24 rounded-[2rem] bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+                    <Users size={48} />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-2xl font-headline font-bold text-foreground">{scannedStudent.name}</h3>
+                    <div className="flex flex-col items-center gap-1">
+                      <p className="text-primary font-black uppercase tracking-[0.2em] text-[10px]">Campus Identity Token</p>
+                      <p className="text-muted-foreground font-bold text-xs">ROLL NO: {scannedStudent.studentId}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-6 bg-muted/30 rounded-[2rem] border border-border/40 space-y-4">
+                  <div className="flex justify-between items-center text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                    <span>Target Session</span>
+                    <span className="text-foreground font-black">{activeSession?.className}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                    <span>Identity Status</span>
+                    <Badge className="bg-green-500/10 text-green-600 border-none font-bold">Verified Token</Badge>
+                  </div>
+                </div>
+
+                <div className="grid gap-4">
+                  <Button onClick={handleConfirmAttendance} className="w-full h-14 rounded-2xl bg-primary text-white font-bold text-lg shadow-xl shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95">
+                    <CheckCircle2 className="mr-2" /> Confirm Attendance
+                  </Button>
+                  <Button onClick={() => setScannedStudent(null)} variant="ghost" className="w-full h-12 rounded-xl font-bold text-muted-foreground">
+                    Cancel & Rescan
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
