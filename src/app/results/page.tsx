@@ -218,7 +218,7 @@ export default function ResultsLookupPage() {
               exit={{ opacity: 0, y: 20 }}
               className="w-full mt-12"
             >
-              <Card className="glass border-none shadow-2xl overflow-hidden max-w-4xl mx-auto rounded-[3rem]">
+              <Card className="glass border-none shadow-2xl overflow-hidden max-w-5xl mx-auto rounded-[3rem]">
                 <CardHeader className="bg-primary text-white p-10">
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div>
@@ -262,9 +262,9 @@ export default function ResultsLookupPage() {
                         <tr>
                           <th className="p-6 px-10 font-black text-[10px] uppercase tracking-widest text-muted-foreground">Subject</th>
                           <th className="p-6 font-black text-[10px] uppercase tracking-widest text-muted-foreground">Session</th>
-                          <th className="p-6 font-black text-[10px] uppercase tracking-widest text-muted-foreground">Term</th>
                           <th className="p-6 font-black text-[10px] uppercase tracking-widest text-muted-foreground">Score</th>
-                          <th className="p-6 px-10 text-right font-black text-[10px] uppercase tracking-widest text-muted-foreground">Grade</th>
+                          <th className="p-6 font-black text-[10px] uppercase tracking-widest text-muted-foreground text-center">Grade</th>
+                          <th className="p-6 px-10 font-black text-[10px] uppercase tracking-widest text-muted-foreground">Remarks</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -277,11 +277,20 @@ export default function ResultsLookupPage() {
                               key={res.id} 
                               className="border-b border-border/10 hover:bg-primary/[0.02] transition-colors"
                             >
-                              <td className="p-6 px-10 font-bold text-lg">{res.subject}</td>
+                              <td className="p-6 px-10">
+                                <p className="font-bold text-lg">{res.subject}</p>
+                                <p className="text-[10px] text-muted-foreground uppercase font-medium">{res.semester}</p>
+                              </td>
                               <td className="p-6 text-sm font-bold text-muted-foreground">{res.examTitle || 'Assessment'}</td>
-                              <td className="p-6 text-sm font-medium">{res.semester}</td>
                               <td className="p-6 text-sm font-bold">{res.marks}%</td>
-                              <td className="p-6 px-10 text-right font-black text-3xl text-primary">{res.grade}</td>
+                              <td className="p-6 text-center">
+                                <span className="font-black text-3xl text-primary">{res.grade}</span>
+                              </td>
+                              <td className="p-6 px-10">
+                                <p className="text-xs font-medium text-muted-foreground max-w-[200px] italic leading-relaxed">
+                                  {res.remark || '---'}
+                                </p>
+                              </td>
                             </motion.tr>
                           ))
                         ) : (

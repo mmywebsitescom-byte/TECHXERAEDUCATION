@@ -103,7 +103,8 @@ export default function AdminPage() {
   const [gradeForm, setGradeForm] = useState({
     subject: '',
     marks: '',
-    grade: ''
+    grade: '',
+    remark: ''
   })
 
   const { user, isUserLoading } = useUser()
@@ -449,7 +450,8 @@ export default function AdminPage() {
     setGradeForm({ 
       subject: selectedExam?.title || '', 
       marks: '', 
-      grade: '' 
+      grade: '',
+      remark: ''
     })
     setIsGradeDialogOpen(true)
   }
@@ -469,6 +471,7 @@ export default function AdminPage() {
       subject: gradeForm.subject || exam?.title || 'Examination',
       marks: marksNum,
       grade: gradeForm.grade || calculateGrade(marksNum),
+      remark: gradeForm.remark || '',
       examId: selectedExamCycle,
       examTitle: exam?.title || 'Assessment',
       semester: exam?.semester || selectedStudentForGrade.currentSemester || 'Semester 1',
@@ -499,7 +502,7 @@ export default function AdminPage() {
       description: `Academic record saved for ${selectedStudentForGrade.firstName} ${selectedStudentForGrade.lastName}. Account approved.` 
     })
     setIsGradeDialogOpen(false)
-    setGradeForm({ subject: '', marks: '', grade: '' })
+    setGradeForm({ subject: '', marks: '', grade: '', remark: '' })
   }
 
   const handleGlobalCreate = () => {
@@ -1380,6 +1383,15 @@ export default function AdminPage() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Teacher's Remark</Label>
+              <Textarea 
+                placeholder="e.g. Excellent performance in practicals." 
+                value={gradeForm.remark} 
+                onChange={e => setGradeForm({...gradeForm, remark: e.target.value})}
+                className="h-20 rounded-xl text-sm resize-none" 
+              />
             </div>
             <DialogFooter><Button type="submit" className="w-full h-10 md:h-12 rounded-xl font-bold">Save Result</Button></DialogFooter>
           </form>
