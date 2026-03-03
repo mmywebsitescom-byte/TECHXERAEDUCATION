@@ -24,7 +24,7 @@ import {
   ShieldCheck, Layout, ImageIcon, Globe, Send, XCircle
 } from 'lucide-react'
 import { useFirestore, useUser, useDoc, useMemoFirebase, useAuth, useCollection } from '@/firebase'
-import { collection, doc, setDoc, deleteDoc, query, orderBy, where, updateDoc, getDoc, collectionGroup } from 'firebase/firestore'
+import { collection, doc, setDoc, deleteDoc, query, orderBy, where, updateDoc, getDoc } from 'firebase/firestore'
 import { signOut } from 'firebase/auth'
 import { useToast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
@@ -39,6 +39,29 @@ import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/e
 import { cn } from '@/lib/utils'
 
 const AUTHORIZED_ADMIN_EMAIL = 'rraghabbarik@gmail.com'
+
+/**
+ * StudentGradeAction - Specialized component to check for existing grades per student
+ * to avoid collection group index requirements.
+ */
+function StudentGradeAction({ student, examId, onEdit, db }: { student: any, examId: string, onEdit: (student: any, existingGrade: any) => void, db: any }) {
+  const resultRef = useMemoFirebase(() => (db && student.id && examId ? doc(db, 'students', student.id, 'results', examId) : null), [db, student.id, examId]);
+  const { data: existingGrade } = useDoc(resultRef);
+
+  return (
+    <Button 
+      onClick={() => onEdit(student, existingGrade)}
+      variant="ghost" 
+      className={cn(
+        "h-8 md:h-10 px-2 md:px-4 rounded-xl font-bold text-[9px] md:text-xs gap-2",
+        existingGrade ? "text-primary bg-primary/5 hover:bg-primary/10" : ""
+      )}
+    >
+      <Edit size={14} /> 
+      {existingGrade ? "Edit Grade" : "Update Grade"}
+    </Button>
+  );
+}
 
 export default function AdminPage() {
   const [mounted, setMounted] = useState(false)
@@ -157,10 +180,6 @@ export default function AdminPage() {
 
   const examsQuery = useMemoFirebase(() => (db && isAuthorizedAdmin ? query(collection(db, 'exams'), orderBy('examDate', 'desc')) : null), [db, isAuthorizedAdmin])
   const { data: allExams } = useCollection(examsQuery)
-
-  // Fetch results for the selected exam cycle to show "Edit" vs "Update"
-  const cycleResultsQuery = useMemoFirebase(() => (db && selectedExamCycle && isAuthorizedAdmin ? query(collectionGroup(db, 'results'), where('examId', '==', selectedExamCycle)) : null), [db, selectedExamCycle, isAuthorizedAdmin])
-  const { data: cycleResults } = useCollection(cycleResultsQuery)
 
   const supportQuery = useMemoFirebase(() => (db && isAuthorizedAdmin ? query(collection(db, 'support_inquiries'), orderBy('timestamp', 'desc')) : null), [db, isAuthorizedAdmin])
   const { data: supportInquiries } = useCollection(supportQuery)
@@ -448,9 +467,8 @@ export default function AdminPage() {
     return 'F';
   }
 
-  const handleUpdateGradeClick = (student: any) => {
+  const handleUpdateGradeClick = (student: any, existingResult?: any) => {
     const selectedExam = allExams?.find(ex => ex.id === selectedExamCycle)
-    const existingResult = cycleResults?.find(r => r.studentUid === student.id)
     
     setSelectedStudentForGrade(student)
     setGradeForm({ 
@@ -483,7 +501,7 @@ export default function AdminPage() {
       semester: exam?.semester || selectedStudentForGrade.currentSemester || 'Semester 1',
       examDate: exam?.examDate || new Date().toISOString(),
       timestamp: new Date().toISOString(),
-      studentUid: selectedStudentForGrade.id // Added for easier collection group querying
+      studentUid: selectedStudentForGrade.id
     }
 
     const resultDocRef = doc(db, 'students', selectedStudentForGrade.id, 'results', selectedExamCycle)
@@ -731,33 +749,25 @@ export default function AdminPage() {
                       </TableHeader>
                       <TableBody>
                         {selectedExamCycle ? (
-                          allStudents?.map(student => {
-                            const existingGrade = cycleResults?.find(r => r.studentUid === student.id);
-                            return (
-                              <TableRow key={student.id} className="border-b border-border/10 hover:bg-primary/[0.02] transition-colors">
-                                <TableCell className="px-6 md:px-10 py-4 md:py-6">
-                                  <div className="flex items-center gap-3 md:gap-4">
-                                    <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary text-xs md:text-base">{student.firstName[0]}</div>
-                                    <p className="font-bold text-sm md:text-base">{student.firstName} {student.lastName}</p>
-                                  </div>
-                                </TableCell>
-                                <TableCell className="text-center font-black text-primary/60 text-[10px] md:text-xs">{student.studentId}</TableCell>
-                                <TableCell className="px-6 md:px-10 text-right">
-                                  <Button 
-                                    onClick={() => handleUpdateGradeClick(student)}
-                                    variant="ghost" 
-                                    className={cn(
-                                      "h-8 md:h-10 px-2 md:px-4 rounded-xl font-bold text-[9px] md:text-xs gap-2",
-                                      existingGrade ? "text-primary bg-primary/5 hover:bg-primary/10" : ""
-                                    )}
-                                  >
-                                    <Edit size={14} /> 
-                                    {existingGrade ? "Edit Grade" : "Update Grade"}
-                                  </Button>
-                                </TableCell>
-                              </TableRow>
-                            )
-                          })
+                          allStudents?.map(student => (
+                            <TableRow key={student.id} className="border-b border-border/10 hover:bg-primary/[0.02] transition-colors">
+                              <TableCell className="px-6 md:px-10 py-4 md:py-6">
+                                <div className="flex items-center gap-3 md:gap-4">
+                                  <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary text-xs md:text-base">{student.firstName[0]}</div>
+                                  <p className="font-bold text-sm md:text-base">{student.firstName} {student.lastName}</p>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-center font-black text-primary/60 text-[10px] md:text-xs">{student.studentId}</TableCell>
+                              <TableCell className="px-6 md:px-10 text-right">
+                                <StudentGradeAction 
+                                  db={db}
+                                  student={student} 
+                                  examId={selectedExamCycle} 
+                                  onEdit={handleUpdateGradeClick} 
+                                />
+                              </TableCell>
+                            </TableRow>
+                          ))
                         ) : (
                           <TableRow>
                             <TableCell colSpan={3} className="h-60 md:h-80 text-center">
