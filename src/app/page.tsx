@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useEffect, useState, useRef } from 'react'
@@ -185,7 +184,7 @@ export default function Home() {
               />
             </div>
 
-            <div className="max-w-7xl mx-auto px-6 pt-[120px]">
+            <div className="max-w-7xl mx-auto px-6 pt-[180px]">
               {/* Floating Trust Card with Parallax Animation */}
               <motion.div 
                 style={{ y: cardY }}
