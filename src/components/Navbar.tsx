@@ -158,7 +158,7 @@ export default function Navbar() {
             </SheetContent>
           </Sheet>
 
-          <Link href="/" className="flex items-center gap-4 group -ml-1 md:-ml-2">
+          <Link href="/" className="flex items-center gap-2 md:gap-3 group -ml-3 md:-ml-6">
             <TechXeraLogo 
               className="w-10 h-10 md:w-12 md:h-12 group-hover:scale-110 transition-transform duration-500" 
               customUrl={customLogoUrl} 
