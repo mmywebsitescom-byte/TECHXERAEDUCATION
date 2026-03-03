@@ -82,6 +82,7 @@ export default function Home() {
     offset: ["start end", "end start"]
   })
 
+  // Smooth upward shift when scrolling
   const cardY = useTransform(scrollYProgress, [0.1, 0.9], [250, -200])
 
   useEffect(() => {
@@ -155,7 +156,7 @@ export default function Home() {
                 { title: "Adaptive UI", desc: "Glassmorphic interface optimized for ultimate responsiveness.", icon: <Layout className="text-secondary" size={20} />, accent: "bg-secondary/10" }
               ].map((feature, i) => (
                 <motion.div key={i} variants={item}>
-                  <Card className="glass group hover:bg-white transition-all duration-500 border-none rounded-[2rem] overflow-hidden h-full shadow-sm hover:shadow-lg">
+                  <Card className="glass group hover:bg-white dark:hover:bg-primary/5 transition-all duration-500 border-none rounded-[2rem] overflow-hidden h-full shadow-sm hover:shadow-lg">
                     <CardContent className="p-8">
                       <div className={`mb-6 p-4 w-fit ${feature.accent} rounded-xl group-hover:scale-110 transition-transform duration-500`}>{feature.icon}</div>
                       <h3 className="text-xl md:text-2xl font-headline font-bold mb-3 tracking-tight">{feature.title}</h3>
@@ -168,10 +169,9 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Dynamic Team & Trust Section (Manageable from Admin) */}
+        {/* Dynamic Team & Trust Section */}
         {settings?.trustSectionEnabled !== false && (
-          <section ref={trustSectionRef} className="py-16 relative overflow-hidden">
-            {/* Team Image Background Area */}
+          <section ref={trustSectionRef} className="py-12 relative overflow-hidden">
             <div className="absolute top-0 inset-x-0 h-[400px] bg-[#fecba1] dark:bg-[#280905] -z-10 flex items-end justify-center overflow-hidden">
               <motion.img 
                 initial={{ opacity: 0, y: 80 }}
@@ -184,13 +184,11 @@ export default function Home() {
               />
             </div>
 
-            <div className="max-w-7xl mx-auto px-6 pt-[350px]">
-              {/* Floating Trust Card with Scroll Parallax */}
+            <div className="max-w-7xl mx-auto px-6 pt-[300px]">
               <motion.div 
                 style={{ y: cardY }}
                 className="bg-white dark:bg-card shadow-[0_50px_100px_-20px_rgba(0,0,0,0.15)] rounded-[3rem] p-10 md:p-16 flex flex-col md:flex-row items-center gap-12 border border-border/40 max-w-5xl mx-auto relative z-20"
               >
-                {/* Score Circle */}
                 <div className="relative shrink-0 flex items-center justify-center">
                   <svg className="w-40 h-40 transform -rotate-90">
                     <circle className="text-muted/20" strokeWidth="12" stroke="currentColor" fill="transparent" r="70" cx="80" cy="80" />
@@ -221,20 +219,19 @@ export default function Home() {
                 </div>
               </motion.div>
 
-              {/* Partner Logos Registry */}
-              <div className="mt-16 pt-12 border-t border-border/40">
+              <div className="mt-16 pb-8 border-t border-border/40">
                 <div className="flex flex-wrap items-center justify-center gap-12 md:gap-24 opacity-40 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-700">
                   {partnerLogos.length > 0 ? (
                     partnerLogos.map((logo: string, idx: number) => (
-                      <img key={idx} src={logo} alt="Partner Logo" className="h-16 md:h-24 lg:h-32 object-contain" />
+                      <img key={idx} src={logo} alt="Partner Logo" className="h-20 md:h-32 lg:h-40 object-contain" />
                     ))
                   ) : (
                     <>
-                      <div className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter">SAP</div>
-                      <div className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter">DECATHLON</div>
-                      <div className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter">TRIPADVISOR</div>
-                      <div className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter">UNIVERSITY</div>
-                      <div className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter">DHL</div>
+                      <div className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter">SAP</div>
+                      <div className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter">DECATHLON</div>
+                      <div className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter">TRIPADVISOR</div>
+                      <div className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter">UNIVERSITY</div>
+                      <div className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter">DHL</div>
                     </>
                   )}
                 </div>
@@ -244,9 +241,9 @@ export default function Home() {
         )}
 
         {/* Support CTA Section */}
-        <section className="py-16 md:py-24 px-6">
+        <section className="py-12 md:py-16 px-6">
           <div className="max-w-5xl mx-auto">
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} className="bg-primary rounded-[3rem] p-12 md:p-20 text-center text-white relative overflow-hidden shadow-2xl">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} className="bg-primary rounded-[3rem] p-12 md:p-16 text-center text-white relative overflow-hidden shadow-2xl">
               <div className="absolute top-0 right-0 p-10 opacity-10"><LifeBuoy size={200} /></div>
               <h2 className="text-4xl md:text-6xl font-headline font-bold mb-6 tracking-tighter">Need Technical Support?</h2>
               <p className="text-xl md:text-2xl text-white/80 mb-10 font-medium max-w-2xl mx-auto leading-relaxed">Our support desk is ready to assist you with access issues, portal navigation, or any technical queries.</p>
