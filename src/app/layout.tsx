@@ -4,6 +4,7 @@ import './globals.css';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/ThemeProvider';
+import DynamicFavicon from '@/components/DynamicFavicon';
 
 export const metadata: Metadata = {
   title: 'TechXera Campus | Empowering Students',
@@ -42,6 +43,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <FirebaseClientProvider>
+            <DynamicFavicon />
             {children}
           </FirebaseClientProvider>
           <Toaster />
