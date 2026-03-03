@@ -1,7 +1,7 @@
 
 "use client"
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import Navbar, { TechXeraLogo } from '@/components/Navbar'
 import TechBackground from '@/components/TechBackground'
 import { Button } from '@/components/ui/button'
@@ -9,7 +9,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ArrowRight, BookOpen, GraduationCap, ShieldCheck, Zap, Sparkles, Cpu, LifeBuoy, Github, Instagram, Linkedin, Mail, ShieldAlert, Settings, Layout } from 'lucide-react'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { motion, useScroll, useTransform } from 'framer-motion'
 import LogoLoop, { type LogoItem } from '@/components/LogoLoop'
 import SplitText from '@/components/SplitText'
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase'
@@ -75,6 +75,15 @@ const item = {
 export default function Home() {
   const [mounted, setMounted] = useState(false)
   const db = useFirestore()
+  const trustSectionRef = useRef(null)
+
+  const { scrollYProgress } = useScroll({
+    target: trustSectionRef,
+    offset: ["start end", "end start"]
+  })
+
+  // Calculate parallax movement for the trust card
+  const cardY = useTransform(scrollYProgress, [0.2, 0.8], [100, -100])
 
   useEffect(() => {
     setMounted(true)
@@ -162,7 +171,7 @@ export default function Home() {
 
         {/* Dynamic Team & Trust Section (Manageable from Admin) */}
         {settings?.trustSectionEnabled !== false && (
-          <section className="py-24 relative overflow-hidden">
+          <section ref={trustSectionRef} className="py-24 relative overflow-hidden">
             {/* Team Image Background Area */}
             <div className="absolute top-0 inset-x-0 h-[500px] bg-[#fecba1] dark:bg-[#280905] -z-10 flex items-end justify-center overflow-hidden">
               <motion.img 
@@ -176,12 +185,10 @@ export default function Home() {
               />
             </div>
 
-            <div className="max-w-7xl mx-auto px-6 pt-[200px]">
-              {/* Floating Trust Card */}
+            <div className="max-w-7xl mx-auto px-6 pt-[120px]">
+              {/* Floating Trust Card with Parallax Animation */}
               <motion.div 
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
+                style={{ y: cardY }}
                 className="bg-white dark:bg-card shadow-[0_50px_100px_-20px_rgba(0,0,0,0.15)] rounded-[3rem] p-10 md:p-16 flex flex-col md:flex-row items-center gap-12 border border-border/40 max-w-5xl mx-auto"
               >
                 {/* Score Circle */}
