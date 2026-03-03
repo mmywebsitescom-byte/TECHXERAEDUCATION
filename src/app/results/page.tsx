@@ -17,6 +17,8 @@ import { useToast } from '@/hooks/use-toast'
 import SplitText from '@/components/SplitText'
 import { TechXeraLogo } from '@/components/Navbar'
 
+const AUTHORIZED_ADMIN_EMAIL = 'rraghabbarik@gmail.com'
+
 export default function ResultsLookupPage() {
   const [mounted, setMounted] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -39,15 +41,17 @@ export default function ResultsLookupPage() {
   const studentRef = useMemoFirebase(() => (user && db ? doc(db, 'students', user.uid) : null), [user, db])
   const { data: profile, isLoading: isProfileLoading } = useDoc(studentRef)
 
+  const isAdmin = user?.email?.toLowerCase() === AUTHORIZED_ADMIN_EMAIL.toLowerCase();
+
   useEffect(() => {
     if (mounted && !isUserLoading && !user) {
       router.push('/login?redirect=/results')
     }
-    // Redirect to dashboard if not approved
-    if (mounted && !isUserLoading && !isProfileLoading && user && profile && !profile.isApproved) {
+    // Redirect to dashboard if not approved (and not an admin)
+    if (mounted && !isUserLoading && !isProfileLoading && user && profile && !profile.isApproved && !isAdmin) {
       router.push('/dashboard')
     }
-  }, [user, isUserLoading, isProfileLoading, profile, router, mounted])
+  }, [user, isUserLoading, isProfileLoading, profile, router, mounted, isAdmin])
 
   const handleLookup = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -126,7 +130,14 @@ export default function ResultsLookupPage() {
     )
   }
 
-  if (!user || !profile?.isApproved) return null
+  // Allow Admin OR Approved Students
+  if (!user || (!profile?.isApproved && !isAdmin)) {
+    if (isAdmin) {
+      // Proceed
+    } else {
+      return null
+    }
+  }
 
   return (
     <div className="min-h-screen relative flex flex-col">

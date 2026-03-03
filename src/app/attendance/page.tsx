@@ -17,6 +17,8 @@ import SplitText from '@/components/SplitText'
 import { QRCodeSVG } from 'qrcode.react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 
+const AUTHORIZED_ADMIN_EMAIL = 'rraghabbarik@gmail.com'
+
 export default function AttendancePage() {
   const [mounted, setMounted] = useState(false)
   const [isIDModalOpen, setIsIDModalOpen] = useState(false)
@@ -30,6 +32,8 @@ export default function AttendancePage() {
 
   const studentRef = useMemoFirebase(() => (user && db ? doc(db, 'students', user.uid) : null), [user, db])
   const { data: profile, isLoading: isProfileLoading } = useDoc(studentRef)
+
+  const isAdmin = user?.email?.toLowerCase() === AUTHORIZED_ADMIN_EMAIL.toLowerCase();
 
   // Fetch all class sessions to determine total count
   const sessionsQuery = useMemoFirebase(() => (db ? collection(db, 'sessions') : null), [db])
@@ -53,7 +57,11 @@ export default function AttendancePage() {
     if (mounted && !isUserLoading && !user) {
       router.push('/login?redirect=/attendance')
     }
-  }, [user, isUserLoading, router, mounted])
+    // Redirect to dashboard if not approved (and not an admin)
+    if (mounted && !isUserLoading && !isProfileLoading && user && profile && !profile.isApproved && !isAdmin) {
+      router.push('/dashboard')
+    }
+  }, [user, isUserLoading, isProfileLoading, profile, router, mounted, isAdmin])
 
   if (!mounted || isUserLoading || isProfileLoading) {
     return (
@@ -65,7 +73,8 @@ export default function AttendancePage() {
 
   if (!user) return null
 
-  if (profile && !profile.isApproved) {
+  // Allow Admin OR Approved Students
+  if (!isAdmin && profile && !profile.isApproved) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <Navbar />
@@ -97,8 +106,8 @@ export default function AttendancePage() {
   // Unique student identity token format recognized by Admin scanner
   const studentQrValue = JSON.stringify({
     uid: user.uid,
-    studentId: profile?.studentId,
-    name: `${profile?.firstName} ${profile?.lastName}`,
+    studentId: profile?.studentId || 'ADMIN-PREVIEW',
+    name: isAdmin ? 'System Administrator' : `${profile?.firstName} ${profile?.lastName}`,
     type: 'techxera-student-id',
     issuedAt: profile?.enrollmentDate || new Date().toISOString()
   })
@@ -153,8 +162,8 @@ export default function AttendancePage() {
                 </motion.div>
                 
                 <div className="w-full space-y-2 text-center">
-                  <p className="font-bold text-xl">{profile?.firstName} {profile?.lastName}</p>
-                  <p className="text-primary font-black uppercase tracking-widest text-xs">ID: {profile?.studentId}</p>
+                  <p className="font-bold text-xl">{isAdmin ? 'Administrator' : `${profile?.firstName} ${profile?.lastName}`}</p>
+                  <p className="text-primary font-black uppercase tracking-widest text-xs">ID: {isAdmin ? 'ROOT' : profile?.studentId}</p>
                 </div>
 
                 <div className="p-4 bg-primary/5 rounded-2xl w-full flex items-center gap-3 text-xs text-primary border border-primary/20">

@@ -15,6 +15,8 @@ import { format } from 'date-fns'
 import SplitText from '@/components/SplitText'
 import { TechXeraLogo } from '@/components/Navbar'
 
+const AUTHORIZED_ADMIN_EMAIL = 'rraghabbarik@gmail.com'
+
 const container = {
   hidden: { opacity: 0 },
   show: {
@@ -44,15 +46,17 @@ export default function ExamsPage() {
   const studentRef = useMemoFirebase(() => (user && db ? doc(db, 'students', user.uid) : null), [user, db])
   const { data: profile, isLoading: isProfileLoading } = useDoc(studentRef)
 
+  const isAdmin = user?.email?.toLowerCase() === AUTHORIZED_ADMIN_EMAIL.toLowerCase();
+
   useEffect(() => {
     if (mounted && !isUserLoading && !user) {
       router.push('/login?redirect=/exams')
     }
-    // Redirect to dashboard if not approved
-    if (mounted && !isUserLoading && !isProfileLoading && user && profile && !profile.isApproved) {
+    // Redirect to dashboard if not approved (and not an admin)
+    if (mounted && !isUserLoading && !isProfileLoading && user && profile && !profile.isApproved && !isAdmin) {
       router.push('/dashboard')
     }
-  }, [user, isUserLoading, isProfileLoading, profile, router, mounted])
+  }, [user, isUserLoading, isProfileLoading, profile, router, mounted, isAdmin])
 
   const examsQuery = useMemoFirebase(() => query(collection(db, 'exams'), orderBy('examDate', 'asc')), [db])
   const { data: exams, isLoading } = useCollection(examsQuery)
@@ -67,7 +71,14 @@ export default function ExamsPage() {
     )
   }
 
-  if (!user || !profile?.isApproved) return null
+  // Allow Admin OR Approved Students
+  if (!user || (!profile?.isApproved && !isAdmin)) {
+    if (isAdmin) {
+      // Proceed
+    } else {
+      return null
+    }
+  }
 
   return (
     <div className="min-h-screen relative flex flex-col">

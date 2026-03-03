@@ -14,6 +14,8 @@ import SplitText from '@/components/SplitText'
 import ScrollStack, { ScrollStackItem } from '@/components/ScrollStack'
 import { TechXeraLogo } from '@/components/Navbar'
 
+const AUTHORIZED_ADMIN_EMAIL = 'rraghabbarik@gmail.com'
+
 export default function NoticesPage() {
   const [mounted, setMounted] = useState(false)
   const { user, isUserLoading } = useUser()
@@ -28,15 +30,17 @@ export default function NoticesPage() {
   const studentRef = useMemoFirebase(() => (user && db ? doc(db, 'students', user.uid) : null), [user, db])
   const { data: profile, isLoading: isProfileLoading } = useDoc(studentRef)
 
+  const isAdmin = user?.email?.toLowerCase() === AUTHORIZED_ADMIN_EMAIL.toLowerCase();
+
   useEffect(() => {
     if (mounted && !isUserLoading && !user) {
       router.push('/login?redirect=/notices')
     }
-    // Redirect to dashboard if not approved
-    if (mounted && !isUserLoading && !isProfileLoading && user && profile && !profile.isApproved) {
+    // Redirect to dashboard if not approved (and not an admin)
+    if (mounted && !isUserLoading && !isProfileLoading && user && profile && !profile.isApproved && !isAdmin) {
       router.push('/dashboard')
     }
-  }, [user, isUserLoading, isProfileLoading, profile, router, mounted])
+  }, [user, isUserLoading, isProfileLoading, profile, router, mounted, isAdmin])
 
   const noticesQuery = useMemoFirebase(() => query(collection(db, 'notices'), orderBy('publishDate', 'desc')), [db])
   const { data: notices, isLoading } = useCollection(noticesQuery)
@@ -51,7 +55,14 @@ export default function NoticesPage() {
     )
   }
 
-  if (!user || !profile?.isApproved) return null
+  // Allow Admin OR Approved Students
+  if (!user || (!profile?.isApproved && !isAdmin)) {
+    if (isAdmin) {
+      // Proceed even without profile
+    } else {
+      return null
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background">

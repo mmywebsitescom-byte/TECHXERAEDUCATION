@@ -14,6 +14,8 @@ import { useRouter } from 'next/navigation'
 import SplitText from '@/components/SplitText'
 import { TechXeraLogo } from '@/components/Navbar'
 
+const AUTHORIZED_ADMIN_EMAIL = 'rraghabbarik@gmail.com'
+
 export default function ResourcesPage() {
   const [mounted, setMounted] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -29,15 +31,17 @@ export default function ResourcesPage() {
   const studentRef = useMemoFirebase(() => (user && db ? doc(db, 'students', user.uid) : null), [user, db])
   const { data: profile, isLoading: isProfileLoading } = useDoc(studentRef)
 
+  const isAdmin = user?.email?.toLowerCase() === AUTHORIZED_ADMIN_EMAIL.toLowerCase();
+
   useEffect(() => {
     if (mounted && !isUserLoading && !user) {
       router.push('/login?redirect=/resources')
     }
-    // Redirect to dashboard if not approved
-    if (mounted && !isUserLoading && !isProfileLoading && user && profile && !profile.isApproved) {
+    // Redirect to dashboard if not approved (and not an admin)
+    if (mounted && !isUserLoading && !isProfileLoading && user && profile && !profile.isApproved && !isAdmin) {
       router.push('/dashboard')
     }
-  }, [user, isUserLoading, isProfileLoading, profile, router, mounted])
+  }, [user, isUserLoading, isProfileLoading, profile, router, mounted, isAdmin])
 
   const resourcesQuery = useMemoFirebase(() => db ? query(collection(db, 'studyMaterials'), orderBy('uploadDate', 'desc')) : null, [db])
   const { data: resources, isLoading: isResourcesLoading } = useCollection(resourcesQuery)
@@ -58,7 +62,14 @@ export default function ResourcesPage() {
     )
   }
 
-  if (!user || !profile?.isApproved) return null
+  // Allow Admin OR Approved Students
+  if (!user || (!profile?.isApproved && !isAdmin)) {
+    if (isAdmin) {
+      // Proceed
+    } else {
+      return null
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -123,7 +134,6 @@ export default function ResourcesPage() {
                   <Card className="bg-white dark:bg-card/40 border-none hover:bg-primary/[0.01] transition-all duration-300 rounded-[2.5rem] overflow-hidden group shadow-sm hover:shadow-lg h-full flex flex-col border border-border/20 backdrop-blur-sm">
                     <CardContent className="p-8 flex-1 flex flex-col">
                       <div className="flex justify-between items-start mb-6">
-                        {/* The specific icon box requested */}
                         <div className="w-16 h-16 bg-primary/5 dark:bg-primary/10 rounded-2xl flex items-center justify-center overflow-hidden shrink-0 group-hover:scale-105 transition-transform duration-300">
                           {item.thumbnailUrl ? (
                             <img 
