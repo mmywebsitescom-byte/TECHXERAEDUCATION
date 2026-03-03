@@ -6,7 +6,9 @@ import { useFirestore, useDoc, useMemoFirebase } from '@/firebase'
 import { doc } from 'firebase/firestore'
 
 /**
- * DynamicFavicon - Synchronizes the browser tab icon with the favicon URL defined in site settings.
+ * DynamicFavicon - Synchronizes the browser tab icon with settings from Firestore.
+ * This component removes any static/hardcoded favicons and ensures only the user-defined
+ * logo or favicon URL is displayed in the web tab.
  */
 export default function DynamicFavicon() {
   const db = useFirestore()
@@ -14,35 +16,43 @@ export default function DynamicFavicon() {
   const { data: settings } = useDoc(settingsRef)
 
   useEffect(() => {
-    // Priority: faviconUrl, fallback to logoUrl, fallback to nothing
+    // Priority: faviconUrl, fallback to logoUrl, fallback to null
     const iconUrl = settings?.faviconUrl || settings?.logoUrl;
 
-    if (iconUrl) {
-      const updateFavicon = (url: string) => {
-        // Find existing icon links
-        const existingIcons = document.querySelectorAll("link[rel*='icon']");
-        
-        if (existingIcons.length > 0) {
-          // Update existing ones instead of removing them to avoid hydration/Next.js metadata conflicts
-          existingIcons.forEach((el) => {
-            (el as HTMLLinkElement).href = url;
-          });
-        } else {
-          // Create new link for the favicon if none exist
-          const link = document.createElement('link');
-          link.rel = 'icon';
-          link.href = url;
-          document.head.appendChild(link);
-          
-          const shortcutLink = document.createElement('link');
-          shortcutLink.rel = 'shortcut icon';
-          shortcutLink.href = url;
-          document.head.appendChild(shortcutLink);
-        }
-      };
+    const updateFaviconTags = (url: string | null) => {
+      // 1. Remove all existing favicon and icon tags to ensure no conflicts
+      const selectors = [
+        "link[rel*='icon']",
+        "link[rel='apple-touch-icon']",
+        "link[rel='shortcut icon']"
+      ];
+      
+      selectors.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(el => el.remove());
+      });
 
-      updateFavicon(iconUrl);
-    }
+      if (url) {
+        // 2. Inject the dynamic icon provided in the Admin panel
+        const link = document.createElement('link');
+        link.rel = 'icon';
+        link.href = url;
+        document.head.appendChild(link);
+        
+        // Ensure high-resolution icon for mobile bookmarks
+        const appleLink = document.createElement('link');
+        appleLink.rel = 'apple-touch-icon';
+        appleLink.href = url;
+        document.head.appendChild(appleLink);
+        
+        const shortcutLink = document.createElement('link');
+        shortcutLink.rel = 'shortcut icon';
+        shortcutLink.href = url;
+        document.head.appendChild(shortcutLink);
+      }
+    };
+
+    updateFaviconTags(iconUrl || null);
   }, [settings?.faviconUrl, settings?.logoUrl])
 
   return null
