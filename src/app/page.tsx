@@ -163,7 +163,7 @@ export default function Home() {
         {/* Dynamic Team & Trust Section (Manageable from Admin) */}
         {settings?.trustSectionEnabled !== false && (
           <section className="py-24 relative overflow-hidden">
-            {/* Team Image Background Area - Width increased, height decreased */}
+            {/* Team Image Background Area */}
             <div className="absolute top-0 inset-x-0 h-[500px] bg-[#fecba1] dark:bg-[#280905] -z-10 flex items-end justify-center overflow-hidden">
               <motion.img 
                 initial={{ opacity: 0, y: 80 }}
@@ -176,7 +176,7 @@ export default function Home() {
               />
             </div>
 
-            <div className="max-w-7xl mx-auto px-6 pt-[380px]">
+            <div className="max-w-7xl mx-auto px-6 pt-[200px]">
               {/* Floating Trust Card */}
               <motion.div 
                 initial={{ opacity: 0, y: 50 }}
