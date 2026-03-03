@@ -3,7 +3,6 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { Toaster } from '@/components/ui/toaster';
-import DynamicFavicon from '@/components/DynamicFavicon';
 import { ThemeProvider } from '@/components/ThemeProvider';
 
 export const metadata: Metadata = {
@@ -43,7 +42,6 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <FirebaseClientProvider>
-            <DynamicFavicon />
             {children}
           </FirebaseClientProvider>
           <Toaster />

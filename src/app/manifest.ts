@@ -9,7 +9,6 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: '/',
     display: 'standalone',
     background_color: '#280905',
-    theme_color: '#C3110C',
-    icons: [], // Icons are managed dynamically to allow user customization from Admin
+    theme_color: '#C3110C'
   }
 }
