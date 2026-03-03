@@ -37,16 +37,16 @@ const AUTHORIZED_ADMIN_EMAIL = 'rraghabbarik@gmail.com'
 
 /**
  * TechXeraLogo - Displays the campus logo. 
- * If a customUrl is provided in Admin, it displays that image.
- * Otherwise, it shows a minimal placeholder.
+ * Completely dynamic: shows the image if customUrl is provided,
+ * otherwise shows a generic blank placeholder.
  */
-export const TechXeraLogo = ({ className, customUrl }: { className?: string; customUrl?: string }) => (
-  <div className={cn("relative flex items-center justify-center bg-primary rounded-full overflow-hidden shadow-2xl ring-1 ring-white/10", className)}>
+export const TechXeraLogo = ({ className, customUrl }: { className?: string; customUrl?: string | null }) => (
+  <div className={cn("relative flex items-center justify-center bg-muted/20 rounded-full overflow-hidden ring-1 ring-border/10", className)}>
     {customUrl ? (
-      <img src={customUrl} alt="Logo" className="w-full h-full object-cover" />
+      <img src={customUrl} alt="Campus Logo" className="w-full h-full object-cover" />
     ) : (
-      <div className="w-full h-full flex items-center justify-center bg-primary text-white font-headline font-bold text-xl md:text-2xl">
-        T
+      <div className="w-full h-full flex items-center justify-center text-muted-foreground/20 font-headline font-bold text-xs uppercase tracking-widest">
+        {/* Placeholder - Empty until Admin adds logo */}
       </div>
     )}
   </div>
@@ -99,7 +99,7 @@ export default function Navbar() {
   const settingsRef = useMemoFirebase(() => (db ? doc(db, 'settings', 'site-config') : null), [db])
   const { data: settings } = useDoc(settingsRef)
 
-  const siteName = settings?.siteName || 'TECHXERA'
+  const siteName = settings?.siteName || 'CAMPUS PORTAL'
   const customLogoUrl = settings?.logoUrl || null
 
   const handleLogout = async () => {
