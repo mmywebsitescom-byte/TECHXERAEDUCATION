@@ -86,6 +86,8 @@ export default function Home() {
   const siteName = settings?.siteName || 'Tech Excellence'
   const heroDesc = settings?.heroDescription || 'A high-performance student portal engineered for TechXera. Manage results, resources, and announcements with a seamless, data-driven interface.'
 
+  const partnerLogos = settings?.trustPartnerLogos?.split(',').map(l => l.trim()).filter(l => l.length > 0) || [];
+
   return (
     <div className="relative min-h-screen">
       <TechBackground />
@@ -216,9 +218,11 @@ export default function Home() {
               {/* Partner Logos Registry */}
               <div className="mt-24 pt-16 border-t border-border/40">
                 <div className="flex flex-wrap items-center justify-center gap-16 md:gap-24 opacity-40 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-700">
-                  {settings?.trustPartnerLogos?.split(',').map((logo: string, idx: number) => (
-                    <img key={idx} src={logo.trim()} alt="Partner Logo" className="h-8 md:h-10 object-contain" />
-                  )) || (
+                  {partnerLogos.length > 0 ? (
+                    partnerLogos.map((logo: string, idx: number) => (
+                      <img key={idx} src={logo} alt="Partner Logo" className="h-8 md:h-10 object-contain" />
+                    ))
+                  ) : (
                     <>
                       {/* Default Placeholders if none provided */}
                       <div className="text-2xl font-black tracking-tighter">SAP</div>
@@ -302,7 +306,7 @@ export default function Home() {
             <h4 className="font-headline font-bold text-foreground text-sm uppercase tracking-[0.2em]">Assistance</h4>
             <ul className="space-y-4 text-xs font-bold uppercase tracking-widest">
               <li><Link href="/support" className="hover:text-primary">Help Center</Link></li>
-              <li><Link href="/privacy" className="hover:text-primary">Privacy</Link></li>
+              <li><Link href="/privacy" className="hover:text-primary">Privacy Policy</Link></li>
               <li><Link href="/security" className="hover:text-primary">Security</Link></li>
             </ul>
           </div>
