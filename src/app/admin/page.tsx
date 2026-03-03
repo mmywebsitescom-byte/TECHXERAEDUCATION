@@ -21,8 +21,7 @@ import {
   Plus, LifeBuoy, BookOpen, Camera, Trash2, 
   Loader2, CheckCircle2, AlertCircle, RefreshCw,
   Clock, Calendar as CalendarIcon, FileText, Edit,
-  ShieldCheck, Layout, ImageIcon, Globe, Send, XCircle,
-  CheckCircle as ConfirmIcon
+  ShieldCheck, Layout, ImageIcon, Globe, Send, XCircle
 } from 'lucide-react'
 import { useFirestore, useUser, useDoc, useMemoFirebase, useAuth, useCollection } from '@/firebase'
 import { collection, doc, setDoc, deleteDoc, query, orderBy, where, updateDoc, getDoc } from 'firebase/firestore'
@@ -452,21 +451,27 @@ export default function AdminPage() {
       timestamp: new Date().toISOString()
     }
 
-    const docRef = doc(db, 'students', selectedStudentForGrade.id, 'results', selectedExamCycle)
+    const resultDocRef = doc(db, 'students', selectedStudentForGrade.id, 'results', selectedExamCycle)
+    const studentDocRef = doc(db, 'students', selectedStudentForGrade.id)
     
-    setDoc(docRef, payload, { merge: true })
+    // Save the result
+    setDoc(resultDocRef, payload, { merge: true })
       .catch(async (error) => {
         const permissionError = new FirestorePermissionError({
-          path: docRef.path,
+          path: resultDocRef.path,
           operation: 'update',
           requestResourceData: payload,
         } satisfies SecurityRuleContext);
         errorEmitter.emit('permission-error', permissionError);
       });
 
+    // Definitive verification: Auto-approve student when a result is added
+    updateDoc(studentDocRef, { isApproved: true, status: 'approved' })
+      .catch(() => console.warn("Auto-approval failed during result entry."));
+
     toast({ 
       title: "Result Archived", 
-      description: `Academic record saved for ${selectedStudentForGrade.firstName} ${selectedStudentForGrade.lastName}.` 
+      description: `Academic record saved for ${selectedStudentForGrade.firstName} ${selectedStudentForGrade.lastName}. Account approved.` 
     })
     setIsGradeDialogOpen(false)
     setGradeForm({ subject: '', marks: '', grade: '' })
@@ -533,7 +538,6 @@ export default function AdminPage() {
   useEffect(() => {
     let scanner: Html5QrcodeScanner | null = null;
     
-    // Only run scanner if open, session selected, and NO student details being reviewed
     if (isScannerOpen && selectedSessionId && db && !scannedStudent) {
       const initScanner = async () => {
         try {
@@ -555,8 +559,6 @@ export default function AdminPage() {
               try {
                 const studentData = JSON.parse(decodedText)
                 if (studentData.type !== 'techxera-student-id') return
-                
-                // Pause scanner and show verification UI
                 setScannedStudent(studentData);
               } catch (err) {
                 console.warn("QR parsing failed:", err)

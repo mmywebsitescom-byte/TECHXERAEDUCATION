@@ -7,8 +7,8 @@ import TechBackground from '@/components/TechBackground'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { QrCode, ShieldCheck, AlertCircle, Clock, Calendar, CheckCircle2, Loader2, TrendingUp, User, Sparkles, BookOpen } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { QrCode, ShieldCheck, AlertCircle, Clock, Calendar, CheckCircle2, Loader2, TrendingUp, Sparkles } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase'
 import { doc, collection, query, where } from 'firebase/firestore'
 import { useRouter } from 'next/navigation'
@@ -33,7 +33,7 @@ export default function AttendancePage() {
 
   // Fetch all class sessions to determine total count
   const sessionsQuery = useMemoFirebase(() => (db ? collection(db, 'sessions') : null), [db])
-  const { data: sessions, isLoading: isSessionsLoading } = useCollection(sessionsQuery)
+  const { data: sessions } = useCollection(sessionsQuery)
 
   // Real-time attendance collection for the student
   const attendanceQuery = useMemoFirebase(() => (user && db ? query(collection(db, 'attendance'), where('studentUid', '==', user.uid)) : null), [user, db])
@@ -55,7 +55,7 @@ export default function AttendancePage() {
     }
   }, [user, isUserLoading, router, mounted])
 
-  if (!mounted || isUserLoading || isProfileLoading || isSessionsLoading) {
+  if (!mounted || isUserLoading || isProfileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="animate-spin text-primary" size={48} />
@@ -77,7 +77,7 @@ export default function AttendancePage() {
               </div>
               <h2 className="text-4xl font-headline font-bold mb-4">Verification Required</h2>
               <p className="text-muted-foreground text-lg mb-8 leading-relaxed">
-                Your profile is currently under review. Identity QR generation will be available once your registration is approved.
+                Your profile is currently under review. Attendance history will be available once your registration is approved.
               </p>
               <Button onClick={() => router.push('/')} variant="outline" className="rounded-xl h-12 px-8 font-bold">
                 Back to Home
