@@ -10,6 +10,9 @@ export const metadata: Metadata = {
   title: 'TechXera Campus | Empowering Students',
   description: 'A modern campus portal for tech-forward students.',
   manifest: '/manifest.json',
+  verification: {
+    google: 'gtIa6bOLhjlXT0mviiXWAZRKv-gdcWvqcGha8KK8_yM',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
