@@ -10,6 +10,11 @@ export const metadata: Metadata = {
   title: 'TechXera Campus | Empowering Students',
   description: 'A modern campus portal for tech-forward students.',
   manifest: '/manifest.json',
+  icons: {
+    icon: 'https://i.postimg.cc/MZg1CbGc/1441541546-(1)-Photoroom.png',
+    shortcut: 'https://i.postimg.cc/MZg1CbGc/1441541546-(1)-Photoroom.png',
+    apple: 'https://i.postimg.cc/MZg1CbGc/1441541546-(1)-Photoroom.png',
+  },
   verification: {
     google: 'gtIa6bOLhjlXT0mviiXWAZRKv-gdcWvqcGha8KK8_yM',
   },

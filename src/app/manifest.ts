@@ -9,6 +9,13 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: '/',
     display: 'standalone',
     background_color: '#280905',
-    theme_color: '#C3110C'
+    theme_color: '#C3110C',
+    icons: [
+      {
+        src: 'https://i.postimg.cc/MZg1CbGc/1441541546-(1)-Photoroom.png',
+        sizes: 'any',
+        type: 'image/png',
+      }
+    ]
   }
 }

@@ -7,7 +7,8 @@ import { doc } from 'firebase/firestore'
 
 /**
  * DynamicFavicon - Synchronizes the browser tab icon with settings from Firestore.
- * Uses cache-busting and tag-claiming to ensure instant updates.
+ * This component finds all existing icon links and replaces them to ensure
+ * dynamic branding works instantly without browser cache issues.
  */
 export default function DynamicFavicon() {
   const db = useFirestore()
@@ -15,39 +16,36 @@ export default function DynamicFavicon() {
   const { data: settings } = useDoc(settingsRef)
 
   useEffect(() => {
-    // Priority: Explicit faviconUrl > Logo URL
+    // Only proceed if a dynamic override exists in the database
     const iconUrl = settings?.faviconUrl || settings?.logoUrl;
     if (!iconUrl) return;
 
     /**
-     * Updates or creates a link tag in the document head.
+     * Finds and replaces all instances of a specific relation link.
      */
-    const updateIcon = (id: string, rel: string, href: string) => {
-      let link = document.getElementById(id) as HTMLLinkElement;
+    const updateIconTags = (rel: string) => {
+      const selector = `link[rel*="${rel}"]`;
+      const existingLinks = document.querySelectorAll(selector);
       
-      // If not found by ID, try to find an existing standard tag to reuse
-      if (!link) {
-        const existing = document.querySelector(`link[rel*="icon"]`) as HTMLLinkElement;
-        if (existing) {
-          link = existing;
-          link.id = id;
-        } else {
-          link = document.createElement('link');
-          link.id = id;
-          link.rel = rel;
-          document.head.appendChild(link);
-        }
-      }
+      // Use cache-busting timestamp to force immediate refresh
+      const dynamicHref = `${iconUrl}${iconUrl.includes('?') ? '&' : '?'}t=${Date.now()}`;
 
-      // Apply the new URL with a timestamp to bypass browser icon caching
-      const separator = href.includes('?') ? '&' : '?';
-      link.href = `${href}${separator}t=${Date.now()}`;
+      if (existingLinks.length > 0) {
+        existingLinks.forEach(link => {
+          (link as HTMLLinkElement).href = dynamicHref;
+        });
+      } else {
+        const newLink = document.createElement('link');
+        newLink.rel = rel;
+        newLink.href = dynamicHref;
+        document.head.appendChild(newLink);
+      }
     };
 
-    // Update standard icon
-    updateIcon('techxera-dynamic-icon', 'icon', iconUrl);
-    // Update Apple touch icon (for mobile bookmarks)
-    updateIcon('techxera-dynamic-apple', 'apple-touch-icon', iconUrl);
+    // Synchronize all standard icon types
+    updateIconTags('icon');
+    updateIconTags('apple-touch-icon');
+    updateIconTags('shortcut icon');
 
   }, [settings?.faviconUrl, settings?.logoUrl])
 
