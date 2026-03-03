@@ -162,21 +162,21 @@ export default function Home() {
 
         {/* Dynamic Team & Trust Section (Manageable from Admin) */}
         {settings?.trustSectionEnabled !== false && (
-          <section className="py-32 relative overflow-hidden">
-            {/* Team Image Background Area - Height Increased for Weight */}
-            <div className="absolute top-0 inset-x-0 h-[650px] bg-[#fecba1] dark:bg-[#280905] -z-10 flex items-end justify-center overflow-hidden">
+          <section className="py-24 relative overflow-hidden">
+            {/* Team Image Background Area - Width increased, height decreased */}
+            <div className="absolute top-0 inset-x-0 h-[500px] bg-[#fecba1] dark:bg-[#280905] -z-10 flex items-end justify-center overflow-hidden">
               <motion.img 
-                initial={{ opacity: 0, y: 100 }}
+                initial={{ opacity: 0, y: 80 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 1, ease: "easeOut" }}
-                src={settings?.trustTeamImageUrl || "https://picsum.photos/seed/techteam/1200/600"} 
+                src={settings?.trustTeamImageUrl || "https://picsum.photos/seed/techteam/1400/600"} 
                 alt="Our Team"
-                className="w-full max-w-6xl object-contain object-bottom h-[600px]"
+                className="w-full max-w-7xl object-contain object-bottom h-[450px]"
               />
             </div>
 
-            <div className="max-w-7xl mx-auto px-6 pt-[500px]">
+            <div className="max-w-7xl mx-auto px-6 pt-[380px]">
               {/* Floating Trust Card */}
               <motion.div 
                 initial={{ opacity: 0, y: 50 }}
