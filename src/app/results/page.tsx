@@ -57,7 +57,7 @@ export default function ResultsLookupPage() {
     e.preventDefault()
     if (!db) return
     
-    const trimmedId = studentIdInput.trim()
+    const trimmedId = studentIdInput.trim().toUpperCase() // Force uppercase for matching
     const trimmedDob = dobInput.trim()
 
     if (!trimmedId || !trimmedDob) {
@@ -80,14 +80,15 @@ export default function ResultsLookupPage() {
       const querySnapshot = await getDocs(q)
 
       if (querySnapshot.empty) {
-        throw new Error("No student record found with this ID. Please verify your Roll Number.")
+        throw new Error("No student record found with this Roll Number.")
       }
 
       const studentDoc = querySnapshot.docs[0]
       const data = studentDoc.data()
 
+      // Exact matching check for DOB
       if (data.dateOfBirth !== trimmedDob) {
-        throw new Error("Student ID and Date of Birth do not match our records.")
+        throw new Error("Roll Number and Date of Birth credentials do not match.")
       }
 
       const resultsRef = collection(db, 'students', studentDoc.id, 'results')
@@ -109,6 +110,7 @@ export default function ResultsLookupPage() {
         description: `Academic transcript retrieved for ${data.firstName} ${data.lastName}.`
       })
     } catch (err: any) {
+      console.error("Lookup error:", err)
       setError(err.message || "An unexpected error occurred during the lookup.")
       toast({
         variant: "destructive",

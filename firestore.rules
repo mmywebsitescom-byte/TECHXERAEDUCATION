@@ -13,7 +13,7 @@ service cloud.firestore {
 
     match /students/{studentUid} {
       allow get: if true;
-      allow list: if isAdmin();
+      allow list: if isSignedIn(); // Allow authenticated users to perform lookup queries
       allow create: if isSignedIn() && request.auth.uid == studentUid || isAdmin();
       allow update: if isSignedIn() && request.auth.uid == studentUid || isAdmin();
       allow delete: if isAdmin();

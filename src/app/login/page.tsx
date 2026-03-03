@@ -82,7 +82,7 @@ function LoginForm() {
         
         await setDoc(doc(db, 'students', newUser.uid), {
           id: newUser.uid,
-          studentId: studentId.trim(),
+          studentId: studentId.trim().toUpperCase(),
           firstName,
           lastName,
           email,
