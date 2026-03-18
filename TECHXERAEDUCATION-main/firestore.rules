@@ -1,0 +1,80 @@
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      let isSuperAdmin = isSignedIn() && (request.auth.token.email.lower() == 'rraghabbarik@gmail.com');
+      let isTeacherAdmin = isSignedIn() && 
+        exists(/databases/$(database)/documents/teachers/$(request.auth.uid)) && 
+        get(/databases/$(database)/documents/teachers/$(request.auth.uid)).data.role == 'admin';
+      return isSuperAdmin || isTeacherAdmin;
+    }
+
+    // Results collection group rule - Critical for Admin dashboard queries
+    match /{path=**}/results/{resultId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /students/{studentUid} {
+      allow get: if true;
+      allow list: if isSignedIn(); // Allow authenticated students to perform lookup queries
+      allow create: if (isSignedIn() && request.auth.uid == studentUid) || isAdmin();
+      allow update: if (isSignedIn() && request.auth.uid == studentUid) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /teachers/{teacherUid} {
+      allow get: if true;
+      allow list: if isSignedIn(); // Allow authenticated users to perform lookup queries
+      allow create: if (isSignedIn() && request.auth.uid == teacherUid) || isAdmin();
+      allow update: if (isSignedIn() && request.auth.uid == teacherUid) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /sessions/{sessionId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /attendance/{recordId} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin() || (
+        isSignedIn() 
+        && request.resource.data.studentUid == request.auth.uid
+        && request.resource.data.tokenUsed == get(/databases/$(database)/documents/sessions/$(request.resource.data.sessionId)).data.dynamicToken
+      );
+      allow update, delete: if isAdmin();
+    }
+
+    match /exams/{examId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /studyMaterials/{materialId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /notices/{noticeId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /support_inquiries/{inquiryId} {
+      allow create: if true;
+      allow read, write: if isAdmin();
+    }
+
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}
