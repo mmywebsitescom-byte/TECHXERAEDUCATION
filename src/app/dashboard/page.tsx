@@ -6,7 +6,7 @@ import Navbar from '@/components/Navbar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
-import { GraduationCap, Award, BookOpen, Clock, TrendingUp, Loader2, Sparkles, AlertCircle, ShieldAlert, ShieldCheck, CreditCard, Copy, Check, Camera, LogOut, QrCode, Users, Calendar as CalendarIcon, CheckCircle2, Code } from 'lucide-react'
+import { GraduationCap, Award, BookOpen, Clock, TrendingUp, Loader2, Sparkles, AlertCircle, ShieldAlert, ShieldCheck, CreditCard, Copy, Check, Camera, LogOut, QrCode, Users, Calendar as CalendarIcon, CheckCircle2, Code, Briefcase } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase, useAuth } from '@/firebase'
 import { doc, updateDoc, collection, query, where, orderBy, limit } from 'firebase/firestore'
@@ -591,7 +591,7 @@ export default function DashboardPage() {
               </div>
             </Card>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-2 gap-4 md:gap-6">
               <motion.button 
                 whileHover={{ scale: 1.05, y: -4 }}
                 whileTap={{ scale: 0.95 }}
@@ -620,12 +620,24 @@ export default function DashboardPage() {
                 whileHover={{ scale: 1.05, y: -4 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => router.push('/notices')}
-                className="flex flex-col items-center justify-center p-6 bg-primary text-white rounded-[2rem] shadow-xl shadow-primary/20 transition-all border-none h-full col-span-2 md:col-span-1"
+                className="flex flex-col items-center justify-center p-6 bg-white dark:bg-card/40 text-foreground rounded-[2rem] shadow-sm hover:shadow-xl transition-all border border-border/50 h-full"
               >
-                <div className="p-3 md:p-4 bg-white/20 rounded-2xl mb-3">
+                <div className="p-3 md:p-4 bg-primary/5 rounded-2xl mb-3 text-primary">
                   <Clock size={28} />
                 </div>
                 <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest">Updates</span>
+              </motion.button>
+
+              <motion.button 
+                whileHover={{ scale: 1.05, y: -4 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => router.push('/internship')}
+                className="flex flex-col items-center justify-center p-6 bg-primary text-white rounded-[2rem] shadow-xl shadow-primary/20 transition-all border-none h-full"
+              >
+                <div className="p-3 md:p-4 bg-white/20 rounded-2xl mb-3">
+                  <Briefcase size={28} />
+                </div>
+                <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest">Internship</span>
               </motion.button>
             </div>
           </div>

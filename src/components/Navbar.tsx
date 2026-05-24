@@ -22,7 +22,8 @@ import {
   GraduationCap,
   Zap,
   Trophy,
-  Code
+  Code,
+  Briefcase
 } from 'lucide-react'
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from '@/firebase'
 import { signOut } from 'firebase/auth'

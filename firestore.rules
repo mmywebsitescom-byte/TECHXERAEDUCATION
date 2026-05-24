@@ -31,21 +31,6 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == uid;
     }
 
-    function hasValidChallengeData() {
-      return request.resource.data.keys().hasAll(['title', 'description', 'difficulty']) &&
-             request.resource.data.title is string &&
-             request.resource.data.description is string &&
-             request.resource.data.difficulty in ['easy', 'medium', 'hard'];
-    }
-
-    function hasValidChallengeResultData() {
-      return request.resource.data.keys().hasAll(['challengeId', 'userId', 'correctAnswers', 'totalPoints']) &&
-             request.resource.data.challengeId is string &&
-             request.resource.data.userId is string &&
-             request.resource.data.correctAnswers is number &&
-             request.resource.data.totalPoints is number;
-    }
-
     match /{path=**}/results/{resultId} {
       allow read: if isSignedIn();
       allow write: if isAdminOrTeacher();
@@ -113,8 +98,7 @@ service cloud.firestore {
 
     match /challenges/{challengeId} {
       allow read: if true;
-      allow create: if isAdminOrTeacher() && hasValidChallengeData();
-      allow update: if isAdminOrTeacher() && hasValidChallengeData();
+      allow create, update: if isAdminOrTeacher();
       allow delete: if isAdmin();
       match /submissions/{submissionId} {
         allow read: if isSignedIn();
@@ -125,7 +109,7 @@ service cloud.firestore {
 
     match /challengeResults/{resultId} {
       allow read: if isSignedIn();
-      allow create: if isSignedIn() && hasValidChallengeResultData() && request.resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow update: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
       allow delete: if isAdmin();
     }
@@ -164,8 +148,24 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    match /internships/{internshipId} {
+      allow create, update, delete: if isAdmin();
+      allow read: if isAdmin() || (
+        isSignedIn() &&
+        resource.data.studentIds.hasAny([request.auth.uid])
+      );
+      match /content/{contentId} {
+        allow create, update, delete: if isAdmin();
+        allow read: if isAdmin() || (
+          isSignedIn() &&
+          get(/databases/$(database)/documents/internships/$(internshipId)).data.studentIds.hasAny([request.auth.uid])
+        );
+      }
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
+
   }
 }

@@ -22,10 +22,11 @@ import {
   Loader2, CheckCircle2, AlertCircle, RefreshCw,
   Clock, Calendar as CalendarIcon, FileText, Edit,
   ShieldCheck, Layout, ImageIcon, Globe, Send, XCircle, X,
-  Heart, Sparkles, Map, Zap, Award, Code, MessageSquare, Mail
+  Heart, Sparkles, Map, Zap, Award, Code, MessageSquare, Mail,
+  Briefcase, Building2, Play, StickyNote, ChevronDown, ChevronUp, Video
 } from 'lucide-react'
 import { useFirestore, useUser, useDoc, useMemoFirebase, useAuth, useCollection } from '@/firebase'
-import { collection, doc, setDoc, deleteDoc, query, orderBy, where, updateDoc, getDoc } from 'firebase/firestore'
+import { collection, doc, setDoc, deleteDoc, query, orderBy, where, updateDoc, getDoc, addDoc, serverTimestamp } from 'firebase/firestore'
 import { signOut } from 'firebase/auth'
 import { useToast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
@@ -148,6 +149,31 @@ export default function AdminPage() {
     fileUrl: '',
   })
 
+  const [expandedInternshipId, setExpandedInternshipId] = useState<string | null>(null)
+  const [isInternshipDialogOpen, setIsInternshipDialogOpen] = useState(false)
+  const [editingInternship, setEditingInternship] = useState<any | null>(null)
+  const [internshipForm, setInternshipForm] = useState({
+    title: '',
+    company: '',
+    description: '',
+    type: 'Internship',
+    startDate: '',
+    endDate: '',
+    duration: '',
+    status: 'active' as 'active' | 'upcoming' | 'completed',
+    studentIds: [] as string[],
+  })
+  const [isContentDialogOpen, setIsContentDialogOpen] = useState(false)
+  const [selectedInternshipForContent, setSelectedInternshipForContent] = useState<any>(null)
+  const [editingContentItem, setEditingContentItem] = useState<any | null>(null)
+  const [contentForm, setContentForm] = useState({
+    day: 1,
+    title: '',
+    type: 'message' as 'video' | 'message' | 'note' | 'record' | 'file',
+    description: '',
+    url: '',
+  })
+
   const [isGradeDialogOpen, setIsGradeDialogOpen] = useState(false)
   const [selectedStudentForGrade, setSelectedStudentForGrade] = useState<any | null>(null)
   const [gradeForm, setGradeForm] = useState({
@@ -263,6 +289,9 @@ export default function AdminPage() {
 
   const messagesQuery = useMemoFirebase(() => (db && isAuthorizedAdmin ? query(collection(db, 'messages'), orderBy('sentAt', 'desc')) : null), [db, isAuthorizedAdmin])
   const { data: allMessages } = useCollection(messagesQuery)
+
+  const internshipsQuery = useMemoFirebase(() => (db && isAuthorizedAdmin ? query(collection(db, 'internships'), orderBy('createdAt', 'desc')) : null), [db, isAuthorizedAdmin])
+  const { data: allInternships } = useCollection(internshipsQuery)
 
   // Derived: filtered students for message tab
   const filteredMsgStudents = (allStudents || []).filter((s: any) =>
@@ -1125,6 +1154,7 @@ export default function AdminPage() {
                 { id: 'repository', label: 'Repository', icon: <BookOpen size={16} /> },
                 { id: 'roadmaps', label: 'Roadmaps', icon: <Map size={16} /> },
                 { id: 'messages', label: 'Send Message', icon: <MessageSquare size={16} /> },
+                { id: 'internship', label: 'Internship', icon: <Briefcase size={16} /> },
                 { id: 'landing', label: 'Landing Page', icon: <Layout size={16} /> },
                 { id: 'branding', label: 'Branding', icon: <SettingsIcon size={16} /> },
               ].map((tab) => (
@@ -2322,6 +2352,173 @@ export default function AdminPage() {
                 </div>
               </TabsContent>
 
+              {/* ─────────────── INTERNSHIP / PLACEMENT TAB ─────────────── */}
+              <TabsContent value="internship" className="mt-0 space-y-8">
+                <div className="space-y-6">
+
+                  {/* Header */}
+                  <div className="flex items-center justify-between flex-wrap gap-4">
+                    <div>
+                      <h2 className="text-2xl font-headline font-bold flex items-center gap-3">
+                        <Briefcase className="text-primary" size={24} /> Internship & Placement
+                      </h2>
+                      <p className="text-sm text-muted-foreground mt-1">Create internship programs, assign students, and upload day-by-day content.</p>
+                    </div>
+                    <Button
+                      onClick={() => {
+                        setInternshipForm({ title: '', company: '', description: '', type: 'Internship', startDate: '', endDate: '', duration: '', status: 'active', studentIds: [] })
+                        setIsInternshipDialogOpen(true)
+                      }}
+                      className="h-11 px-6 rounded-2xl font-bold gap-2 bg-primary text-white hover:bg-primary/90"
+                    >
+                      <Plus size={16} /> New Internship
+                    </Button>
+                  </div>
+
+                  {/* Internship list */}
+                  {!allInternships?.length ? (
+                    <div className="p-12 border-2 border-dashed border-border/30 rounded-[2rem] text-center bg-muted/10">
+                      <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                        <Briefcase size={28} className="text-primary/40" />
+                      </div>
+                      <p className="font-bold text-muted-foreground uppercase tracking-widest text-sm">No internships created yet.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {allInternships?.map((intern: any) => {
+                        const isOpen = expandedInternshipId === intern.id
+                        const assignedStudents = (allStudents || []).filter((s: any) => (intern.studentIds || []).includes(s.id))
+                        return (
+                          <div key={intern.id} className="rounded-2xl border border-border/20 overflow-hidden bg-background/30">
+                            {/* Header row */}
+                            <div className="flex items-center gap-4 p-5 hover:bg-primary/5 transition-colors">
+                              <div
+                                className="flex items-center gap-4 flex-1 cursor-pointer"
+                                onClick={() => setExpandedInternshipId(isOpen ? null : intern.id)}
+                              >
+                                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                                  <Building2 size={22} className="text-primary" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="font-bold text-base">{intern.title}</span>
+                                    <Badge className="bg-primary/10 text-primary border-none text-[9px] font-black uppercase">{intern.type || 'Internship'}</Badge>
+                                    <Badge className={cn("text-[9px] font-black border-none", intern.status === 'active' ? 'bg-emerald-500/10 text-emerald-600' : intern.status === 'completed' ? 'bg-muted text-muted-foreground' : 'bg-yellow-500/10 text-yellow-600')}>
+                                      {intern.status}
+                                    </Badge>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground">{intern.company} · {assignedStudents.length} student{assignedStudents.length !== 1 ? 's' : ''} assigned</p>
+                                </div>
+                                {isOpen ? <ChevronUp size={16} className="text-muted-foreground shrink-0" /> : <ChevronDown size={16} className="text-muted-foreground shrink-0" />}
+                              </div>
+                              {/* Actions */}
+                              <div className="flex gap-2 shrink-0">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="rounded-xl font-bold gap-1 text-xs h-9"
+                                  onClick={() => {
+                                    setEditingInternship(intern)
+                                    setInternshipForm({
+                                      title: intern.title || '',
+                                      company: intern.company || '',
+                                      description: intern.description || '',
+                                      type: intern.type || 'Internship',
+                                      startDate: intern.startDate || '',
+                                      endDate: intern.endDate || '',
+                                      duration: intern.duration || '',
+                                      status: intern.status || 'active',
+                                      studentIds: intern.studentIds || [],
+                                    })
+                                    setIsInternshipDialogOpen(true)
+                                  }}
+                                >
+                                  <Edit size={13} /> Edit
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="rounded-xl font-bold gap-1 text-xs h-9"
+                                  onClick={() => {
+                                    setSelectedInternshipForContent(intern)
+                                    setEditingContentItem(null)
+                                    setContentForm({ day: 1, title: '', type: 'message', description: '', url: '' })
+                                    setIsContentDialogOpen(true)
+                                  }}
+                                >
+                                  <Plus size={13} /> Add Content
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="rounded-xl h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                  onClick={async () => {
+                                    if (!db || !confirm('Delete this internship?')) return
+                                    await deleteDoc(doc(db, 'internships', intern.id))
+                                    toast({ title: 'Internship Deleted' })
+                                  }}
+                                >
+                                  <Trash2 size={14} />
+                                </Button>
+                              </div>
+                            </div>
+
+                            {/* Expanded: assigned students + daily content */}
+                            {isOpen && (
+                              <div className="border-t border-border/20 bg-muted/5 p-5 space-y-6">
+                                {/* Description */}
+                                {intern.description && (
+                                  <div className="text-sm text-muted-foreground bg-background/60 rounded-xl p-4 border border-border/20">
+                                    {intern.description}
+                                  </div>
+                                )}
+
+                                {/* Assigned Students */}
+                                <div className="space-y-2">
+                                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Assigned Students ({assignedStudents.length})</p>
+                                  {assignedStudents.length === 0 ? (
+                                    <p className="text-xs text-muted-foreground italic">No students assigned yet.</p>
+                                  ) : (
+                                    <div className="flex flex-wrap gap-2">
+                                      {assignedStudents.map((s: any) => (
+                                        <div key={s.id} className="flex items-center gap-2 bg-primary/10 px-3 py-1.5 rounded-full">
+                                          <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-primary text-[9px] font-black">{s.firstName?.[0]}</div>
+                                          <span className="text-xs font-semibold">{s.firstName} {s.lastName}</span>
+                                          <span className="text-[10px] text-muted-foreground">{s.email}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Daily content preview */}
+                                <InternshipContentAdmin
+                                  internshipId={intern.id}
+                                  db={db}
+                                  toast={toast}
+                                  onEdit={(item) => {
+                                    setSelectedInternshipForContent(intern)
+                                    setEditingContentItem(item)
+                                    setContentForm({
+                                      day: item.day,
+                                      title: item.title || '',
+                                      type: item.type || 'message',
+                                      description: item.description || '',
+                                      url: item.url || '',
+                                    })
+                                    setIsContentDialogOpen(true)
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+
             </CardContent>
           </Card>
         </Tabs>
@@ -2475,6 +2672,267 @@ export default function AdminPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* ── Create / Edit Internship Dialog ── */}
+      <Dialog open={isInternshipDialogOpen} onOpenChange={(open) => { setIsInternshipDialogOpen(open); if (!open) setEditingInternship(null) }}>
+        <DialogContent className="w-[95vw] sm:max-w-2xl rounded-[2rem] p-6 md:p-10 max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-headline font-bold flex items-center gap-2">
+              {editingInternship ? <><Edit size={20} /> Edit Internship</> : <><Briefcase size={20} /> Create Internship / Placement</>}
+            </DialogTitle>
+            <DialogDescription>{editingInternship ? 'Update internship details, students, and status.' : 'Fill in the details and assign students to this program.'}</DialogDescription>
+          </DialogHeader>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault()
+              if (!db) return
+              if (internshipForm.studentIds.length === 0) { toast({ variant: 'destructive', title: 'Select at least one student' }); return }
+              try {
+                if (editingInternship) {
+                  await updateDoc(doc(db, 'internships', editingInternship.id), { ...internshipForm })
+                  toast({ title: 'Internship Updated!' })
+                } else {
+                  await addDoc(collection(db, 'internships'), { ...internshipForm, createdAt: new Date().toISOString() })
+                  toast({ title: 'Internship Created!' })
+                }
+                setIsInternshipDialogOpen(false)
+                setEditingInternship(null)
+              } catch (err) {
+                toast({ variant: 'destructive', title: 'Error saving internship' })
+              }
+            }}
+            className="space-y-4 pt-4"
+          >
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs">Program Title *</Label>
+                <Input required placeholder="e.g. Web Dev Internship" className="h-11 rounded-xl" value={internshipForm.title} onChange={e => setInternshipForm({...internshipForm, title: e.target.value})} />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Company / Organization *</Label>
+                <Input required placeholder="e.g. Google India" className="h-11 rounded-xl" value={internshipForm.company} onChange={e => setInternshipForm({...internshipForm, company: e.target.value})} />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Type</Label>
+                <Select value={internshipForm.type} onValueChange={v => setInternshipForm({...internshipForm, type: v})}>
+                  <SelectTrigger className="h-11 rounded-xl"><SelectValue /></SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    {['Internship', 'Placement', 'Apprenticeship', 'Training'].map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Status</Label>
+                <Select value={internshipForm.status} onValueChange={(v: any) => setInternshipForm({...internshipForm, status: v})}>
+                  <SelectTrigger className="h-11 rounded-xl"><SelectValue /></SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    <SelectItem value="upcoming">Upcoming</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Start Date</Label>
+                <Input type="date" className="h-11 rounded-xl" value={internshipForm.startDate} onChange={e => setInternshipForm({...internshipForm, startDate: e.target.value})} />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">End Date</Label>
+                <Input type="date" className="h-11 rounded-xl" value={internshipForm.endDate} onChange={e => setInternshipForm({...internshipForm, endDate: e.target.value})} />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Duration (optional)</Label>
+              <Input placeholder="e.g. 3 months / 45 days" className="h-11 rounded-xl" value={internshipForm.duration} onChange={e => setInternshipForm({...internshipForm, duration: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Description</Label>
+              <Textarea placeholder="What will students learn or do?" className="h-24 rounded-xl resize-none" value={internshipForm.description} onChange={e => setInternshipForm({...internshipForm, description: e.target.value})} />
+            </div>
+            {/* Student assignment */}
+            <div className="space-y-3">
+              <Label className="text-xs font-bold uppercase tracking-widest">Assign Students *</Label>
+              <div className="max-h-52 overflow-y-auto border border-border/30 rounded-2xl p-3 space-y-2 bg-muted/10">
+                {(allStudents || []).filter((s: any) => s.isApproved).map((student: any) => {
+                  const isSelected = internshipForm.studentIds.includes(student.id)
+                  return (
+                    <label key={student.id} className={cn("flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors", isSelected ? "bg-primary/10" : "hover:bg-muted/50")}>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => {
+                          const ids = isSelected
+                            ? internshipForm.studentIds.filter(id => id !== student.id)
+                            : [...internshipForm.studentIds, student.id]
+                          setInternshipForm({...internshipForm, studentIds: ids})
+                        }}
+                        className="w-4 h-4 accent-green-600"
+                      />
+                      <div>
+                        <p className="text-sm font-semibold">{student.firstName} {student.lastName}</p>
+                        <p className="text-[10px] text-muted-foreground">{student.email} · {student.studentId}</p>
+                      </div>
+                    </label>
+                  )
+                })}
+                {(allStudents || []).filter((s: any) => s.isApproved).length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">No approved students found.</p>
+                )}
+              </div>
+              <p className="text-[10px] text-muted-foreground">{internshipForm.studentIds.length} student(s) selected</p>
+            </div>
+            <DialogFooter>
+              <Button type="submit" className="w-full h-12 rounded-xl font-bold">
+                {editingInternship ? 'Save Changes' : 'Create Internship'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Add / Edit Daily Content Dialog ── */}
+      <Dialog open={isContentDialogOpen} onOpenChange={(open) => { setIsContentDialogOpen(open); if (!open) setEditingContentItem(null) }}>
+        <DialogContent className="w-[95vw] sm:max-w-lg rounded-[2rem] p-6 md:p-10">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-headline font-bold flex items-center gap-2">
+              {editingContentItem ? <><Edit size={18} /> Edit Content</> : <><Plus size={18} /> Add Daily Content</>}
+            </DialogTitle>
+            <DialogDescription>{editingContentItem ? 'Update this content item.' : <>Upload content for <span className="font-bold text-foreground">{selectedInternshipForContent?.title}</span></>}</DialogDescription>
+          </DialogHeader>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault()
+              if (!db || !selectedInternshipForContent) return
+              try {
+                if (editingContentItem) {
+                  await updateDoc(doc(db, 'internships', selectedInternshipForContent.id, 'content', editingContentItem.id), {
+                    ...contentForm,
+                    day: Number(contentForm.day),
+                  })
+                  toast({ title: 'Content Updated!' })
+                } else {
+                  await addDoc(collection(db, 'internships', selectedInternshipForContent.id, 'content'), {
+                    ...contentForm,
+                    day: Number(contentForm.day),
+                    createdAt: new Date().toISOString(),
+                  })
+                  toast({ title: 'Content Added!', description: `Day ${contentForm.day} content uploaded.` })
+                }
+                setIsContentDialogOpen(false)
+                setEditingContentItem(null)
+              } catch (err) {
+                toast({ variant: 'destructive', title: 'Error saving content' })
+              }
+            }}
+            className="space-y-4 pt-4"
+          >
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs">Day Number *</Label>
+                <Input required type="number" min="1" className="h-11 rounded-xl" value={contentForm.day} onChange={e => setContentForm({...contentForm, day: Number(e.target.value)})} />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Content Type *</Label>
+                <Select value={contentForm.type} onValueChange={(v: any) => setContentForm({...contentForm, type: v})}>
+                  <SelectTrigger className="h-11 rounded-xl"><SelectValue /></SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    <SelectItem value="video">📹 Video</SelectItem>
+                    <SelectItem value="message">💬 Message</SelectItem>
+                    <SelectItem value="note">📝 Note</SelectItem>
+                    <SelectItem value="record">📄 Record</SelectItem>
+                    <SelectItem value="file">📎 File</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Title *</Label>
+              <Input required placeholder="e.g. Day 1 Orientation Video" className="h-11 rounded-xl" value={contentForm.title} onChange={e => setContentForm({...contentForm, title: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">
+                {contentForm.type === 'video' ? 'Video URL (YouTube or direct)' :
+                 contentForm.type === 'file' || contentForm.type === 'record' ? 'File URL' :
+                 contentForm.type === 'note' ? 'Reference Link (optional)' : 'URL (optional)'}
+              </Label>
+              <Input
+                placeholder={contentForm.type === 'video' ? 'https://youtube.com/watch?v=...' : 'https://...'}
+                className="h-11 rounded-xl"
+                value={contentForm.url}
+                onChange={e => setContentForm({...contentForm, url: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">{contentForm.type === 'message' ? 'Message Text *' : 'Description / Notes'}</Label>
+              <Textarea
+                required={contentForm.type === 'message' || contentForm.type === 'note'}
+                placeholder={contentForm.type === 'message' ? 'Write your message to the student...' : 'Add any details or instructions...'}
+                className="h-28 rounded-xl resize-none"
+                value={contentForm.description}
+                onChange={e => setContentForm({...contentForm, description: e.target.value})}
+              />
+            </div>
+            <DialogFooter>
+              <Button type="submit" className="w-full h-12 rounded-xl font-bold">
+                {editingContentItem ? 'Save Changes' : 'Upload Content'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+    </div>
+  )
+}
+
+// ─── Admin: list + delete daily content for one internship ───────────────────
+function InternshipContentAdmin({ internshipId, db, toast, onEdit }: { internshipId: string; db: any; toast: any; onEdit: (item: any) => void }) {
+  const contentRef = useMemoFirebase(
+    () => db ? query(collection(db, 'internships', internshipId, 'content'), orderBy('day', 'asc')) : null,
+    [db, internshipId]
+  )
+  const { data: items, isLoading } = useCollection(contentRef)
+
+  if (isLoading) return <div className="flex justify-center py-4"><Loader2 className="animate-spin text-primary" size={20} /></div>
+  if (!items?.length) return <p className="text-xs text-muted-foreground italic">No daily content yet. Use "Add Content" to upload.</p>
+
+  const TYPE_COLOR: Record<string, string> = {
+    video: 'bg-blue-500/10 text-blue-600', message: 'bg-green-500/10 text-green-600',
+    note: 'bg-yellow-500/10 text-yellow-600', record: 'bg-purple-500/10 text-purple-600', file: 'bg-pink-500/10 text-pink-600',
+  }
+
+  return (
+    <div className="space-y-2">
+      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Daily Content ({items.length} items)</p>
+      <div className="space-y-1.5">
+        {items.map((item: any) => (
+          <div key={item.id} className="flex items-center gap-3 bg-background/60 rounded-xl px-4 py-2.5 border border-border/20">
+            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase ${TYPE_COLOR[item.type] || ''}`}>Day {item.day}</span>
+            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase ${TYPE_COLOR[item.type] || ''}`}>{item.type}</span>
+            <span className="text-sm font-semibold flex-1 truncate">{item.title}</span>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 shrink-0"
+              onClick={() => onEdit(item)}
+            >
+              <Edit size={12} />
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0"
+              onClick={async () => {
+                if (!db || !confirm('Delete this content item?')) return
+                await deleteDoc(doc(db, 'internships', internshipId, 'content', item.id))
+                toast({ title: 'Content Deleted' })
+              }}
+            >
+              <Trash2 size={12} />
+            </Button>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
