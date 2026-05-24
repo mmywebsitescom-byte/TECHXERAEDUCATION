@@ -4,6 +4,14 @@ const nextConfig: NextConfig = {
   typescript: { ignoreBuildErrors: true },
   eslint: { ignoreDuringBuilds: true },
 
+  // ─── Performance Optimizations ──────────────────────────────────────────
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
+  },
+  experimental: {
+    optimizePackageImports: ['framer-motion', 'lucide-react', 'recharts'],
+  },
+
   // ─── Security Headers ───────────────────────────────────────────────────
   async headers() {
     return [

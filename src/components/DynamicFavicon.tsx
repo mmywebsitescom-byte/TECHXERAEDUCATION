@@ -1,19 +1,18 @@
-
 "use client"
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase'
 import { doc } from 'firebase/firestore'
 
 /**
  * DynamicFavicon - Aggressively synchronizes the browser tab icon.
- * Uses a combination of immediate application, interval polling, and MutationObserver
- * to ensure custom branding is never overwritten by framework defaults.
+ * Pauses MutationObserver updates during internal writes to prevent infinite CPU loops.
  */
 export default function DynamicFavicon() {
   const db = useFirestore()
   const settingsRef = useMemoFirebase(() => (db ? doc(db, 'settings', 'site-config') : null), [db])
   const { data: settings } = useDoc(settingsRef)
+  const observerRef = useRef<MutationObserver | null>(null)
 
   useEffect(() => {
     // The primary default icon URL
@@ -23,33 +22,50 @@ export default function DynamicFavicon() {
     const targetUrl = settings?.faviconUrl || settings?.logoUrl || primaryIconUrl;
 
     const applyIcon = () => {
-      // Selectors for all common favicon and touch icon variants
-      const selectors = [
-        'link[rel*="icon"]',
-        'link[rel="apple-touch-icon"]',
-        'link[rel="shortcut icon"]'
-      ];
-      
-      const existingLinks = document.querySelectorAll(selectors.join(','));
-      
-      // Use cache-busting timestamp to force immediate browser refresh
-      // Using 'v=' instead of 'cache=' for standard browser compatibility
-      const dynamicHref = `${targetUrl}${targetUrl.includes('?') ? '&' : '?'}v=${Date.now()}`;
+      // Temporarily disconnect observer to prevent infinite loops during our own updates
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
 
-      if (existingLinks.length > 0) {
-        // Claim every existing tag to prevent default icons from showing
-        existingLinks.forEach(link => {
-          const l = link as HTMLLinkElement;
-          if (l.href !== dynamicHref) {
-            l.href = dynamicHref;
-          }
+      try {
+        // Selectors for all common favicon and touch icon variants
+        const selectors = [
+          'link[rel*="icon"]',
+          'link[rel="apple-touch-icon"]',
+          'link[rel="shortcut icon"]'
+        ];
+        
+        const existingLinks = document.querySelectorAll(selectors.join(','));
+        // Resolve relative targetUrl to absolute URL to match what the browser returns in l.href
+        const absoluteTargetUrl = new URL(targetUrl, window.location.href).href;
+
+        if (existingLinks.length > 0) {
+          // Claim every existing tag to prevent default icons from showing
+          existingLinks.forEach(link => {
+            const l = link as HTMLLinkElement;
+            if (l.href !== absoluteTargetUrl) {
+              l.href = absoluteTargetUrl;
+            }
+          });
+        } else {
+          // Create a new primary icon if none exist
+          const newLink = document.createElement('link');
+          newLink.rel = 'icon';
+          newLink.href = absoluteTargetUrl;
+          document.head.appendChild(newLink);
+        }
+      } catch (err) {
+        console.error("DynamicFavicon: applyIcon error:", err);
+      }
+
+      // Reconnect observer after updates are applied
+      if (observerRef.current) {
+        observerRef.current.observe(document.head, { 
+          childList: true, 
+          subtree: true, 
+          attributes: true,
+          attributeFilter: ['href', 'rel'] 
         });
-      } else {
-        // Create a new primary icon if none exist (should not happen with Next.js but safe to have)
-        const newLink = document.createElement('link');
-        newLink.rel = 'icon';
-        newLink.href = dynamicHref;
-        document.head.appendChild(newLink);
       }
     };
 
@@ -61,13 +77,19 @@ export default function DynamicFavicon() {
 
     // 2. MutationObserver: Watch the <head> for any external attempts to modify icons
     const observer = new MutationObserver((mutations) => {
+      let hasExternalMutation = false;
       for (const mutation of mutations) {
         if (mutation.type === 'childList' || mutation.type === 'attributes') {
-          // If elements are added/removed or attributes changed in head, re-verify icon
-          applyIcon();
+          hasExternalMutation = true;
+          break;
         }
       }
+      if (hasExternalMutation) {
+        applyIcon();
+      }
     });
+
+    observerRef.current = observer;
 
     observer.observe(document.head, { 
       childList: true, 
@@ -78,7 +100,9 @@ export default function DynamicFavicon() {
     
     return () => {
       clearInterval(pollingInterval);
-      observer.disconnect();
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
     };
 
   }, [settings?.faviconUrl, settings?.logoUrl])

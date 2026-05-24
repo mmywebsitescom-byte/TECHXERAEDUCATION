@@ -63,7 +63,7 @@ const NavLinks = ({ className, onItemClick }: { className?: string; onItemClick?
       <CheckCircle2 size={14} /> Attendance
     </Link>
     <Link href="/resources" onClick={onItemClick} className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5 py-2">
-      Resources
+      <BookOpen size={14} /> Resources
     </Link>
     <Link href="/projects" onClick={onItemClick} className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5 py-2">
       <Code size={14} /> Projects
@@ -146,7 +146,7 @@ export default function Navbar() {
                   <CheckCircle2 size={20} className="text-primary" /> Attendance
                 </Link>
                 <Link href="/resources" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-4 p-4 rounded-2xl hover:bg-primary/10 transition-colors">
-                  Resources
+                  <BookOpen size={20} className="text-primary" /> Resources
                 </Link>
                 <Link href="/projects" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-4 p-4 rounded-2xl hover:bg-primary/10 transition-colors">
                   <Code size={20} className="text-primary" /> Projects

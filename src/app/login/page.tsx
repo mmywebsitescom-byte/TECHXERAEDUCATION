@@ -315,29 +315,24 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  if (!mounted) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }}>
-          <TechXeraLogo className="w-16 h-16 opacity-50" />
-        </motion.div>
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen relative flex flex-col">
       <TechBackground />
       <Navbar />
       
       <main className="flex-1 flex items-center justify-center p-6 pt-24 pb-12">
-        <Suspense fallback={<TechXeraLogo className="w-16 h-16 animate-pulse opacity-50" />}>
+        <Suspense fallback={
+          <div className="w-full max-w-md">
+            <div className="glass shadow-2xl border-border/40 rounded-2xl p-8 space-y-4 animate-pulse">
+              <div className="h-20 w-20 rounded-full bg-muted mx-auto" />
+              <div className="h-8 bg-muted rounded-xl w-3/4 mx-auto" />
+              <div className="h-4 bg-muted rounded-lg w-2/3 mx-auto" />
+              <div className="h-11 bg-muted rounded-xl" />
+              <div className="h-11 bg-muted rounded-xl" />
+              <div className="h-12 bg-primary/30 rounded-xl" />
+            </div>
+          </div>
+        }>
           <LoginForm />
         </Suspense>
       </main>

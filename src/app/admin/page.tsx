@@ -63,7 +63,7 @@ function StudentGradeAction({ student, examId, onEdit, db }: { student: any, exa
 
 export default function AdminPage() {
   const [mounted, setMounted] = useState(false)
-  const [activeTab, setActiveTab] = useState('results')
+  const [activeTab, setActiveTab] = useState('overview')
   const [isScannerOpen, setIsScannerOpen] = useState(false)
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
@@ -201,6 +201,15 @@ export default function AdminPage() {
   const [isSendingMsg, setIsSendingMsg] = useState(false)
   const [expandedMsgId, setExpandedMsgId] = useState<string | null>(null)
 
+  // Search state variables for management lists
+  const [studentSearch, setStudentSearch] = useState('')
+  const [teacherSearch, setTeacherSearch] = useState('')
+  const [internshipSearch, setInternshipSearch] = useState('')
+  const [supportSearch, setSupportSearch] = useState('')
+  const [materialSearch, setMaterialSearch] = useState('')
+  const [roadmapSearch, setRoadmapSearch] = useState('')
+  const [assignStudentSearch, setAssignStudentSearch] = useState('')
+
   const { user, isUserLoading } = useUser()
   const auth = useAuth()
   const db = useFirestore()
@@ -297,6 +306,43 @@ export default function AdminPage() {
   const filteredMsgStudents = (allStudents || []).filter((s: any) =>
     `${s.firstName || ''} ${s.lastName || ''} ${s.email || ''}`.toLowerCase().includes(msgSearchQuery.toLowerCase())
   )
+
+  // Derived filtered collections for search/filter inputs
+  const filteredStudents = React.useMemo(() => {
+    return (allStudents || []).filter((s: any) =>
+      `${s.firstName || ''} ${s.lastName || ''} ${s.studentId || ''} ${s.email || ''}`.toLowerCase().includes(studentSearch.toLowerCase())
+    )
+  }, [allStudents, studentSearch])
+
+  const filteredTeachers = React.useMemo(() => {
+    return (allTeachers || []).filter((t: any) =>
+      `${t.firstName || ''} ${t.lastName || ''} ${t.employeeId || ''} ${t.email || ''}`.toLowerCase().includes(teacherSearch.toLowerCase())
+    )
+  }, [allTeachers, teacherSearch])
+
+  const filteredInternships = React.useMemo(() => {
+    return (allInternships || []).filter((i: any) =>
+      `${i.title || ''} ${i.company || ''} ${i.description || ''}`.toLowerCase().includes(internshipSearch.toLowerCase())
+    )
+  }, [allInternships, internshipSearch])
+
+  const filteredSupportInquiries = React.useMemo(() => {
+    return (supportInquiries || []).filter((s: any) =>
+      `${s.name || ''} ${s.email || ''} ${s.subject || ''} ${s.message || ''}`.toLowerCase().includes(supportSearch.toLowerCase())
+    )
+  }, [supportInquiries, supportSearch])
+
+  const filteredMaterials = React.useMemo(() => {
+    return (allMaterials || []).filter((m: any) =>
+      `${m.title || ''} ${m.subject || ''} ${m.materialType || ''}`.toLowerCase().includes(materialSearch.toLowerCase())
+    )
+  }, [allMaterials, materialSearch])
+
+  const filteredRoadmaps = React.useMemo(() => {
+    return (allRoadmaps || []).filter((r: any) =>
+      `${r.title || ''} ${r.field || ''} ${r.description || ''}`.toLowerCase().includes(roadmapSearch.toLowerCase())
+    )
+  }, [allRoadmaps, roadmapSearch])
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -1071,6 +1117,16 @@ export default function AdminPage() {
 
   const activeSession = sessions?.find(s => s.id === selectedSessionId)
 
+  // System Stats for Dashboard Overview
+  const totalStudentsCount = allStudents?.length || 0
+  const pendingStudentsCount = allStudents?.filter((s: any) => !s.isApproved).length || 0
+  const totalTeachersCount = allTeachers?.length || 0
+  const pendingTeachersCount = allTeachers?.filter((t: any) => !t.isApproved).length || 0
+  const totalInternshipsCount = allInternships?.length || 0
+  const activeInternshipsCount = allInternships?.filter((i: any) => i.status === 'active').length || 0
+  const unresolvedInquiriesCount = supportInquiries?.filter((i: any) => i.status === 'pending').length || 0
+  const totalPendingApprovals = pendingStudentsCount + pendingTeachersCount
+
   if (!mounted || isUserLoading) return <div className="min-h-screen flex items-center justify-center bg-background"><Shield className="animate-pulse text-primary" size={64} /></div>
   if (!user || !isAuthorizedAdmin) return (
     <div className="min-h-screen flex items-center justify-center bg-background">
@@ -1137,10 +1193,11 @@ export default function AdminPage() {
       </header>
 
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 md:px-12 pb-32 space-y-8 z-10 overflow-hidden">
-        <Tabs defaultValue="results" className="w-full" onValueChange={setActiveTab}>
+        <Tabs value={activeTab} className="w-full" onValueChange={setActiveTab}>
           <div className="bg-white/80 dark:bg-card/40 backdrop-blur-xl rounded-[2rem] md:rounded-[2.5rem] p-2 md:p-3 shadow-xl mb-8 md:mb-12 border border-white/20 overflow-x-auto scrollbar-hide">
             <TabsList className="bg-transparent flex flex-nowrap justify-start lg:justify-center h-auto gap-1 md:gap-2 border-none min-w-max">
               {[
+                { id: 'overview', label: 'Overview', icon: <Layout size={16} /> },
                 { id: 'results', label: 'Results', icon: <GraduationCap size={16} /> },
                 { id: 'students', label: 'Students', icon: <Users size={16} /> },
                 { id: 'teachers', label: 'Teachers', icon: <Users size={16} /> },
@@ -1171,7 +1228,226 @@ export default function AdminPage() {
 
           <Card className="glass border-none rounded-[2rem] md:rounded-[3.5rem] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.1)] overflow-hidden min-h-[500px] md:min-h-[600px]">
             <CardContent className="p-6 md:p-12">
-              
+
+              <TabsContent value="overview" className="mt-0 space-y-8 md:space-y-12">
+                <div className="space-y-6">
+                  {/* Header */}
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                      <h2 className="text-2xl md:text-3xl font-headline font-bold flex items-center gap-3">
+                        <Layout className="text-primary" size={24} /> Dashboard Overview
+                      </h2>
+                      <p className="text-sm text-muted-foreground mt-1">Real-time summaries and quick actions for your campus operations.</p>
+                    </div>
+                  </div>
+
+                  {/* KPI Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {/* Card 1: Students */}
+                    <Card className="bg-background/40 border border-border/20 rounded-[1.5rem] p-6 flex flex-col justify-between">
+                      <div className="flex items-center justify-between mb-4">
+                        <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Students</span>
+                        <div className="p-3 bg-emerald-500/10 text-emerald-600 rounded-xl">
+                          <Users size={20} />
+                        </div>
+                      </div>
+                      <div>
+                        <h3 className="text-3xl font-bold tracking-tight mb-1">{totalStudentsCount}</h3>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1.5 font-medium">
+                          {pendingStudentsCount > 0 ? (
+                            <span className="flex items-center gap-1 text-orange-500 font-bold">⚠️ {pendingStudentsCount} pending</span>
+                          ) : (
+                            <span className="flex items-center gap-1 text-emerald-600 font-bold">✓ All approved</span>
+                          )}
+                        </p>
+                      </div>
+                    </Card>
+
+                    {/* Card 2: Faculty/Teachers */}
+                    <Card className="bg-background/40 border border-border/20 rounded-[1.5rem] p-6 flex flex-col justify-between">
+                      <div className="flex items-center justify-between mb-4">
+                        <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Faculty</span>
+                        <div className="p-3 bg-blue-500/10 text-blue-600 rounded-xl">
+                          <Users size={20} />
+                        </div>
+                      </div>
+                      <div>
+                        <h3 className="text-3xl font-bold tracking-tight mb-1">{totalTeachersCount}</h3>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1.5 font-medium">
+                          {pendingTeachersCount > 0 ? (
+                            <span className="flex items-center gap-1 text-orange-500 font-bold">⚠️ {pendingTeachersCount} pending</span>
+                          ) : (
+                            <span className="flex items-center gap-1 text-emerald-600 font-bold">✓ All approved</span>
+                          )}
+                        </p>
+                      </div>
+                    </Card>
+
+                    {/* Card 3: Internships */}
+                    <Card className="bg-background/40 border border-border/20 rounded-[1.5rem] p-6 flex flex-col justify-between">
+                      <div className="flex items-center justify-between mb-4">
+                        <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Internships</span>
+                        <div className="p-3 bg-indigo-500/10 text-indigo-600 rounded-xl">
+                          <Briefcase size={20} />
+                        </div>
+                      </div>
+                      <div>
+                        <h3 className="text-3xl font-bold tracking-tight mb-1">{totalInternshipsCount}</h3>
+                        <p className="text-xs text-muted-foreground font-medium">
+                          <span className="text-indigo-600 font-bold">{activeInternshipsCount} active programs</span>
+                        </p>
+                      </div>
+                    </Card>
+
+                    {/* Card 4: Action Required */}
+                    <Card className="bg-background/40 border border-border/20 rounded-[1.5rem] p-6 flex flex-col justify-between">
+                      <div className="flex items-center justify-between mb-4">
+                        <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Action Required</span>
+                        <div className="p-3 bg-red-500/10 text-red-600 rounded-xl">
+                          <AlertCircle size={20} />
+                        </div>
+                      </div>
+                      <div>
+                        <h3 className="text-3xl font-bold tracking-tight mb-1">{totalPendingApprovals + unresolvedInquiriesCount}</h3>
+                        <p className="text-xs text-muted-foreground font-medium flex flex-col gap-0.5">
+                          {totalPendingApprovals > 0 && <span>• {totalPendingApprovals} pending approvals</span>}
+                          {unresolvedInquiriesCount > 0 && <span>• {unresolvedInquiriesCount} open support tickets</span>}
+                          {totalPendingApprovals === 0 && unresolvedInquiriesCount === 0 && <span className="text-emerald-600 font-bold font-headline">✓ System fully caught up</span>}
+                        </p>
+                      </div>
+                    </Card>
+                  </div>
+
+                  {/* Quick Links & Support Queue Preview */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6">
+                    {/* Quick Actions Panel */}
+                    <Card className="bg-background/30 border border-border/20 rounded-[1.8rem] p-6 md:p-8">
+                      <h3 className="text-lg md:text-xl font-bold font-headline mb-6 flex items-center gap-2">
+                        <Sparkles className="text-primary" size={18} /> Administrative Quick Links
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setActiveTab('students')}
+                          className="h-14 rounded-xl border border-border hover:bg-primary/5 flex items-center justify-start px-4 gap-3 text-left font-bold text-xs"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
+                            <Users size={16} />
+                          </div>
+                          <div>
+                            <p className="font-bold">Verify Students</p>
+                            <p className="text-[9px] text-muted-foreground font-medium">{pendingStudentsCount} Awaiting Verification</p>
+                          </div>
+                        </Button>
+
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setActiveTab('teachers')}
+                          className="h-14 rounded-xl border border-border hover:bg-primary/5 flex items-center justify-start px-4 gap-3 text-left font-bold text-xs"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0">
+                            <Users size={16} />
+                          </div>
+                          <div>
+                            <p className="font-bold">Verify Teachers</p>
+                            <p className="text-[9px] text-muted-foreground font-medium">{pendingTeachersCount} Awaiting Verification</p>
+                          </div>
+                        </Button>
+
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setActiveTab('support')}
+                          className="h-14 rounded-xl border border-border hover:bg-primary/5 flex items-center justify-start px-4 gap-3 text-left font-bold text-xs"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-red-500/10 text-red-600 flex items-center justify-center shrink-0">
+                            <LifeBuoy size={16} />
+                          </div>
+                          <div>
+                            <p className="font-bold">Support Hub</p>
+                            <p className="text-[9px] text-muted-foreground font-medium">{unresolvedInquiriesCount} Pending Inquiries</p>
+                          </div>
+                        </Button>
+
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setActiveTab('internship')}
+                          className="h-14 rounded-xl border border-border hover:bg-primary/5 flex items-center justify-start px-4 gap-3 text-left font-bold text-xs"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-600 flex items-center justify-center shrink-0">
+                            <Briefcase size={16} />
+                          </div>
+                          <div>
+                            <p className="font-bold">Placements</p>
+                            <p className="text-[9px] text-muted-foreground font-medium">{totalInternshipsCount} Total Programs</p>
+                          </div>
+                        </Button>
+
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setActiveTab('notices')}
+                          className="h-14 rounded-xl border border-border hover:bg-primary/5 flex items-center justify-start px-4 gap-3 text-left font-bold text-xs"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-yellow-500/10 text-yellow-600 flex items-center justify-center shrink-0">
+                            <Bell size={16} />
+                          </div>
+                          <div>
+                            <p className="font-bold">Publish Notice</p>
+                            <p className="text-[9px] text-muted-foreground font-medium">Alert students of events</p>
+                          </div>
+                        </Button>
+
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setActiveTab('exams')}
+                          className="h-14 rounded-xl border border-border hover:bg-primary/5 flex items-center justify-start px-4 gap-3 text-left font-bold text-xs"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-600 flex items-center justify-center shrink-0">
+                            <CalendarIcon size={16} />
+                          </div>
+                          <div>
+                            <p className="font-bold">Schedule Exam</p>
+                            <p className="text-[9px] text-muted-foreground font-medium">Set dates & semesters</p>
+                          </div>
+                        </Button>
+                      </div>
+                    </Card>
+
+                    {/* Support inquiries preview or recent actions */}
+                    <Card className="bg-background/30 border border-border/20 rounded-[1.8rem] p-6 md:p-8 flex flex-col justify-between">
+                      <div>
+                        <h3 className="text-lg md:text-xl font-bold font-headline mb-4 flex items-center gap-2">
+                          <LifeBuoy className="text-primary" size={18} /> Support Queue Preview
+                        </h3>
+                        <div className="space-y-3 max-h-[220px] overflow-y-auto pr-2 scrollbar-thin">
+                          {supportInquiries?.filter((i: any) => i.status === 'pending').slice(0, 3).map((inquiry: any) => (
+                            <div key={inquiry.id} className="p-4 bg-background/60 rounded-xl border border-border/10 flex flex-col gap-1">
+                              <div className="flex justify-between items-center">
+                                <span className="font-bold text-sm text-foreground truncate max-w-[150px]">{inquiry.subject}</span>
+                                <Badge className="bg-orange-500 text-[8px] px-1.5 uppercase font-bold border-none">{inquiry.status}</Badge>
+                              </div>
+                              <p className="text-xs text-muted-foreground line-clamp-1">{inquiry.message}</p>
+                              <p className="text-[8px] text-muted-foreground/60 font-bold uppercase">{inquiry.name} ({inquiry.email})</p>
+                            </div>
+                          ))}
+                          {supportInquiries?.filter((i: any) => i.status === 'pending').length === 0 && (
+                            <div className="h-32 flex flex-col items-center justify-center text-center text-muted-foreground gap-3">
+                              <CheckCircle2 size={32} className="text-emerald-500" />
+                              <p className="text-xs font-bold uppercase tracking-wider">No pending inquiries</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <Button 
+                        onClick={() => setActiveTab('support')} 
+                        className="w-full mt-4 h-11 rounded-xl font-bold text-xs bg-primary text-white hover:bg-primary/90"
+                      >
+                        View Support Tickets
+                      </Button>
+                    </Card>
+                  </div>
+                </div>
+              </TabsContent>
+
               <TabsContent value="results" className="mt-0 space-y-8 md:space-y-12">
                 <div className="space-y-6 md:space-y-8">
                   <div className="max-w-md">
@@ -1340,7 +1616,19 @@ export default function AdminPage() {
                 </div>
               </TabsContent>
 
-              <TabsContent value="students" className="mt-0 space-y-8">
+              <TabsContent value="students" className="mt-0 space-y-6">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="relative max-w-sm w-full">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+                    <Input
+                      placeholder="Search students by name, email, or roll no..."
+                      value={studentSearch}
+                      onChange={(e) => setStudentSearch(e.target.value)}
+                      className="pl-10 h-10 rounded-xl bg-background/50 border border-border"
+                    />
+                  </div>
+                </div>
+
                 <div className="border rounded-[1.5rem] md:rounded-[2.5rem] overflow-x-auto bg-background/30 shadow-inner scrollbar-thin">
                   <Table className="min-w-[700px] md:min-w-full">
                     <TableHeader className="bg-muted/50 border-b">
@@ -1352,7 +1640,7 @@ export default function AdminPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {allStudents?.map(student => (
+                      {filteredStudents?.map(student => (
                         <TableRow key={student.id} className="border-b border-border/10 hover:bg-primary/[0.02] transition-colors">
                           <TableCell className="px-6 md:px-10 py-4 md:py-6">
                             <p className="font-bold text-foreground text-sm md:text-base">{student.firstName} {student.lastName}</p>
@@ -1361,7 +1649,7 @@ export default function AdminPage() {
                             <p className="text-muted-foreground font-medium uppercase text-[10px] md:text-xs">{student.studentId}</p>
                           </TableCell>
                           <TableCell className="py-4 md:py-6 text-center">
-                            <Badge className="bg-primary hover:bg-primary/90 text-white rounded-full px-3 md:px-4 py-0.5 md:py-1 lowercase font-bold text-[9px] md:text-[10px]">
+                            <Badge className="bg-primary hover:bg-primary/90 text-white rounded-full px-3 md:px-4 py-0.5 md:py-1 lowercase font-bold text-[9px] md:text-[10px] border-none">
                               {student.status || (student.isApproved ? 'approved' : 'pending')}
                             </Badge>
                           </TableCell>
@@ -1377,12 +1665,31 @@ export default function AdminPage() {
                           </TableCell>
                         </TableRow>
                       ))}
+                      {filteredStudents?.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center py-10 text-muted-foreground italic font-medium">
+                            No students match your search criteria.
+                          </TableCell>
+                        </TableRow>
+                      )}
                     </TableBody>
                   </Table>
                 </div>
               </TabsContent>
 
-              <TabsContent value="teachers" className="mt-0 space-y-8">
+              <TabsContent value="teachers" className="mt-0 space-y-6">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="relative max-w-sm w-full">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+                    <Input
+                      placeholder="Search teachers by name, email, or employee ID..."
+                      value={teacherSearch}
+                      onChange={(e) => setTeacherSearch(e.target.value)}
+                      className="pl-10 h-10 rounded-xl bg-background/50 border border-border"
+                    />
+                  </div>
+                </div>
+
                 <div className="border rounded-[1.5rem] md:rounded-[2.5rem] overflow-x-auto bg-background/30 shadow-inner scrollbar-thin">
                   <Table className="min-w-[700px] md:min-w-full">
                     <TableHeader className="bg-muted/50 border-b">
@@ -1394,17 +1701,17 @@ export default function AdminPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {allTeachers?.map(teacher => (
+                      {filteredTeachers?.map(teacher => (
                         <TableRow key={teacher.id} className="border-b border-border/10 hover:bg-primary/[0.02] transition-colors">
                           <TableCell className="px-6 md:px-10 py-4 md:py-6">
                             <p className="font-bold text-foreground text-sm md:text-base">{teacher.firstName} {teacher.lastName}</p>
-                            <p className="text-[10px] text-muted-foreground uppercase">Role: {teacher.role || 'teacher'}</p>
+                            <p className="text-[10px] text-muted-foreground uppercase font-semibold mt-0.5">Role: {teacher.role || 'teacher'}</p>
                           </TableCell>
                           <TableCell className="py-4 md:py-6">
                             <p className="text-muted-foreground font-medium uppercase text-[10px] md:text-xs">{teacher.employeeId}</p>
                           </TableCell>
                           <TableCell className="py-4 md:py-6 text-center">
-                            <Badge className={`${teacher.isApproved ? 'bg-primary' : 'bg-muted-foreground'} text-white rounded-full px-3 py-0.5 lowercase font-bold text-[9px]`}>
+                            <Badge className={`${teacher.isApproved ? 'bg-primary' : 'bg-muted-foreground'} text-white rounded-full px-3 py-0.5 lowercase font-bold text-[9px] border-none`}>
                               {teacher.status || (teacher.isApproved ? 'approved' : 'pending')}
                             </Badge>
                           </TableCell>
@@ -1424,19 +1731,37 @@ export default function AdminPage() {
                           </TableCell>
                         </TableRow>
                       ))}
+                      {filteredTeachers?.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center py-10 text-muted-foreground italic font-medium">
+                            No faculty match your search criteria.
+                          </TableCell>
+                        </TableRow>
+                      )}
                     </TableBody>
                   </Table>
                 </div>
               </TabsContent>
 
-              <TabsContent value="support" className="mt-0 space-y-6 md:space-y-8">
-                <h3 className="text-xl md:text-2xl font-headline font-bold">Inquiry Management</h3>
+              <TabsContent value="support" className="mt-0 space-y-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <h3 className="text-xl md:text-2xl font-headline font-bold">Inquiry Management</h3>
+                  <div className="relative max-w-sm w-full">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+                    <Input
+                      placeholder="Search inquiries by name, email, subject..."
+                      value={supportSearch}
+                      onChange={(e) => setSupportSearch(e.target.value)}
+                      className="pl-10 h-10 rounded-xl bg-background/50 border border-border"
+                    />
+                  </div>
+                </div>
                 <div className="grid gap-4">
-                  {supportInquiries?.map(inquiry => (
+                  {filteredSupportInquiries?.map(inquiry => (
                     <Card key={inquiry.id} className="bg-background/50 rounded-xl md:rounded-2xl border-none p-4 md:p-6 flex flex-col md:flex-row justify-between gap-4 md:gap-6 border border-white/10">
                       <div className="space-y-2">
                         <div className="flex items-center gap-3">
-                          <Badge className={cn(inquiry.status === 'pending' ? 'bg-orange-500' : 'bg-green-500')}>{inquiry.status}</Badge>
+                          <Badge className={cn("border-none", inquiry.status === 'pending' ? 'bg-orange-500' : 'bg-green-500')}>{inquiry.status}</Badge>
                           <h4 className="font-bold text-base md:text-lg truncate max-w-[200px] md:max-w-none">{inquiry.subject}</h4>
                         </div>
                         <p className="text-xs md:text-sm text-muted-foreground line-clamp-2">{inquiry.message}</p>
@@ -1447,6 +1772,11 @@ export default function AdminPage() {
                       )}
                     </Card>
                   ))}
+                  {filteredSupportInquiries?.length === 0 && (
+                    <div className="p-12 text-center text-muted-foreground italic font-medium bg-background/20 rounded-2xl border-2 border-dashed border-border/30">
+                      No inquiries match your search criteria.
+                    </div>
+                  )}
                 </div>
               </TabsContent>
 
@@ -1779,7 +2109,19 @@ export default function AdminPage() {
                 </div>
               </TabsContent>
 
-              <TabsContent value="repository" className="mt-0 space-y-8">
+              <TabsContent value="repository" className="mt-0 space-y-6">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="relative max-w-sm w-full">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+                    <Input
+                      placeholder="Search study materials by title, subject..."
+                      value={materialSearch}
+                      onChange={(e) => setMaterialSearch(e.target.value)}
+                      className="pl-10 h-10 rounded-xl bg-background/50 border border-border"
+                    />
+                  </div>
+                </div>
+
                 <div className="border rounded-[1.5rem] md:rounded-[2.5rem] overflow-x-auto bg-background/30 shadow-inner scrollbar-thin">
                   <Table className="min-w-[600px] md:min-w-full">
                     <TableHeader className="bg-muted/50 border-b">
@@ -1791,11 +2133,11 @@ export default function AdminPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {allMaterials?.map(material => (
+                      {filteredMaterials?.map(material => (
                         <TableRow key={material.id} className="border-b border-border/10 hover:bg-primary/[0.02] transition-colors">
                           <TableCell className="px-6 md:px-10 py-4 md:py-6"><p className="font-bold text-foreground text-sm md:text-base truncate max-w-[150px] md:max-w-none">{material.title}</p></TableCell>
                           <TableCell className="py-4 md:py-6"><p className="text-muted-foreground uppercase font-medium text-[10px] md:text-xs">{material.subject}</p></TableCell>
-                          <TableCell className="py-4 md:py-6"><Badge variant="outline" className="rounded-full text-[9px] md:text-xs px-2 md:px-4">{material.materialType || 'Notes'}</Badge></TableCell>
+                          <TableCell className="py-4 md:py-6"><Badge variant="outline" className="rounded-full text-[9px] md:text-xs px-2 md:px-4 border-none">{material.materialType || 'Notes'}</Badge></TableCell>
                           <TableCell className="px-6 md:px-10 text-right">
                             <div className="flex justify-end gap-1 md:gap-2">
                               <Button variant="ghost" size="icon" className="h-8 w-8 md:h-10 md:w-10 text-primary hover:bg-primary/5 rounded-xl" onClick={() => handleEditMaterial(material)}><Edit size={18} /></Button>
@@ -1804,6 +2146,13 @@ export default function AdminPage() {
                           </TableCell>
                         </TableRow>
                       ))}
+                      {filteredMaterials?.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center py-10 text-muted-foreground italic font-medium">
+                            No study materials match your search criteria.
+                          </TableCell>
+                        </TableRow>
+                      )}
                     </TableBody>
                   </Table>
                 </div>
@@ -1957,24 +2306,36 @@ export default function AdminPage() {
                 </form>
               </TabsContent>
 
-              <TabsContent value="roadmaps" className="mt-0 space-y-8 md:space-y-12">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                  <h3 className="text-xl md:text-2xl font-headline font-bold flex items-center gap-3">
-                    <Map className="text-primary" /> Curate Roadmaps
-                  </h3>
-                  <Button onClick={() => setIsRoadmapDialogOpen(true)} className="bg-primary text-white hover:bg-primary/90 rounded-xl shadow-lg h-12 px-6 font-bold w-full md:w-auto">
-                    <Plus className="mr-2" size={18} /> Add Roadmap
-                  </Button>
+              <TabsContent value="roadmaps" className="mt-0 space-y-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div className="flex items-center gap-3">
+                    <Map className="text-primary" />
+                    <h3 className="text-xl md:text-2xl font-headline font-bold">Curate Roadmaps</h3>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                    <div className="relative max-w-sm w-full">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+                      <Input
+                        placeholder="Search roadmaps by title or field..."
+                        value={roadmapSearch}
+                        onChange={(e) => setRoadmapSearch(e.target.value)}
+                        className="pl-10 h-10 rounded-xl bg-background/50 border border-border w-full"
+                      />
+                    </div>
+                    <Button onClick={() => setIsRoadmapDialogOpen(true)} className="bg-primary text-white hover:bg-primary/90 rounded-xl shadow-lg h-10 px-6 font-bold w-full sm:w-auto shrink-0">
+                      <Plus className="mr-2" size={16} /> Add Roadmap
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="border rounded-[1.5rem] md:rounded-[2.5rem] overflow-x-auto bg-background/30 shadow-inner p-6">
-                  {allRoadmaps?.length === 0 ? (
+                  {filteredRoadmaps?.length === 0 ? (
                     <div className="text-center py-20 bg-muted/20 border-2 border-dashed rounded-3xl">
-                      <p className="font-bold text-muted-foreground uppercase tracking-widest text-xs">No active roadmaps found.</p>
+                      <p className="font-bold text-muted-foreground uppercase tracking-widest text-xs">No active roadmaps match your search.</p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {allRoadmaps?.map(roadmap => (
+                      {filteredRoadmaps?.map(roadmap => (
                         <Card key={roadmap.id} className="border-none bg-background shadow-md rounded-3xl overflow-hidden hover:shadow-xl transition-all h-full flex flex-col">
                           {roadmap.thumbnailUrl && (
                             <div className="h-32 bg-primary/5 w-full overflow-hidden shrink-0">
@@ -2352,8 +2713,7 @@ export default function AdminPage() {
                 </div>
               </TabsContent>
 
-              {/* ─────────────── INTERNSHIP / PLACEMENT TAB ─────────────── */}
-              <TabsContent value="internship" className="mt-0 space-y-8">
+              <TabsContent value="internship" className="mt-0 space-y-6">
                 <div className="space-y-6">
 
                   {/* Header */}
@@ -2364,28 +2724,41 @@ export default function AdminPage() {
                       </h2>
                       <p className="text-sm text-muted-foreground mt-1">Create internship programs, assign students, and upload day-by-day content.</p>
                     </div>
-                    <Button
-                      onClick={() => {
-                        setInternshipForm({ title: '', company: '', description: '', type: 'Internship', startDate: '', endDate: '', duration: '', status: 'active', studentIds: [] })
-                        setIsInternshipDialogOpen(true)
-                      }}
-                      className="h-11 px-6 rounded-2xl font-bold gap-2 bg-primary text-white hover:bg-primary/90"
-                    >
-                      <Plus size={16} /> New Internship
-                    </Button>
+                    <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                      <div className="relative max-w-sm w-full">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+                        <Input
+                          placeholder="Search internships by title or company..."
+                          value={internshipSearch}
+                          onChange={(e) => setInternshipSearch(e.target.value)}
+                          className="pl-10 h-10 rounded-xl bg-background/50 border border-border w-full"
+                        />
+                      </div>
+                      <Button
+                        onClick={() => {
+                          setInternshipForm({ title: '', company: '', description: '', type: 'Internship', startDate: '', endDate: '', duration: '', status: 'active', studentIds: [] })
+                          setIsInternshipDialogOpen(true)
+                        }}
+                        className="h-10 px-6 rounded-xl font-bold gap-2 bg-primary text-white hover:bg-primary/90 shrink-0 w-full sm:w-auto"
+                      >
+                        <Plus size={16} /> New Internship
+                      </Button>
+                    </div>
                   </div>
 
                   {/* Internship list */}
-                  {!allInternships?.length ? (
+                  {!filteredInternships?.length ? (
                     <div className="p-12 border-2 border-dashed border-border/30 rounded-[2rem] text-center bg-muted/10">
                       <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
                         <Briefcase size={28} className="text-primary/40" />
                       </div>
-                      <p className="font-bold text-muted-foreground uppercase tracking-widest text-sm">No internships created yet.</p>
+                      <p className="font-bold text-muted-foreground uppercase tracking-widest text-sm">
+                        {internshipSearch ? 'No internships match your search.' : 'No internships created yet.'}
+                      </p>
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {allInternships?.map((intern: any) => {
+                      {filteredInternships?.map((intern: any) => {
                         const isOpen = expandedInternshipId === intern.id
                         const assignedStudents = (allStudents || []).filter((s: any) => (intern.studentIds || []).includes(s.id))
                         return (
@@ -2674,7 +3047,7 @@ export default function AdminPage() {
       </Dialog>
 
       {/* ── Create / Edit Internship Dialog ── */}
-      <Dialog open={isInternshipDialogOpen} onOpenChange={(open) => { setIsInternshipDialogOpen(open); if (!open) setEditingInternship(null) }}>
+      <Dialog open={isInternshipDialogOpen} onOpenChange={(open) => { setIsInternshipDialogOpen(open); if (!open) { setEditingInternship(null); setAssignStudentSearch(''); } }}>
         <DialogContent className="w-[95vw] sm:max-w-2xl rounded-[2rem] p-6 md:p-10 max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-headline font-bold flex items-center gap-2">
@@ -2697,6 +3070,7 @@ export default function AdminPage() {
                 }
                 setIsInternshipDialogOpen(false)
                 setEditingInternship(null)
+                setAssignStudentSearch('')
               } catch (err) {
                 toast({ variant: 'destructive', title: 'Error saving internship' })
               }
@@ -2751,32 +3125,49 @@ export default function AdminPage() {
             </div>
             {/* Student assignment */}
             <div className="space-y-3">
-              <Label className="text-xs font-bold uppercase tracking-widest">Assign Students *</Label>
+              <div className="flex items-center justify-between gap-4">
+                <Label className="text-xs font-bold uppercase tracking-widest">Assign Students *</Label>
+                <div className="relative max-w-[200px] w-full">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" size={12} />
+                  <Input
+                    placeholder="Filter students..."
+                    value={assignStudentSearch}
+                    onChange={(e) => setAssignStudentSearch(e.target.value)}
+                    className="pl-8 h-8 rounded-lg text-xs bg-background/50 border border-border"
+                  />
+                </div>
+              </div>
               <div className="max-h-52 overflow-y-auto border border-border/30 rounded-2xl p-3 space-y-2 bg-muted/10">
-                {(allStudents || []).filter((s: any) => s.isApproved).map((student: any) => {
-                  const isSelected = internshipForm.studentIds.includes(student.id)
-                  return (
-                    <label key={student.id} className={cn("flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors", isSelected ? "bg-primary/10" : "hover:bg-muted/50")}>
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => {
-                          const ids = isSelected
-                            ? internshipForm.studentIds.filter(id => id !== student.id)
-                            : [...internshipForm.studentIds, student.id]
-                          setInternshipForm({...internshipForm, studentIds: ids})
-                        }}
-                        className="w-4 h-4 accent-green-600"
-                      />
-                      <div>
-                        <p className="text-sm font-semibold">{student.firstName} {student.lastName}</p>
-                        <p className="text-[10px] text-muted-foreground">{student.email} · {student.studentId}</p>
-                      </div>
-                    </label>
-                  )
-                })}
-                {(allStudents || []).filter((s: any) => s.isApproved).length === 0 && (
-                  <p className="text-sm text-muted-foreground text-center py-4">No approved students found.</p>
+                {(allStudents || [])
+                  .filter((s: any) => s.isApproved)
+                  .filter((s: any) => `${s.firstName || ''} ${s.lastName || ''} ${s.studentId || ''} ${s.email || ''}`.toLowerCase().includes(assignStudentSearch.toLowerCase()))
+                  .map((student: any) => {
+                    const isSelected = internshipForm.studentIds.includes(student.id)
+                    return (
+                      <label key={student.id} className={cn("flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors", isSelected ? "bg-primary/10" : "hover:bg-muted/50")}>
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => {
+                            const ids = isSelected
+                              ? internshipForm.studentIds.filter(id => id !== student.id)
+                              : [...internshipForm.studentIds, student.id]
+                            setInternshipForm({...internshipForm, studentIds: ids})
+                          }}
+                          className="w-4 h-4 accent-green-600"
+                        />
+                        <div>
+                          <p className="text-sm font-semibold">{student.firstName} {student.lastName}</p>
+                          <p className="text-[10px] text-muted-foreground">{student.email} · {student.studentId}</p>
+                        </div>
+                      </label>
+                    )
+                  })}
+                {(allStudents || [])
+                  .filter((s: any) => s.isApproved)
+                  .filter((s: any) => `${s.firstName || ''} ${s.lastName || ''} ${s.studentId || ''} ${s.email || ''}`.toLowerCase().includes(assignStudentSearch.toLowerCase()))
+                  .length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">No matching approved students found.</p>
                 )}
               </div>
               <p className="text-[10px] text-muted-foreground">{internshipForm.studentIds.length} student(s) selected</p>

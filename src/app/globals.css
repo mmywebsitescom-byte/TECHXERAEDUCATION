@@ -58,6 +58,29 @@
   * {
     @apply border-border;
   }
+
+  /* Custom Cursors - Light Mode (Nature Green) */
+  html, body {
+    cursor: url('/cursor-light.svg') 3 3, default;
+  }
+  a, button, [role="button"], select, input[type="submit"], input[type="button"], .cursor-pointer {
+    cursor: url('/cursor-light-pointer.svg') 16 16, pointer !important;
+  }
+  .cursor-default {
+    cursor: url('/cursor-light.svg') 3 3, default !important;
+  }
+
+  /* Custom Cursors - Dark Mode (Crimson & Charcoal) */
+  .dark html, .dark body {
+    cursor: url('/cursor-dark.svg') 3 3, default;
+  }
+  .dark a, .dark button, .dark [role="button"], .dark select, .dark input[type="submit"], .dark input[type="button"], .dark .cursor-pointer {
+    cursor: url('/cursor-dark-pointer.svg') 16 16, pointer !important;
+  }
+  .dark .cursor-default {
+    cursor: url('/cursor-dark.svg') 3 3, default !important;
+  }
+
   body {
     @apply bg-background text-foreground font-body selection:bg-primary/30 antialiased transition-colors duration-300;
     -webkit-tap-highlight-color: transparent;
@@ -87,6 +110,24 @@
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+  /* Thin scrollbar for panels */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(var(--primary) / 0.3);
+    border-radius: 100px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary) / 0.5);
+  }
+  /* GPU acceleration for animated elements */
+  .animate-float, [data-animated] {
+    will-change: transform;
   }
 }
 
